@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>MakerFlow PM Wiki</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/website/assets/site.css" />
+    <script defer src="/website/assets/site.js"></script>
+  </head>
+  <body class="site-root">
+    <header class="site-header">
+      <a class="brand-mark" href="/website/">
+        <img src="/website/assets/logo.svg" alt="MakerFlow PM logo" />
+        <span><strong>MakerFlow PM</strong><em>Documentation Wiki</em></span>
+      </a>
+      <nav class="site-nav"><a href="/website/">Website</a><a href="/login">App Login</a></nav>
+      <div class="site-actions"><a class="btn" href="/login">Launch App</a></div>
+    </header>
+
+    <main class="wiki-layout">
+      <aside class="wiki-nav">
+        <h2>Wiki Pages</h2>
+        <a href="/website/wiki/" aria-current="page">Overview</a>
+        <a href="/website/wiki/getting-started.html">Getting Started</a>
+        <a href="/website/wiki/deployment.html">Deployment</a>
+        <a href="/website/wiki/architecture.html">Architecture</a>
+        <a href="/website/wiki/data-model.html">Data Model</a>
+        <a href="/website/wiki/api-routes.html">API and Routes</a>
+        <a href="/website/wiki/operations.html">Operations</a>
+        <a href="/website/wiki/file-map.html">Full File Map</a>
+        <a href="/website/wiki/release-notes.html">Release Notes</a>
+      </aside>
+
+      <article class="wiki-content">
+        <h1>MakerFlow PM Documentation Wiki</h1>
+        <p>
+          This wiki is designed for open-source release readiness. It documents how to run, deploy, maintain,
+          and extend the platform.
+        </p>
+        <p><strong>Repository:</strong> <a href="https://github.com/ianroy/makerflowPM" target="_blank" rel="noreferrer">github.com/ianroy/makerflowPM</a></p>
+        <h2>Purpose</h2>
+        <ul>
+          <li>Explain the technical architecture and product logic.</li>
+          <li>Provide operational runbooks for admins and developers.</li>
+          <li>Map every file in the package with searchable metadata.</li>
+          <li>Track updates that should be reflected in release communication.</li>
+        </ul>
+
+        <h2>How to Keep This Wiki Updated</h2>
+        <p>Run the sync script after meaningful code changes:</p>
+        <pre><code>python3 scripts/sync_website_content.py</code></pre>
+        <p class="muted">
+          Generated artifacts update both the landing page and this wiki’s release/file-map pages.
+        </p>
+
+        <h2>Primary Documentation Path</h2>
+        <ol>
+          <li><a href="/website/wiki/getting-started.html">Getting Started</a></li>
+          <li><a href="/website/wiki/deployment.html">Production Deployment</a></li>
+          <li><a href="/website/wiki/architecture.html">Architecture + Design Decisions</a></li>
+          <li><a href="/website/wiki/data-model.html">Data Model + Domain Logic</a></li>
+          <li><a href="/website/wiki/operations.html">Operations + Security + Backup</a></li>
+        </ol>
+      </article>
+    </main>
+  </body>
+</html>

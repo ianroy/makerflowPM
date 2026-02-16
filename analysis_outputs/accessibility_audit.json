@@ -1,0 +1,77 @@
+{
+  "pages": [
+    {
+      "page": "/dashboard",
+      "focusable_elements": 49,
+      "issues": []
+    },
+    {
+      "page": "/reports",
+      "focusable_elements": 55,
+      "issues": []
+    },
+    {
+      "page": "/projects",
+      "focusable_elements": 52,
+      "issues": []
+    },
+    {
+      "page": "/tasks",
+      "focusable_elements": 41,
+      "issues": []
+    },
+    {
+      "page": "/agenda",
+      "focusable_elements": 49,
+      "issues": []
+    },
+    {
+      "page": "/calendar",
+      "focusable_elements": 49,
+      "issues": []
+    },
+    {
+      "page": "/views",
+      "focusable_elements": 74,
+      "issues": []
+    },
+    {
+      "page": "/onboarding",
+      "focusable_elements": 45,
+      "issues": []
+    },
+    {
+      "page": "/intake",
+      "focusable_elements": 35,
+      "issues": []
+    },
+    {
+      "page": "/assets",
+      "focusable_elements": 46,
+      "issues": []
+    },
+    {
+      "page": "/partnerships",
+      "focusable_elements": 45,
+      "issues": []
+    },
+    {
+      "page": "/admin/users",
+      "focusable_elements": 57,
+      "issues": []
+    },
+    {
+      "page": "/settings",
+      "focusable_elements": 184,
+      "issues": []
+    }
+  ],
+  "contrast": {
+    "text_on_card": 15.31,
+    "muted_on_card": 6.29,
+    "brand_on_card": 6.5,
+    "white_on_brand": 6.5
+  },
+  "contrast_issues": [],
+  "total_page_issues": 0
+}

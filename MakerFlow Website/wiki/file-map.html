@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Wiki | Full File Map</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/website/assets/site.css" />
+    <script defer src="/website/assets/site.js"></script>
+  </head>
+  <body class="site-root">
+    <header class="site-header">
+      <a class="brand-mark" href="/website/">
+        <img src="/website/assets/logo.svg" alt="MakerFlow PM logo" />
+        <span><strong>MakerFlow PM</strong><em>Full File Map</em></span>
+      </a>
+      <nav class="site-nav"><a href="/website/wiki/">Wiki Home</a><a href="/login">App Login</a></nav>
+      <div class="site-actions"><a class="btn" href="/login">Launch App</a></div>
+    </header>
+    <main class="wiki-layout">
+      <aside class="wiki-nav">
+        <h2>Wiki Pages</h2>
+        <a href="/website/wiki/">Overview</a>
+        <a href="/website/wiki/getting-started.html">Getting Started</a>
+        <a href="/website/wiki/deployment.html">Deployment</a>
+        <a href="/website/wiki/architecture.html">Architecture</a>
+        <a href="/website/wiki/data-model.html">Data Model</a>
+        <a href="/website/wiki/api-routes.html">API and Routes</a>
+        <a href="/website/wiki/operations.html">Operations</a>
+        <a href="/website/wiki/file-map.html" aria-current="page">Full File Map</a>
+        <a href="/website/wiki/release-notes.html">Release Notes</a>
+      </aside>
+      <article class="wiki-content">
+        <h1>Generated File Map</h1>
+        <p class="muted" id="file-map-summary">Loading generated file map...</p>
+        <div class="file-map-controls">
+          <input id="file-map-search" placeholder="Filter by path, category, or description" />
+        </div>
+        <table id="file-map-table">
+          <thead>
+            <tr>
+              <th>Path</th>
+              <th>Category</th>
+              <th>Description</th>
+              <th>Size</th>
+            </tr>
+          </thead>
+          <tbody id="file-map-table-body">
+            <tr><td colspan="4">Loading...</td></tr>
+          </tbody>
+        </table>
+        <p class="muted">Updated <span data-generated-at>-</span></p>
+      </article>
+    </main>
+  </body>
+</html>

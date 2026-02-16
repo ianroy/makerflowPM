@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Wiki | Architecture</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/website/assets/site.css" />
+  </head>
+  <body class="site-root">
+    <header class="site-header">
+      <a class="brand-mark" href="/website/">
+        <img src="/website/assets/logo.svg" alt="MakerFlow PM logo" />
+        <span><strong>MakerFlow PM</strong><em>Architecture</em></span>
+      </a>
+      <nav class="site-nav"><a href="/website/wiki/">Wiki Home</a><a href="/login">App Login</a></nav>
+      <div class="site-actions"><a class="btn" href="/login">Launch App</a></div>
+    </header>
+    <main class="wiki-layout">
+      <aside class="wiki-nav">
+        <h2>Wiki Pages</h2>
+        <a href="/website/wiki/">Overview</a>
+        <a href="/website/wiki/getting-started.html">Getting Started</a>
+        <a href="/website/wiki/deployment.html">Deployment</a>
+        <a href="/website/wiki/architecture.html" aria-current="page">Architecture</a>
+        <a href="/website/wiki/data-model.html">Data Model</a>
+        <a href="/website/wiki/api-routes.html">API and Routes</a>
+        <a href="/website/wiki/operations.html">Operations</a>
+        <a href="/website/wiki/file-map.html">Full File Map</a>
+        <a href="/website/wiki/release-notes.html">Release Notes</a>
+      </aside>
+      <article class="wiki-content">
+        <h1>Architecture</h1>
+        <h2>Stack</h2>
+        <ul>
+          <li>Backend: Python stdlib WSGI app (<code>app/server.py</code>)</li>
+          <li>Database: SQLite (<code>data/bdi_ops.db</code>)</li>
+          <li>Frontend: server-rendered HTML with progressive JS enhancements</li>
+          <li>Static assets: <code>app/static/</code></li>
+        </ul>
+
+        <h2>Design Principles</h2>
+        <ul>
+          <li>Low deployment friction for university IT constraints.</li>
+          <li>Explicit route handling for readability and auditability.</li>
+          <li>Data portability and recoverability over vendor lock-in.</li>
+          <li>Role-based permission model with workspace-level governance.</li>
+        </ul>
+
+        <h2>Runtime Request Path</h2>
+        <ol>
+          <li>WSGI entrypoint validates path and serves public/static routes.</li>
+          <li>Session context and role resolved from cookie/session table.</li>
+          <li>CSRF validation enforced for state-changing methods.</li>
+          <li>Route handlers execute SQL and render HTML or JSON payloads.</li>
+        </ol>
+
+        <h2>Scalability Path</h2>
+        <ul>
+          <li>Current target: 10-20 active users on one VM.</li>
+          <li>Next stage: PostgreSQL, worker model, and queue-backed jobs.</li>
+          <li>Future: SSO IdP integration and centralized observability.</li>
+        </ul>
+      </article>
+    </main>
+  </body>
+</html>

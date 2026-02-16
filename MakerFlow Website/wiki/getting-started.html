@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Wiki | Getting Started</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/website/assets/site.css" />
+  </head>
+  <body class="site-root">
+    <header class="site-header">
+      <a class="brand-mark" href="/website/">
+        <img src="/website/assets/logo.svg" alt="MakerFlow PM logo" />
+        <span><strong>MakerFlow PM</strong><em>Getting Started</em></span>
+      </a>
+      <nav class="site-nav"><a href="/website/wiki/">Wiki Home</a><a href="/login">App Login</a></nav>
+      <div class="site-actions"><a class="btn" href="/login">Launch App</a></div>
+    </header>
+    <main class="wiki-layout">
+      <aside class="wiki-nav">
+        <h2>Wiki Pages</h2>
+        <a href="/website/wiki/">Overview</a>
+        <a href="/website/wiki/getting-started.html" aria-current="page">Getting Started</a>
+        <a href="/website/wiki/deployment.html">Deployment</a>
+        <a href="/website/wiki/architecture.html">Architecture</a>
+        <a href="/website/wiki/data-model.html">Data Model</a>
+        <a href="/website/wiki/api-routes.html">API and Routes</a>
+        <a href="/website/wiki/operations.html">Operations</a>
+        <a href="/website/wiki/file-map.html">Full File Map</a>
+        <a href="/website/wiki/release-notes.html">Release Notes</a>
+      </aside>
+      <article class="wiki-content">
+        <h1>Getting Started</h1>
+        <p><strong>Repository:</strong> <a href="https://github.com/ianroy/makerflowPM" target="_blank" rel="noreferrer">github.com/ianroy/makerflowPM</a></p>
+        <h2>Startup</h2>
+        <pre><code>git clone https://github.com/ianroy/makerflowPM.git
+cd makerflowPM
+cp .env.example .env
+python3 app/server.py</code></pre>
+        <p>Open <code>http://127.0.0.1:8080/login</code>.</p>
+
+        <h2>Default Account (Rotate Immediately)</h2>
+        <ul>
+          <li><code>admin@makerflow.local</code> / <code>ChangeMeNow!2026</code></li>
+        </ul>
+
+        <h2>Core User Roles</h2>
+        <ul>
+          <li><strong>Owner</strong>: global governance and high-risk admin actions.</li>
+          <li><strong>Workspace Admin</strong>: manages one workspace/department.</li>
+          <li><strong>Manager/Staff/Student/Viewer</strong>: scoped by permissions and nav visibility.</li>
+        </ul>
+
+        <h2>First-Day Setup Checklist</h2>
+        <ol>
+          <li>Create workspaces for each department or service unit.</li>
+          <li>Create teams and spaces (labs, studios, branches, rooms).</li>
+          <li>Define default statuses and labels by board.</li>
+          <li>Import current project/task data from CSV.</li>
+          <li>Set user roles and email preference defaults.</li>
+        </ol>
+      </article>
+    </main>
+  </body>
+</html>

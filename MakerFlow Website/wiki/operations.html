@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Wiki | Operations</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/website/assets/site.css" />
+  </head>
+  <body class="site-root">
+    <header class="site-header">
+      <a class="brand-mark" href="/website/">
+        <img src="/website/assets/logo.svg" alt="MakerFlow PM logo" />
+        <span><strong>MakerFlow PM</strong><em>Operations</em></span>
+      </a>
+      <nav class="site-nav"><a href="/website/wiki/">Wiki Home</a><a href="/login">App Login</a></nav>
+      <div class="site-actions"><a class="btn" href="/login">Launch App</a></div>
+    </header>
+    <main class="wiki-layout">
+      <aside class="wiki-nav">
+        <h2>Wiki Pages</h2>
+        <a href="/website/wiki/">Overview</a>
+        <a href="/website/wiki/getting-started.html">Getting Started</a>
+        <a href="/website/wiki/deployment.html">Deployment</a>
+        <a href="/website/wiki/architecture.html">Architecture</a>
+        <a href="/website/wiki/data-model.html">Data Model</a>
+        <a href="/website/wiki/api-routes.html">API and Routes</a>
+        <a href="/website/wiki/operations.html" aria-current="page">Operations</a>
+        <a href="/website/wiki/file-map.html">Full File Map</a>
+        <a href="/website/wiki/release-notes.html">Release Notes</a>
+      </aside>
+      <article class="wiki-content">
+        <h1>Operations Runbook</h1>
+        <h2>Backups</h2>
+        <p>Primary DB path: <code>data/bdi_ops.db</code></p>
+        <pre><code>./scripts/backup_db.sh</code></pre>
+        <p>Keep offsite snapshots for disaster recovery.</p>
+
+        <h2>Monitoring</h2>
+        <ul>
+          <li>Service status: <code>systemctl status makerflow</code></li>
+          <li>Health endpoint: <code>/healthz</code></li>
+          <li>Disk capacity and DB growth trend</li>
+          <li>Audit log and email delivery log review cadence</li>
+        </ul>
+
+        <h2>Security Practices</h2>
+        <ul>
+          <li>HTTPS only in production.</li>
+          <li>Strong secret key and secure cookies.</li>
+          <li>Role reviews for workspace admins and owners.</li>
+          <li>Periodic cleanup of stale accounts and sessions.</li>
+        </ul>
+
+        <h2>Post-Release Maintenance</h2>
+        <ol>
+          <li>Run regression scripts before deploy.</li>
+          <li>Run <code>python3 scripts/sync_website_content.py</code>.</li>
+          <li>Review release notes page for external communication.</li>
+        </ol>
+      </article>
+    </main>
+  </body>
+</html>

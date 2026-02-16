@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Wiki | API and Routes</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/website/assets/site.css" />
+  </head>
+  <body class="site-root">
+    <header class="site-header">
+      <a class="brand-mark" href="/website/">
+        <img src="/website/assets/logo.svg" alt="MakerFlow PM logo" />
+        <span><strong>MakerFlow PM</strong><em>API and Routes</em></span>
+      </a>
+      <nav class="site-nav"><a href="/website/wiki/">Wiki Home</a><a href="/login">App Login</a></nav>
+      <div class="site-actions"><a class="btn" href="/login">Launch App</a></div>
+    </header>
+    <main class="wiki-layout">
+      <aside class="wiki-nav">
+        <h2>Wiki Pages</h2>
+        <a href="/website/wiki/">Overview</a>
+        <a href="/website/wiki/getting-started.html">Getting Started</a>
+        <a href="/website/wiki/deployment.html">Deployment</a>
+        <a href="/website/wiki/architecture.html">Architecture</a>
+        <a href="/website/wiki/data-model.html">Data Model</a>
+        <a href="/website/wiki/api-routes.html" aria-current="page">API and Routes</a>
+        <a href="/website/wiki/operations.html">Operations</a>
+        <a href="/website/wiki/file-map.html">Full File Map</a>
+        <a href="/website/wiki/release-notes.html">Release Notes</a>
+      </aside>
+      <article class="wiki-content">
+        <h1>API and Route Overview</h1>
+        <p>All route handlers are in <code>app/server.py</code>. State-changing routes require CSRF validation.</p>
+
+        <h2>Public Routes</h2>
+        <ul>
+          <li><code>/login</code>, <code>/forgot-password</code>, <code>/reset-password</code></li>
+          <li><code>/healthz</code></li>
+          <li><code>/website/</code> and <code>/website/wiki/</code></li>
+        </ul>
+
+        <h2>Core JSON APIs</h2>
+        <ul>
+          <li><code>/api/tasks</code>, <code>/api/tasks/create</code>, <code>/api/tasks/save</code></li>
+          <li><code>/api/projects/save</code></li>
+          <li><code>/api/comments</code>, <code>/api/comments/add</code></li>
+          <li><code>/api/lookups</code>, <code>/api/activity</code></li>
+          <li><code>/api/interface/log</code> for UI/audit telemetry</li>
+        </ul>
+
+        <h2>Operational Rules</h2>
+        <ul>
+          <li>Tasks are expected to map to projects (with fallback operations project behavior).</li>
+          <li>Delete workflow uses status gates, soft-delete queue, and admin purge controls.</li>
+          <li>Comments support <code>@mentions</code> and watcher notifications (respecting user email prefs).</li>
+        </ul>
+      </article>
+    </main>
+  </body>
+</html>

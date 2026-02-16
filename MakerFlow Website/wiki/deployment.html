@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Wiki | Deployment</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/website/assets/site.css" />
+  </head>
+  <body class="site-root">
+    <header class="site-header">
+      <a class="brand-mark" href="/website/">
+        <img src="/website/assets/logo.svg" alt="MakerFlow PM logo" />
+        <span><strong>MakerFlow PM</strong><em>Deployment</em></span>
+      </a>
+      <nav class="site-nav"><a href="/website/wiki/">Wiki Home</a><a href="/login">App Login</a></nav>
+      <div class="site-actions"><a class="btn" href="/login">Launch App</a></div>
+    </header>
+    <main class="wiki-layout">
+      <aside class="wiki-nav">
+        <h2>Wiki Pages</h2>
+        <a href="/website/wiki/">Overview</a>
+        <a href="/website/wiki/getting-started.html">Getting Started</a>
+        <a href="/website/wiki/deployment.html" aria-current="page">Deployment</a>
+        <a href="/website/wiki/architecture.html">Architecture</a>
+        <a href="/website/wiki/data-model.html">Data Model</a>
+        <a href="/website/wiki/api-routes.html">API and Routes</a>
+        <a href="/website/wiki/operations.html">Operations</a>
+        <a href="/website/wiki/file-map.html">Full File Map</a>
+        <a href="/website/wiki/release-notes.html">Release Notes</a>
+      </aside>
+      <article class="wiki-content">
+        <h1>Production Deployment</h1>
+        <p><strong>Repository:</strong> <a href="https://github.com/ianroy/makerflowPM" target="_blank" rel="noreferrer">github.com/ianroy/makerflowPM</a></p>
+        <p>Use the deployment script for a low-cost VM setup with <code>systemd + nginx + TLS</code>.</p>
+        <pre><code>./scripts/deploy_production.sh \
+  --ssh ubuntu@YOUR_SERVER_IP \
+  --domain makerflow.yourdomain.edu \
+  --admin-email admin@yourdomain.edu \
+  --admin-password 'REPLACE_WITH_STRONG_PASSWORD'</code></pre>
+
+        <h2>What the Script Configures</h2>
+        <ul>
+          <li>Uploads source code to <code>/opt/makerflow-pm</code>.</li>
+          <li>Creates/updates <code>makerflow.service</code>.</li>
+          <li>Creates nginx site and reverse proxy.</li>
+          <li>Optionally issues cert via certbot.</li>
+          <li>Installs daily backup cron for DB snapshots.</li>
+        </ul>
+
+        <h2>Validation Commands</h2>
+        <pre><code>sudo systemctl status makerflow
+sudo nginx -t
+curl -i http://127.0.0.1:8080/healthz</code></pre>
+
+        <h2>Security Requirements</h2>
+        <ul>
+          <li>Set <code>BDI_COOKIE_SECURE=1</code>.</li>
+          <li>Use a 64+ character <code>BDI_SECRET_KEY</code>.</li>
+          <li>Rotate bootstrap passwords immediately after first login.</li>
+          <li>Restrict SSH to key-based auth.</li>
+        </ul>
+      </article>
+    </main>
+  </body>
+</html>

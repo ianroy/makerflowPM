@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="MakerFlow PM logo">
+  <defs>
+    <linearGradient id="mfA" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#55b7ff" />
+      <stop offset="55%" stop-color="#25c9ad" />
+      <stop offset="100%" stop-color="#ffb454" />
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="104" height="104" rx="20" fill="#0f2638" stroke="#2b5269" />
+  <path d="M24 84V38h14l12 19 12-19h14v46H62V62l-12 17-12-17v22z" fill="url(#mfA)" />
+  <circle cx="88" cy="34" r="8" fill="#ff7a68" />
+</svg>

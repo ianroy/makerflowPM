@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Wiki | Data Model</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/website/assets/site.css" />
+  </head>
+  <body class="site-root">
+    <header class="site-header">
+      <a class="brand-mark" href="/website/">
+        <img src="/website/assets/logo.svg" alt="MakerFlow PM logo" />
+        <span><strong>MakerFlow PM</strong><em>Data Model</em></span>
+      </a>
+      <nav class="site-nav"><a href="/website/wiki/">Wiki Home</a><a href="/login">App Login</a></nav>
+      <div class="site-actions"><a class="btn" href="/login">Launch App</a></div>
+    </header>
+    <main class="wiki-layout">
+      <aside class="wiki-nav">
+        <h2>Wiki Pages</h2>
+        <a href="/website/wiki/">Overview</a>
+        <a href="/website/wiki/getting-started.html">Getting Started</a>
+        <a href="/website/wiki/deployment.html">Deployment</a>
+        <a href="/website/wiki/architecture.html">Architecture</a>
+        <a href="/website/wiki/data-model.html" aria-current="page">Data Model</a>
+        <a href="/website/wiki/api-routes.html">API and Routes</a>
+        <a href="/website/wiki/operations.html">Operations</a>
+        <a href="/website/wiki/file-map.html">Full File Map</a>
+        <a href="/website/wiki/release-notes.html">Release Notes</a>
+      </aside>
+      <article class="wiki-content">
+        <h1>Data Model</h1>
+        <h2>Core Tenancy Tables</h2>
+        <ul>
+          <li><code>organizations</code>: workspace container (department/service unit).</li>
+          <li><code>users</code>: identity records.</li>
+          <li><code>memberships</code>: role assignment per organization.</li>
+          <li><code>sessions</code>: server-side auth sessions.</li>
+        </ul>
+
+        <h2>Execution Tables</h2>
+        <ul>
+          <li><code>projects</code> and <code>tasks</code>: portfolio and execution records.</li>
+          <li><code>teams</code> and <code>spaces</code>: accountability and physical context.</li>
+          <li><code>item_comments</code> and <code>item_watchers</code>: collaboration state.</li>
+        </ul>
+
+        <h2>Operations Tables</h2>
+        <ul>
+          <li><code>equipment_assets</code>: machine lifecycle and maintenance status.</li>
+          <li><code>consumables</code>: stock quantities with location and owner.</li>
+          <li><code>meeting_agendas</code> / <code>meeting_items</code>: recurring meetings and decisions.</li>
+          <li><code>onboarding_templates</code> / <code>onboarding_assignments</code>: role-based onboarding.</li>
+        </ul>
+
+        <h2>Governance + Audit</h2>
+        <ul>
+          <li><code>audit_log</code>: data and interface change history.</li>
+          <li><code>email_messages</code>: notification delivery history.</li>
+          <li><code>deleted_at</code> pattern on key entities for restore/purge workflow.</li>
+        </ul>
+      </article>
+    </main>
+  </body>
+</html>
