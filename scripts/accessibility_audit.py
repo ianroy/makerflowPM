@@ -18,10 +18,10 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from app.server import app, ensure_bootstrap
+from app.server import app, db_connect, ensure_bootstrap, hash_password
 
-DEFAULT_ADMIN_EMAIL = os.environ.get("BDI_ADMIN_EMAIL", "admin@makerflow.local").strip().lower()
-DEFAULT_ADMIN_PASSWORD = os.environ.get("BDI_ADMIN_PASSWORD", "ChangeMeNow!2026")
+DEFAULT_ADMIN_EMAIL = os.environ.get("MAKERSPACE_ADMIN_EMAIL", "admin@makerflow.local").strip().lower()
+DEFAULT_ADMIN_PASSWORD = os.environ.get("MAKERSPACE_ADMIN_PASSWORD", "ChangeMeMeow!2026")
 
 
 def hex_to_rgb(value):
@@ -184,6 +184,20 @@ class WSGIClient:
 
 def main():
     ensure_bootstrap()
+    conn = db_connect()
+    try:
+        admin = conn.execute("SELECT id FROM users WHERE email = ?", (DEFAULT_ADMIN_EMAIL,)).fetchone()
+        if not admin:
+            raise SystemExit(f"Missing {DEFAULT_ADMIN_EMAIL} account")
+        pw_hash, pw_salt = hash_password(DEFAULT_ADMIN_PASSWORD)
+        conn.execute(
+            "UPDATE users SET password_hash = ?, password_salt = ?, is_active = 1 WHERE id = ?",
+            (pw_hash, pw_salt, int(admin["id"])),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
     client = WSGIClient()
 
     client.request("/login")

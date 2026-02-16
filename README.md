@@ -1,6 +1,7 @@
 # MakerFlow PM
 
 Open-source project management and operations platform for makerspaces, labs, and service teams.
+Built by Ian Roy leveraging OpenAI Codex for iterative product engineering and documentation.
 
 Repository: [https://github.com/ianroy/makerflowPM](https://github.com/ianroy/makerflowPM)
 Primary site: [https://makerflow.org](https://makerflow.org)
@@ -27,19 +28,19 @@ Open: [http://127.0.0.1:8080/login](http://127.0.0.1:8080/login)
 
 Default bootstrap account (rotate immediately):
 
-- `admin@makerflow.local` / `ChangeMeNow!2026`
+- `admin@makerflow.local` / `ChangeMeMeow!2026`
 
 ## Environment
 
 Key variables (see `.env.example` for full list):
 
 ```bash
-BDI_SECRET_KEY=replace-with-64+char-secret
-BDI_COOKIE_SECURE=1
-BDI_DEFAULT_ORG_NAME=Default Workspace
-BDI_DEFAULT_ORG_SLUG=default
-BDI_ADMIN_EMAIL=admin@makerflow.local
-BDI_ADMIN_PASSWORD=ChangeMeNow!2026
+MAKERSPACE_SECRET_KEY=replace-with-64+char-secret
+MAKERSPACE_COOKIE_SECURE=1
+MAKERSPACE_DEFAULT_ORG_NAME=Default Workspace
+MAKERSPACE_DEFAULT_ORG_SLUG=default
+MAKERSPACE_ADMIN_EMAIL=admin@makerflow.local
+MAKERSPACE_ADMIN_PASSWORD=ChangeMeMeow!2026
 ```
 
 ## Deployment (DigitalOcean Droplet)
@@ -69,6 +70,18 @@ python3 scripts/smoke_test.py
 python3 scripts/usability_test.py
 python3 scripts/accessibility_audit.py
 python3 scripts/comprehensive_feature_security_test.py
+```
+
+Full release preflight (docs + security + UI + accessibility + 10-user simulation + cleanup):
+
+```bash
+./scripts/pre_release_audit.sh
+```
+
+This pipeline now includes a final clean-state reset:
+
+```bash
+python3 scripts/reset_release_state.py
 ```
 
 ## Documentation

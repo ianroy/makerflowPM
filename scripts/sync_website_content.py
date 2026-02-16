@@ -42,7 +42,7 @@ EXCLUDED_PREFIXES = (
 )
 
 EXCLUDED_EXACT_PATHS = {
-    "data/bdi_ops.db",
+    "data/makerspace_ops.db",
 }
 
 PATH_DESCRIPTIONS: Dict[str, str] = {

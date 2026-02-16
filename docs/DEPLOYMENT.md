@@ -66,5 +66,5 @@ Then open:
 
 ## Data Paths
 
-- Live DB: `/opt/makerflow-pm/data/bdi_ops.db`
+- Live DB: `/opt/makerflow-pm/data/makerspace_ops.db`
 - Backups: `/opt/makerflow-pm/data/backups/`

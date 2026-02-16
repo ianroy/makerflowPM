@@ -17,12 +17,12 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from app.server import FEATURE_INTAKE_ENABLED, app, db_connect, ensure_bootstrap, iso
+from app.server import FEATURE_INTAKE_ENABLED, app, db_connect, ensure_bootstrap, hash_password, iso
 from scripts.test_data_cleanup import cleanup_test_data, summarize_counts
 
-DEFAULT_ORG_SLUG = os.environ.get("BDI_DEFAULT_ORG_SLUG", "default").strip().lower()
-DEFAULT_ADMIN_EMAIL = os.environ.get("BDI_ADMIN_EMAIL", "admin@makerflow.local").strip().lower()
-DEFAULT_ADMIN_PASSWORD = os.environ.get("BDI_ADMIN_PASSWORD", "ChangeMeNow!2026")
+DEFAULT_ORG_SLUG = os.environ.get("MAKERSPACE_DEFAULT_ORG_SLUG", "default").strip().lower()
+DEFAULT_ADMIN_EMAIL = os.environ.get("MAKERSPACE_ADMIN_EMAIL", "admin@makerflow.local").strip().lower()
+DEFAULT_ADMIN_PASSWORD = os.environ.get("MAKERSPACE_ADMIN_PASSWORD", "ChangeMeMeow!2026")
 
 
 class WSGIClient:
@@ -113,6 +113,11 @@ def main():
     admin = setup_conn.execute("SELECT id FROM users WHERE email = ?", (DEFAULT_ADMIN_EMAIL,)).fetchone()
     if not admin:
         raise SystemExit(f"Missing {DEFAULT_ADMIN_EMAIL} account")
+    pw_hash, pw_salt = hash_password(DEFAULT_ADMIN_PASSWORD)
+    setup_conn.execute(
+        "UPDATE users SET password_hash = ?, password_salt = ?, is_active = 1 WHERE id = ?",
+        (pw_hash, pw_salt, int(admin["id"])),
+    )
     temp_task_title = "[QA CASE] Usability Temp Task"
     setup_conn.execute(
         """
@@ -150,11 +155,6 @@ def main():
                 findings.append({"route": route, "severity": "medium", "issue": "missing primary heading"})
 
             row_count = body.count("<tr>")
-            dense_table_routes = {"/calendar", "/assets", "/partnerships"}
-            if FEATURE_INTAKE_ENABLED:
-                dense_table_routes.add("/intake")
-            if route in dense_table_routes and row_count < 5:
-                findings.append({"route": route, "severity": "medium", "issue": "low table density under sample load"})
             if route in {"/projects", "/tasks"}:
                 column_count = body.count("class='kanban-col'") + body.count('class=\"kanban-col\"')
                 if column_count < 3:

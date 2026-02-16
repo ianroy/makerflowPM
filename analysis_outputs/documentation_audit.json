@@ -1,0 +1,22 @@
+{
+  "checked_files": [
+    "README.md",
+    "docs/ARCHITECTURE.md",
+    "docs/CONTRIBUTING.md",
+    "docs/DATA_MODEL.md",
+    "docs/DECISIONS.md",
+    "docs/DEPLOYMENT.md",
+    "docs/LICENSE.md",
+    "docs/SECURITY.md",
+    "docs/TESTING.md",
+    "MakerFlow Website/index.html",
+    "MakerFlow Website/wiki/index.html",
+    "MakerFlow Website/wiki/getting-started.html",
+    "MakerFlow Website/wiki/deployment.html",
+    "scripts/deploy_production.sh"
+  ],
+  "checked_count": 14,
+  "finding_count": 0,
+  "findings": [],
+  "status": "pass"
+}

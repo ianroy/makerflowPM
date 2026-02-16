@@ -39,8 +39,8 @@ PRIORITIES = ["Low", "Medium", "High", "Critical"]
 ENERGIES = ["Low", "Medium", "High"]
 PARTNER_STAGES = ["Discovery", "Active", "Pilot", "Dormant"]
 HEALTH = ["Strong", "Medium", "At Risk"]
-DEFAULT_ORG_SLUG = os.environ.get("BDI_DEFAULT_ORG_SLUG", "default").strip().lower()
-DEFAULT_ADMIN_EMAIL = os.environ.get("BDI_ADMIN_EMAIL", "admin@makerflow.local").strip().lower()
+DEFAULT_ORG_SLUG = os.environ.get("MAKERSPACE_DEFAULT_ORG_SLUG", "default").strip().lower()
+DEFAULT_ADMIN_EMAIL = os.environ.get("MAKERSPACE_ADMIN_EMAIL", "admin@makerflow.local").strip().lower()
 
 
 def rand_date(days_back: int = 30, days_forward: int = 90) -> str:
@@ -277,7 +277,7 @@ def main():
             end = start + duration
             title = random.choice(
                 [
-                    "[SAMPLE] BDI staff meeting",
+                    "[SAMPLE] Makerspace staff meeting",
                     "[SAMPLE] Course support sync",
                     "[SAMPLE] Workshop facilitation",
                     "[SAMPLE] Project build block",

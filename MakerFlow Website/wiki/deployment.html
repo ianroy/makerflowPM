@@ -38,7 +38,7 @@
         <p>Use the deployment script for a low-cost VM setup with <code>systemd + nginx + TLS</code>.</p>
         <pre><code>./scripts/deploy_production.sh \
   --ssh ubuntu@YOUR_SERVER_IP \
-  --domain makerflow.yourdomain.edu \
+  --domain makerflow.org \
   --admin-email admin@yourdomain.edu \
   --admin-password 'REPLACE_WITH_STRONG_PASSWORD'</code></pre>
 
@@ -58,8 +58,8 @@ curl -i http://127.0.0.1:8080/healthz</code></pre>
 
         <h2>Security Requirements</h2>
         <ul>
-          <li>Set <code>BDI_COOKIE_SECURE=1</code>.</li>
-          <li>Use a 64+ character <code>BDI_SECRET_KEY</code>.</li>
+          <li>Set <code>MAKERSPACE_COOKIE_SECURE=1</code>.</li>
+          <li>Use a 64+ character <code>MAKERSPACE_SECRET_KEY</code>.</li>
           <li>Rotate bootstrap passwords immediately after first login.</li>
           <li>Restrict SSH to key-based auth.</li>
         </ul>

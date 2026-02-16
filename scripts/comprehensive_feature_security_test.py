@@ -38,7 +38,7 @@ from app.server import (
 )
 from scripts.test_data_cleanup import cleanup_test_data, summarize_counts
 
-DEFAULT_ORG_SLUG = os.environ.get("BDI_DEFAULT_ORG_SLUG", "default").strip().lower()
+DEFAULT_ORG_SLUG = os.environ.get("MAKERSPACE_DEFAULT_ORG_SLUG", "default").strip().lower()
 
 
 def encode_multipart(fields: Dict[str, str], files: Dict[str, Tuple[str, bytes, str]]) -> Tuple[bytes, str]:

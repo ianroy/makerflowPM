@@ -30,3 +30,21 @@ Cleanup:
 ```bash
 python3 scripts/test_data_cleanup.py
 ```
+
+## Full Pre-Release Pipeline
+
+Run the full launch checklist in one command:
+
+```bash
+./scripts/pre_release_audit.sh
+```
+
+This runs:
+
+1. Documentation audit
+2. Smoke + usability + accessibility checks
+3. Comprehensive security test
+4. 10-user collaboration simulation
+5. Test data cleanup
+6. Website/wiki metadata refresh
+7. Release-state DB reset (default workspace/admin only)

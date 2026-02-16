@@ -11,7 +11,7 @@
 ## Summary
 
 - Route checks executed: 96
-- Form action checks executed: 169
+- Form action checks executed: 135
 - Permission/action checks executed: 108
 - Multi-user tasks created: 10
 - Multi-user task updates: 10

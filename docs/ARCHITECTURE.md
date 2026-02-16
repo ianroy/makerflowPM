@@ -5,7 +5,7 @@ Repository: [https://github.com/ianroy/makerflowPM](https://github.com/ianroy/ma
 ## System Shape
 
 - Backend: Python stdlib WSGI (`app/server.py`)
-- Database: SQLite (`data/bdi_ops.db`)
+- Database: SQLite (`data/makerspace_ops.db`)
 - Frontend: server-rendered HTML + progressive JS (`app/static/`)
 
 ## Core Principles

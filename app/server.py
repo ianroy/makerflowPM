@@ -38,24 +38,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 STATIC_DIR = BASE_DIR / "app" / "static"
 WEBSITE_DIR = BASE_DIR / "MakerFlow Website"
-DB_PATH = Path(os.environ.get("BDI_DB_PATH", str(DATA_DIR / "bdi_ops.db")))
-SECRET_KEY = os.environ.get("BDI_SECRET_KEY", "change-this-secret-in-production")
-COOKIE_SECURE = os.environ.get("BDI_COOKIE_SECURE", "0") == "1"
-SESSION_DAYS = int(os.environ.get("BDI_SESSION_DAYS", "14"))
-HOST = os.environ.get("BDI_HOST", "127.0.0.1")
-PORT = int(os.environ.get("BDI_PORT", "8080"))
-WSGI_THREADED = os.environ.get("BDI_WSGI_THREADED", "1") == "1"
-DB_BUSY_TIMEOUT_MS = max(1000, int(os.environ.get("BDI_DB_BUSY_TIMEOUT_MS", "6000")))
-DB_JOURNAL_MODE = os.environ.get("BDI_DB_JOURNAL_MODE", "WAL").strip().upper()
-DB_SYNCHRONOUS = os.environ.get("BDI_DB_SYNCHRONOUS", "NORMAL").strip().upper()
-DB_CACHE_SIZE_KB = max(4096, int(os.environ.get("BDI_DB_CACHE_SIZE_KB", "65536")))
-DB_MMAP_SIZE_BYTES = max(0, int(os.environ.get("BDI_DB_MMAP_SIZE_BYTES", "268435456")))
-DB_TEMP_STORE_MEMORY = os.environ.get("BDI_DB_TEMP_STORE_MEMORY", "1") == "1"
-GCAL_CLIENT_ID = os.environ.get("BDI_GCAL_CLIENT_ID", "")
-GCAL_CLIENT_SECRET = os.environ.get("BDI_GCAL_CLIENT_SECRET", "")
-GCAL_REFRESH_TOKEN = os.environ.get("BDI_GCAL_REFRESH_TOKEN", "")
-GCAL_ACCESS_TOKEN = os.environ.get("BDI_GCAL_ACCESS_TOKEN", "")
-GCAL_DEFAULT_CALENDAR_ID = os.environ.get("BDI_GCAL_CALENDAR_ID", "primary")
+DB_PATH = Path(os.environ.get("MAKERSPACE_DB_PATH", str(DATA_DIR / "makerspace_ops.db")))
+SECRET_KEY = os.environ.get("MAKERSPACE_SECRET_KEY", "change-this-secret-in-production")
+COOKIE_SECURE = os.environ.get("MAKERSPACE_COOKIE_SECURE", "0") == "1"
+SESSION_DAYS = int(os.environ.get("MAKERSPACE_SESSION_DAYS", "14"))
+HOST = os.environ.get("MAKERSPACE_HOST", "127.0.0.1")
+PORT = int(os.environ.get("MAKERSPACE_PORT", "8080"))
+WSGI_THREADED = os.environ.get("MAKERSPACE_WSGI_THREADED", "1") == "1"
+DB_BUSY_TIMEOUT_MS = max(1000, int(os.environ.get("MAKERSPACE_DB_BUSY_TIMEOUT_MS", "6000")))
+DB_JOURNAL_MODE = os.environ.get("MAKERSPACE_DB_JOURNAL_MODE", "WAL").strip().upper()
+DB_SYNCHRONOUS = os.environ.get("MAKERSPACE_DB_SYNCHRONOUS", "NORMAL").strip().upper()
+DB_CACHE_SIZE_KB = max(4096, int(os.environ.get("MAKERSPACE_DB_CACHE_SIZE_KB", "65536")))
+DB_MMAP_SIZE_BYTES = max(0, int(os.environ.get("MAKERSPACE_DB_MMAP_SIZE_BYTES", "268435456")))
+DB_TEMP_STORE_MEMORY = os.environ.get("MAKERSPACE_DB_TEMP_STORE_MEMORY", "1") == "1"
+GCAL_CLIENT_ID = os.environ.get("MAKERSPACE_GCAL_CLIENT_ID", "")
+GCAL_CLIENT_SECRET = os.environ.get("MAKERSPACE_GCAL_CLIENT_SECRET", "")
+GCAL_REFRESH_TOKEN = os.environ.get("MAKERSPACE_GCAL_REFRESH_TOKEN", "")
+GCAL_ACCESS_TOKEN = os.environ.get("MAKERSPACE_GCAL_ACCESS_TOKEN", "")
+GCAL_DEFAULT_CALENDAR_ID = os.environ.get("MAKERSPACE_GCAL_CALENDAR_ID", "primary")
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_CALENDAR_API_BASE = "https://www.googleapis.com/calendar/v3"
 FEATURE_INTAKE_ENABLED = False
@@ -430,12 +430,12 @@ REPORT_TEMPLATE_LIBRARY: List[Dict[str, object]] = [
     },
 ]
 
-SMTP_HOST = os.environ.get("BDI_SMTP_HOST", "").strip()
-SMTP_PORT = int(os.environ.get("BDI_SMTP_PORT", "587"))
-SMTP_USER = os.environ.get("BDI_SMTP_USER", "").strip()
-SMTP_PASSWORD = os.environ.get("BDI_SMTP_PASSWORD", "")
-SMTP_FROM = os.environ.get("BDI_SMTP_FROM", "").strip()
-SMTP_USE_TLS = os.environ.get("BDI_SMTP_TLS", "1") == "1"
+SMTP_HOST = os.environ.get("MAKERSPACE_SMTP_HOST", "").strip()
+SMTP_PORT = int(os.environ.get("MAKERSPACE_SMTP_PORT", "587"))
+SMTP_USER = os.environ.get("MAKERSPACE_SMTP_USER", "").strip()
+SMTP_PASSWORD = os.environ.get("MAKERSPACE_SMTP_PASSWORD", "")
+SMTP_FROM = os.environ.get("MAKERSPACE_SMTP_FROM", "").strip()
+SMTP_USE_TLS = os.environ.get("MAKERSPACE_SMTP_TLS", "1") == "1"
 
 KANBAN_COLORS = {
     "Todo": "#67b8ff",
@@ -2156,10 +2156,10 @@ def ensure_default_report_templates(conn: sqlite3.Connection, org_id: int, owner
 
 def seed_defaults(conn: sqlite3.Connection) -> None:
     # Release-safe bootstrap: create only generic defaults, no sample operational data.
-    raw_slug = os.environ.get("BDI_DEFAULT_ORG_SLUG", "default").strip().lower()
+    raw_slug = os.environ.get("MAKERSPACE_DEFAULT_ORG_SLUG", "default").strip().lower()
     org_slug = re.sub(r"[^a-z0-9-]", "-", raw_slug)
     org_slug = re.sub(r"-+", "-", org_slug).strip("-") or "default"
-    org_name = os.environ.get("BDI_DEFAULT_ORG_NAME", "Default Workspace").strip() or "Default Workspace"
+    org_name = os.environ.get("MAKERSPACE_DEFAULT_ORG_NAME", "Default Workspace").strip() or "Default Workspace"
 
     row = conn.execute("SELECT id FROM organizations WHERE slug = ?", (org_slug,)).fetchone()
     if row:
@@ -2171,9 +2171,9 @@ def seed_defaults(conn: sqlite3.Connection) -> None:
         )
         org_id = int(conn.execute("SELECT id FROM organizations WHERE slug = ?", (org_slug,)).fetchone()["id"])
 
-    admin_email = os.environ.get("BDI_ADMIN_EMAIL", "admin@makerflow.local").lower().strip()
-    admin_password = os.environ.get("BDI_ADMIN_PASSWORD", "ChangeMeNow!2026")
-    admin_name = os.environ.get("BDI_ADMIN_NAME", "MakerFlow Admin")
+    admin_email = os.environ.get("MAKERSPACE_ADMIN_EMAIL", "admin@makerflow.local").lower().strip()
+    admin_password = os.environ.get("MAKERSPACE_ADMIN_PASSWORD", "ChangeMeMeow!2026")
+    admin_name = os.environ.get("MAKERSPACE_ADMIN_NAME", "MakerFlow Admin")
 
     admin = conn.execute("SELECT id FROM users WHERE email = ?", (admin_email,)).fetchone()
     if not admin:
@@ -5868,7 +5868,7 @@ def render_calendar_page(
     today_link = with_space(f"/calendar?view={view_mode}&date={dt.date.today().isoformat()}", selected_space_id)
     gcal_status = "Configured" if gcal_api_configured() else "Not configured"
     gcal_help = (
-        "Set BDI_GCAL_CLIENT_ID, BDI_GCAL_CLIENT_SECRET, and BDI_GCAL_REFRESH_TOKEN (or BDI_GCAL_ACCESS_TOKEN)."
+        "Set MAKERSPACE_GCAL_CLIENT_ID, MAKERSPACE_GCAL_CLIENT_SECRET, and MAKERSPACE_GCAL_REFRESH_TOKEN (or MAKERSPACE_GCAL_ACCESS_TOKEN)."
         if not gcal_api_configured()
         else "API credentials detected. Pull imports events. Push syncs due tasks to Google Calendar."
     )
@@ -6068,7 +6068,7 @@ def render_data_hub_page(conn: sqlite3.Connection, org_id: int) -> str:
         <thead><tr><th>Recipient</th><th>Subject</th><th>Status</th><th>Created</th><th>Sent</th><th>Error</th></tr></thead>
         <tbody>{email_html}</tbody>
       </table>
-      <p class="muted">Configure SMTP with <code>BDI_SMTP_HOST</code>, <code>BDI_SMTP_PORT</code>, <code>BDI_SMTP_USER</code>, <code>BDI_SMTP_PASSWORD</code>, <code>BDI_SMTP_FROM</code>.</p>
+      <p class="muted">Configure SMTP with <code>MAKERSPACE_SMTP_HOST</code>, <code>MAKERSPACE_SMTP_PORT</code>, <code>MAKERSPACE_SMTP_USER</code>, <code>MAKERSPACE_SMTP_PASSWORD</code>, <code>MAKERSPACE_SMTP_FROM</code>.</p>
     </section>
     """
 
@@ -6218,7 +6218,7 @@ def render_reports_page(
     </section>
     <section class='card'>
       <h3>Impact Report Template Library</h3>
-      <p class='muted'>Based on your BDI impact summary structure plus public makerspace annual-report patterns (usage, school reach, capacity mix, reliability, and student progress).</p>
+      <p class='muted'>Based on your Makerspace impact summary structure plus public makerspace annual-report patterns (usage, school reach, capacity mix, reliability, and student progress).</p>
       <div class='template-grid'>{template_cards}</div>
     </section>
     <section class='card'>
@@ -7676,7 +7676,7 @@ def render_partnership_page(conn: sqlite3.Connection, org_id: int) -> str:
       </div>
       <div class=\"card\">
         <h3>Why It Matters</h3>
-        <p>Repeat engagements are one of BDI’s strongest impact multipliers. Track follow-ups to preserve momentum.</p>
+        <p>Repeat engagements are one of Makerspace’s strongest impact multipliers. Track follow-ups to preserve momentum.</p>
       </div>
     </section>
     <section class=\"card board-list-surface\" data-view-surface='partnerships' data-view-mode='list' hidden>

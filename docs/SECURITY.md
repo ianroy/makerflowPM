@@ -14,8 +14,8 @@
 ## Required Production Controls
 
 - Always run behind HTTPS.
-- Set `BDI_COOKIE_SECURE=1` in production.
-- Set strong `BDI_SECRET_KEY` (64+ random chars).
+- Set `MAKERSPACE_COOKIE_SECURE=1` in production.
+- Set strong `MAKERSPACE_SECRET_KEY` (64+ random chars).
 - Rotate admin bootstrap password immediately.
 - Use institution-approved password policy (length + entropy + rotation).
 
@@ -39,5 +39,5 @@
 
 1. Disable compromised user in `users.is_active`.
 2. Invalidate sessions (`DELETE FROM sessions WHERE user_id = ?`).
-3. Rotate `BDI_SECRET_KEY` if signing key exposure is suspected.
+3. Rotate `MAKERSPACE_SECRET_KEY` if signing key exposure is suspected.
 4. Restore DB from known-good backup if tampering is detected.

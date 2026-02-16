@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-02-16T21:03:01+00:00",
+  "generated_at": "2026-02-16T21:14:12+00:00",
   "stats": {
-    "file_count": 47,
+    "file_count": 52,
     "directory_count": 10
   },
   "files": [
@@ -9,19 +9,25 @@
       "path": ".env",
       "category": "Project Root",
       "description": "Project file.",
-      "size_bytes": 224
+      "size_bytes": 228
     },
     {
       "path": ".env.example",
       "category": "Project Root",
       "description": "Project file.",
-      "size_bytes": 637
+      "size_bytes": 638
     },
     {
       "path": ".gitignore",
       "category": "Project Root",
       "description": "Project file.",
       "size_bytes": 57
+    },
+    {
+      "path": "LICENSE",
+      "category": "Project Root",
+      "description": "Project file.",
+      "size_bytes": 951
     },
     {
       "path": "MakerFlow Website/assets/logo.svg",
@@ -45,7 +51,7 @@
       "path": "MakerFlow Website/data/file_map.json",
       "category": "Website and Wiki",
       "description": "Data/configuration file.",
-      "size_bytes": 8214
+      "size_bytes": 8855
     },
     {
       "path": "MakerFlow Website/data/updates.json",
@@ -57,7 +63,7 @@
       "path": "MakerFlow Website/index.html",
       "category": "Website and Wiki",
       "description": "Frontend web asset.",
-      "size_bytes": 15280
+      "size_bytes": 15468
     },
     {
       "path": "MakerFlow Website/wiki/api-routes.html",
@@ -81,7 +87,7 @@
       "path": "MakerFlow Website/wiki/deployment.html",
       "category": "Website and Wiki",
       "description": "Frontend web asset.",
-      "size_bytes": 3058
+      "size_bytes": 3047
     },
     {
       "path": "MakerFlow Website/wiki/file-map.html",
@@ -93,13 +99,13 @@
       "path": "MakerFlow Website/wiki/getting-started.html",
       "category": "Website and Wiki",
       "description": "Frontend web asset.",
-      "size_bytes": 3025
+      "size_bytes": 3026
     },
     {
       "path": "MakerFlow Website/wiki/index.html",
       "category": "Website and Wiki",
       "description": "Frontend web asset.",
-      "size_bytes": 3312
+      "size_bytes": 3611
     },
     {
       "path": "MakerFlow Website/wiki/operations.html",
@@ -117,7 +123,7 @@
       "path": "README.md",
       "category": "Project Root",
       "description": "Project overview, local run instructions, and deployment commands.",
-      "size_bytes": 1870
+      "size_bytes": 2321
     },
     {
       "path": "app/__init__.py",
@@ -129,7 +135,7 @@
       "path": "app/server.py",
       "category": "Application Code",
       "description": "Main WSGI backend: routes, rendering, business logic, auth, and data access.",
-      "size_bytes": 518228
+      "size_bytes": 518229
     },
     {
       "path": "app/static/app.js",
@@ -144,13 +150,13 @@
       "size_bytes": 38880
     },
     {
-      "path": "data/bdi_ops.db-shm",
+      "path": "data/makerspace_ops.db-shm",
       "category": "Data and Storage",
       "description": "Project file.",
       "size_bytes": 32768
     },
     {
-      "path": "data/bdi_ops.db-wal",
+      "path": "data/makerspace_ops.db-wal",
       "category": "Data and Storage",
       "description": "Project file.",
       "size_bytes": 0
@@ -165,7 +171,7 @@
       "path": "docs/CONTRIBUTING.md",
       "category": "Project Documentation",
       "description": "Documentation/content file.",
-      "size_bytes": 939
+      "size_bytes": 1132
     },
     {
       "path": "docs/DATA_MODEL.md",
@@ -183,7 +189,13 @@
       "path": "docs/DEPLOYMENT.md",
       "category": "Project Documentation",
       "description": "Documentation/content file.",
-      "size_bytes": 1384
+      "size_bytes": 1438
+    },
+    {
+      "path": "docs/LICENSE.md",
+      "category": "Project Documentation",
+      "description": "Documentation/content file.",
+      "size_bytes": 863
     },
     {
       "path": "docs/SECURITY.md",
@@ -195,7 +207,7 @@
       "path": "docs/TESTING.md",
       "category": "Project Documentation",
       "description": "Documentation/content file.",
-      "size_bytes": 601
+      "size_bytes": 980
     },
     {
       "path": "docs/USER_TEST_A11Y_REPORT_2026-02-16.md",
@@ -213,7 +225,7 @@
       "path": "scripts/accessibility_audit.py",
       "category": "Automation Script",
       "description": "Python source file.",
-      "size_bytes": 7920
+      "size_bytes": 8479
     },
     {
       "path": "scripts/backup_db.sh",
@@ -237,7 +249,13 @@
       "path": "scripts/deploy_production.sh",
       "category": "Automation Script",
       "description": "One-command production deployment to Linux VM (systemd + nginx + TLS).",
-      "size_bytes": 9744
+      "size_bytes": 9733
+    },
+    {
+      "path": "scripts/documentation_audit.py",
+      "category": "Automation Script",
+      "description": "Python source file.",
+      "size_bytes": 3998
     },
     {
       "path": "scripts/export_all_csv.sh",
@@ -250,6 +268,18 @@
       "category": "Automation Script",
       "description": "Python source file.",
       "size_bytes": 13356
+    },
+    {
+      "path": "scripts/pre_release_audit.sh",
+      "category": "Automation Script",
+      "description": "Shell automation script.",
+      "size_bytes": 1212
+    },
+    {
+      "path": "scripts/reset_release_state.py",
+      "category": "Automation Script",
+      "description": "Python source file.",
+      "size_bytes": 2321
     },
     {
       "path": "scripts/run_local.sh",
@@ -285,7 +315,7 @@
       "path": "scripts/usability_test.py",
       "category": "Automation Script",
       "description": "Python source file.",
-      "size_bytes": 8223
+      "size_bytes": 8123
     }
   ]
 }

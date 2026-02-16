@@ -15,7 +15,7 @@ if str(ROOT) not in sys.path:
 from app.server import db_connect, ensure_bootstrap, hash_password, intake_score, iso
 from scripts.test_data_cleanup import cleanup_test_data, summarize_counts
 
-DEFAULT_ORG_SLUG = os.environ.get("BDI_DEFAULT_ORG_SLUG", "default").strip().lower()
+DEFAULT_ORG_SLUG = os.environ.get("MAKERSPACE_DEFAULT_ORG_SLUG", "default").strip().lower()
 
 
 def main() -> None:

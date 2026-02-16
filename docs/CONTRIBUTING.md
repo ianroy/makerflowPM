@@ -1,6 +1,7 @@
 # Contributing Guide
 
 Repository: [https://github.com/ianroy/makerflowPM](https://github.com/ianroy/makerflowPM)
+Primary site: [https://makerflow.org](https://makerflow.org)
 
 ## Setup
 
@@ -39,3 +40,8 @@ python3 scripts/comprehensive_feature_security_test.py
 ## Documentation Updates
 
 If behavior changes, update relevant docs in `README.md` and `docs/`.
+
+## License
+
+By contributing, you agree that contributions are published under `CC BY-SA 4.0`.
+See `LICENSE` and `docs/LICENSE.md`.
