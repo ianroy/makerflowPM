@@ -17,12 +17,33 @@ Primary site: [https://makerflow.org](https://makerflow.org)
 
 ## Quick Start
 
+### Option 1: Original (Zero Dependencies)
+
 ```bash
 git clone https://github.com/ianroy/makerflowPM.git
 cd makerflowPM
 cp .env.example .env
 python3 app/server.py
 ```
+
+### Option 2: Flask (Production Ready)
+
+```bash
+git clone https://github.com/ianroy/makerflowPM.git
+cd makerflowPM
+cp .env.example .env
+pip install -r requirements.txt
+./run_flask.sh
+```
+
+Or for production:
+```bash
+./run_flask.sh production
+```
+
+See [QUICKSTART_FLASK.md](QUICKSTART_FLASK.md) for Flask-specific documentation.
+
+---
 
 Open: [http://127.0.0.1:8080/login](http://127.0.0.1:8080/login)
 

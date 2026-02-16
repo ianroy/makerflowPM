@@ -1,2 +1,10 @@
-# No external dependencies required.
+# Flask dependencies
+Flask>=3.0.0
+Werkzeug>=3.0.0
+
+# Production WSGI servers (choose one)
+# Recommended for production:
+gunicorn>=21.0.0; platform_system != "Windows"
+waitress>=2.1.0; platform_system == "Windows"
+
 # Runtime: Python 3.9+
