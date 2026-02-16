@@ -56,6 +56,30 @@
 sudo nginx -t
 curl -i http://127.0.0.1:8080/healthz</code></pre>
 
+        <h2>DigitalOcean App Platform</h2>
+        <p>Use the included App Platform spec for container-style deploys:</p>
+        <pre><code>doctl apps create --spec .do/app.yaml
+doctl apps update &lt;APP_ID&gt; --spec .do/app.yaml</code></pre>
+        <p>Use these service commands in the App Platform UI/spec:</p>
+        <pre><code>Build command: pip install -r requirements.txt
+Run command: gunicorn wsgi:application --bind 0.0.0.0:$PORT --workers 2 --threads 2 --timeout 120</code></pre>
+        <p>The spec is configured for App Platform health checks:</p>
+        <ul>
+          <li>Run command binds to <code>0.0.0.0:$PORT</code>.</li>
+          <li>Build command installs runtime dependencies from <code>requirements.txt</code>.</li>
+          <li>Service HTTP port is <code>8080</code>.</li>
+          <li>Health check path is <code>/healthz</code>.</li>
+          <li>Initial delay is set to <code>30s</code>.</li>
+        </ul>
+
+        <h2>Health Check Troubleshooting</h2>
+        <ul>
+          <li>Verify App Platform uses the spec from <code>.do/app.yaml</code>.</li>
+          <li>Confirm <code>/healthz</code> returns <code>200 OK</code> without login.</li>
+          <li>Confirm no custom startup command overrides the bind address.</li>
+          <li>If deploys still fail, increase initial delay to <code>45-60s</code>.</li>
+        </ul>
+
         <h2>Security Requirements</h2>
         <ul>
           <li>Set <code>MAKERSPACE_COOKIE_SECURE=1</code>.</li>

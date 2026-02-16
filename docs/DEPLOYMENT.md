@@ -40,6 +40,30 @@ Optional:
 --swap-gb 2
 ```
 
+## App Platform Deploy via Spec
+
+For DigitalOcean App Platform (container/buildpack deploy), use the included spec:
+
+- `.do/app.yaml`
+
+Create app:
+
+```bash
+doctl apps create --spec .do/app.yaml
+```
+
+Update app after changes:
+
+```bash
+doctl apps update <APP_ID> --spec .do/app.yaml
+```
+
+Notes:
+
+- This spec binds Gunicorn to `0.0.0.0:$PORT`.
+- Health check path is `/healthz`.
+- Replace secret placeholders before production use.
+
 ## What the Script Configures
 
 - App path: `/opt/makerflow-pm`

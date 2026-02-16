@@ -17,12 +17,33 @@ Primary site: [https://makerflow.org](https://makerflow.org)
 
 ## Quick Start
 
+### Option 1: Original (Zero Dependencies)
+
 ```bash
 git clone https://github.com/ianroy/makerflowPM.git
 cd makerflowPM
 cp .env.example .env
 python3 app/server.py
 ```
+
+### Option 2: Flask (Production Ready)
+
+```bash
+git clone https://github.com/ianroy/makerflowPM.git
+cd makerflowPM
+cp .env.example .env
+pip install -r requirements.txt
+./run_flask.sh
+```
+
+Or for production:
+```bash
+./run_flask.sh production
+```
+
+See [QUICKSTART_FLASK.md](QUICKSTART_FLASK.md) for Flask-specific documentation.
+
+---
 
 Open: [http://127.0.0.1:8080/login](http://127.0.0.1:8080/login)
 
@@ -62,6 +83,45 @@ Optional flags:
 --no-swap
 --swap-gb 2
 ```
+
+App Platform alternative:
+
+```bash
+doctl apps create --spec .do/app.yaml
+```
+
+Update existing App Platform app:
+
+```bash
+doctl apps update <APP_ID> --spec .do/app.yaml
+```
+
+## DigitalOcean App Platform (Container/Service)
+
+If you deploy via App Platform (not Droplet), use:
+
+- Build command: `pip install -r requirements.txt`
+- Run command: `gunicorn wsgi:application --bind 0.0.0.0:$PORT --workers 2 --threads 2 --timeout 120`
+- HTTP Port: `8080`
+- Health check path: `/healthz`
+
+Set required environment variables:
+
+- `MAKERSPACE_SECRET_KEY`
+- `MAKERSPACE_COOKIE_SECURE=1`
+- `MAKERSPACE_ADMIN_EMAIL`
+- `MAKERSPACE_ADMIN_PASSWORD`
+
+Health-check failure checklist:
+
+- Confirm run command binds to `0.0.0.0:$PORT`.
+- Confirm build command is `pip install -r requirements.txt`.
+- Confirm `http_port` is `8080`.
+- Confirm health check path is `/healthz`.
+- Increase initial delay to `30s` if cold starts are slow.
+- Verify the app returns `200 OK` for `/healthz` without authentication.
+
+Note: SQLite on App Platform is ephemeral. For persistent production data, use Droplet + volume or migrate to a managed database.
 
 ## Test and Verification
 

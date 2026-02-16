@@ -62,6 +62,13 @@ python3 app/server.py</code></pre>
           <li>Import current project/task data from CSV.</li>
           <li>Set user roles and email preference defaults.</li>
         </ol>
+
+        <h2>Deployment Paths</h2>
+        <ul>
+          <li><strong>Droplet (recommended for SQLite persistence):</strong> <code>./scripts/deploy_production.sh ...</code></li>
+          <li><strong>App Platform:</strong> <code>doctl apps create --spec .do/app.yaml</code></li>
+        </ul>
+        <p>For App Platform, use <code>/healthz</code> as the health check and keep startup bound to <code>0.0.0.0:$PORT</code>.</p>
       </article>
     </main>
   </body>

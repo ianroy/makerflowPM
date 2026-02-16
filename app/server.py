@@ -42,8 +42,10 @@ DB_PATH = Path(os.environ.get("MAKERSPACE_DB_PATH", str(DATA_DIR / "makerspace_o
 SECRET_KEY = os.environ.get("MAKERSPACE_SECRET_KEY", "change-this-secret-in-production")
 COOKIE_SECURE = os.environ.get("MAKERSPACE_COOKIE_SECURE", "0") == "1"
 SESSION_DAYS = int(os.environ.get("MAKERSPACE_SESSION_DAYS", "14"))
-HOST = os.environ.get("MAKERSPACE_HOST", "127.0.0.1")
-PORT = int(os.environ.get("MAKERSPACE_PORT", "8080"))
+# Prefer generic container vars for App Platform compatibility.
+# MAKERSPACE_* vars remain supported and take precedence where set.
+HOST = os.environ.get("MAKERSPACE_HOST", os.environ.get("HOST", "127.0.0.1"))
+PORT = int(os.environ.get("MAKERSPACE_PORT", os.environ.get("PORT", "8080")))
 WSGI_THREADED = os.environ.get("MAKERSPACE_WSGI_THREADED", "1") == "1"
 DB_BUSY_TIMEOUT_MS = max(1000, int(os.environ.get("MAKERSPACE_DB_BUSY_TIMEOUT_MS", "6000")))
 DB_JOURNAL_MODE = os.environ.get("MAKERSPACE_DB_JOURNAL_MODE", "WAL").strip().upper()
