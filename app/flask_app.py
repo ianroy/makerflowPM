@@ -67,6 +67,10 @@ class FlaskWSGIBridge:
 @flask_app.before_request
 def setup_request():
     """Initialize request context."""
+    # Health probes must remain lightweight and should not depend on full DB bootstrap.
+    # This prevents deployment health checks from failing before migrations can be diagnosed.
+    if request.path in {"/healthz"}:
+        return None
     ensure_bootstrap()
 
 

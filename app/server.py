@@ -8660,7 +8660,6 @@ def app(environ, start_response):
     Route dispatch is intentionally explicit (`if req.path == ...`) rather than framework-based
     so the project stays lightweight and easy to host in constrained environments.
     """
-    ensure_bootstrap()
     req = Request(environ)
 
     if req.path == "/website":
@@ -8720,12 +8719,19 @@ def app(environ, start_response):
     if req.path == "/readyz":
         # Readiness checks include DB reachability to catch locked/corrupt startup states.
         try:
+            ensure_bootstrap()
             probe = db_connect()
             probe.execute("SELECT 1").fetchone()
             probe.close()
             return Response("ready", content_type="text/plain").wsgi(start_response)
         except Exception:
             return Response("not-ready", status="503 Service Unavailable", content_type="text/plain").wsgi(start_response)
+
+    try:
+        ensure_bootstrap()
+    except Exception as exc:
+        body = f"<h1>503 Service Unavailable</h1><p>Database bootstrap failed: {h(str(exc))}</p>"
+        return Response(body, status="503 Service Unavailable").wsgi(start_response)
 
     conn = db_connect()
     ctx = get_auth_context(conn, req)
