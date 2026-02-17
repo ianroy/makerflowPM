@@ -85,8 +85,8 @@
     document.body.dataset.theme = theme;
     if (themeToggle) {
       const isDark = theme === "dark";
-      themeToggle.textContent = isDark ? "Light" : "Dark";
       themeToggle.setAttribute("aria-pressed", isDark ? "true" : "false");
+      themeToggle.setAttribute("data-mode", isDark ? "dark" : "light");
     }
     window.localStorage.setItem("makerflow-theme", theme);
   }

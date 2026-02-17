@@ -41,7 +41,6 @@ except Exception:  # pragma: no cover - optional dependency path
     dict_row = None
 
 APP_NAME = "Project Management Platform for Lab Administration"
-APP_TAGLINE = "MakerFlow PM for makerspaces, research labs, and library services"
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 STATIC_DIR = BASE_DIR / "app" / "static"
@@ -81,6 +80,7 @@ LANES = [
 
 TASK_STATUSES = ["Todo", "In Progress", "Blocked", "Done", "Cancelled"]
 PROJECT_STATUSES = ["Planned", "Active", "Blocked", "Complete", "Cancelled"]
+AGENDA_ITEM_STATUSES = ["Open", "In Progress", "Done"]
 INTAKE_STATUSES = ["Triage", "Planned", "Active", "On Hold", "Done", "Rejected"]
 ASSET_STATUSES = ["Operational", "Needs Service", "Down"]
 CONSUMABLE_STATUSES = ["In Stock", "Low", "Out"]
@@ -1595,6 +1595,12 @@ def run_schema_upgrades(conn: sqlite3.Connection) -> None:
     ensure_column(conn, "partnerships", "deleted_at", "TEXT")
     ensure_column(conn, "partnerships", "deleted_by_user_id", "INTEGER")
     ensure_column(conn, "onboarding_templates", "doc_url", "TEXT")
+    ensure_column(conn, "meeting_items", "linked_task_id", "INTEGER")
+    ensure_column(conn, "meeting_items", "linked_project_id", "INTEGER")
+    ensure_column(conn, "meeting_items", "item_type", "TEXT DEFAULT 'agenda'")
+    ensure_column(conn, "meeting_items", "priority", "TEXT DEFAULT 'Medium'")
+    ensure_column(conn, "meeting_items", "due_date", "TEXT")
+    ensure_column(conn, "meeting_items", "description", "TEXT")
 
     conn.executescript(
         """
@@ -1959,11 +1965,19 @@ def init_db() -> None:
             title TEXT NOT NULL,
             owner_user_id INTEGER,
             status TEXT NOT NULL,
+            priority TEXT NOT NULL DEFAULT 'Medium',
+            due_date TEXT,
+            description TEXT,
+            linked_task_id INTEGER,
+            linked_project_id INTEGER,
+            item_type TEXT NOT NULL DEFAULT 'agenda',
             minutes_estimate INTEGER DEFAULT 5,
             sort_order INTEGER DEFAULT 0,
             created_at TEXT NOT NULL,
             FOREIGN KEY (agenda_id) REFERENCES meeting_agendas(id) ON DELETE CASCADE,
-            FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE SET NULL
+            FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE SET NULL,
+            FOREIGN KEY (linked_task_id) REFERENCES tasks(id) ON DELETE SET NULL,
+            FOREIGN KEY (linked_project_id) REFERENCES projects(id) ON DELETE SET NULL
         );
 
         CREATE TABLE IF NOT EXISTS calendar_events (
@@ -4041,7 +4055,6 @@ def render_layout(
           <div class="sidebar-brand">
             <h1><a class="brand-link" href="/website/">MakerFlow PM</a></h1>
             <p>{h(APP_NAME)}</p>
-            <p>{h(APP_TAGLINE)}</p>
           </div>
           <nav class="side-nav" aria-label="Primary">{nav_primary}</nav>
           <section class="sidebar-panel">
@@ -4078,13 +4091,16 @@ def render_layout(
           </div>
           <div class="top-actions">
             <button type="button" class="btn" id="global-new-task-btn">New Task</button>
-            <button type="button" class="btn ghost" id="theme-toggle" aria-pressed="false" aria-label="Toggle theme">Dark</button>
+            <button type="button" class="theme-switch" id="theme-toggle" aria-pressed="false" aria-label="Toggle dark mode">
+              <span class="theme-switch-knob" aria-hidden="true"></span>
+            </button>
             <button type="button" class="btn ghost" id="activity-toggle" aria-expanded="false" aria-controls="activity-drawer">Activity</button>
             <span class="pill soft" id="activity-count" aria-live="polite">0</span>
-            <span class="user-chip">{h(user['name'])} · {h(org['name']) if org else ''}</span>
-            <form method="post" action="/logout">
+            <a class="user-chip top-link-chip" href="{h(with_space('/settings', active_space_id))}" title="Open user settings">{h(user['name'])}</a>
+            <a class="user-chip top-link-chip" href="/admin/users#workspace-editor" title="Open workspace editor">{h(org['name']) if org else 'Workspace'}</a>
+            <form method="post" action="/logout" class="logout-form">
               <input type="hidden" name="csrf_token" value="{h(ctx.get('csrf', ''))}" />
-              <button type="submit">Logout</button>
+              <button type="submit" class="logout-btn">Logout</button>
             </form>
           </div>
         </header>
@@ -5179,6 +5195,42 @@ def render_task_rows(tasks: Iterable[sqlite3.Row]) -> str:
     return "".join(rows) or "<tr><td colspan='8'>No tasks match this filter.</td></tr>"
 
 
+def agenda_status_from_task_status(status: str) -> str:
+    normalized = str(status or "").strip()
+    if normalized in {"Done", "Cancelled"}:
+        return "Done"
+    if normalized in {"In Progress", "Blocked"}:
+        return "In Progress"
+    return "Open"
+
+
+def agenda_status_from_project_status(status: str) -> str:
+    normalized = str(status or "").strip()
+    if normalized in {"Complete", "Cancelled"}:
+        return "Done"
+    if normalized in {"Active", "Blocked"}:
+        return "In Progress"
+    return "Open"
+
+
+def task_status_from_agenda_status(status: str) -> str:
+    normalized = str(status or "").strip()
+    if normalized == "Done":
+        return "Done"
+    if normalized == "In Progress":
+        return "In Progress"
+    return "Todo"
+
+
+def project_status_from_agenda_status(status: str) -> str:
+    normalized = str(status or "").strip()
+    if normalized == "Done":
+        return "Complete"
+    if normalized == "In Progress":
+        return "Active"
+    return "Planned"
+
+
 def render_agenda_page(conn: sqlite3.Connection, org_id: int, selected_agenda_id: Optional[int] = None) -> str:
     agendas = conn.execute(
         """
@@ -5198,18 +5250,23 @@ def render_agenda_page(conn: sqlite3.Connection, org_id: int, selected_agenda_id
     if selected_id is None and agendas:
         selected_id = int(agendas[0]["id"])
 
+    users = get_users_for_org(conn, org_id)
     selected_agenda = next((a for a in agendas if int(a["id"]) == int(selected_id or 0)), None)
     items: List[sqlite3.Row] = []
     if selected_id is not None:
         items = conn.execute(
             """
-            SELECT i.*, u.name AS owner_name
+            SELECT i.*, u.name AS owner_name,
+                   t.id AS linked_task_exists, t.title AS linked_task_title, t.status AS linked_task_status, t.priority AS linked_task_priority, t.due_date AS linked_task_due_date,
+                   p.id AS linked_project_exists, p.name AS linked_project_name, p.status AS linked_project_status, p.priority AS linked_project_priority, p.due_date AS linked_project_due_date
             FROM meeting_items i
             LEFT JOIN users u ON u.id = i.owner_user_id
+            LEFT JOIN tasks t ON t.id = i.linked_task_id AND t.organization_id = ? AND t.deleted_at IS NULL
+            LEFT JOIN projects p ON p.id = i.linked_project_id AND p.organization_id = ? AND p.deleted_at IS NULL
             WHERE i.agenda_id = ?
             ORDER BY i.sort_order, i.id
             """,
-            (selected_id,),
+            (org_id, org_id, selected_id),
         ).fetchall()
 
     note_sql = """
@@ -5234,29 +5291,132 @@ def render_agenda_page(conn: sqlite3.Connection, org_id: int, selected_agenda_id
             for a in agendas
         ]
     )
-    item_rows = "".join(
+    user_opts = "".join([f"<option value='{u['id']}'>{h(u['name'])}</option>" for u in users])
+    task_attach_opts = "".join(
         [
+            f"<option value='{r['id']}'>{h(r['title'])} · {h(r['status'])}</option>"
+            for r in conn.execute(
+                """
+                SELECT id, title, status
+                FROM tasks
+                WHERE organization_id = ? AND deleted_at IS NULL
+                ORDER BY updated_at DESC, id DESC
+                LIMIT 200
+                """,
+                (org_id,),
+            ).fetchall()
+        ]
+    )
+    project_attach_opts = "".join(
+        [
+            f"<option value='{r['id']}'>{h(r['name'])} · {h(r['status'])}</option>"
+            for r in conn.execute(
+                """
+                SELECT id, name, status
+                FROM projects
+                WHERE organization_id = ? AND deleted_at IS NULL
+                ORDER BY updated_at DESC, id DESC
+                LIMIT 200
+                """,
+                (org_id,),
+            ).fetchall()
+        ]
+    )
+    team_opts = "".join(
+        [
+            f"<option value='{t['id']}'>{h(t['name'])}</option>"
+            for t in get_teams_for_org(conn, org_id)
+        ]
+    )
+    space_opts = "".join(
+        [
+            f"<option value='{s['id']}'>{h(s['name'])}</option>"
+            for s in get_spaces_for_org(conn, org_id)
+        ]
+    )
+
+    item_rows = []
+    for i in items:
+        linked_task_id = to_int(str(i["linked_task_exists"])) if i["linked_task_exists"] is not None else None
+        linked_project_id = to_int(str(i["linked_project_exists"])) if i["linked_project_exists"] is not None else None
+        item_type = "agenda"
+        display_title = str(i["title"] or "Untitled")
+        display_status = str(i["status"] or "Open")
+        display_priority = str(i["priority"] or "Medium")
+        display_due = str(i["due_date"] or "")
+        if linked_task_id is not None:
+            item_type = "task"
+            display_title = str(i["linked_task_title"] or display_title)
+            display_status = agenda_status_from_task_status(str(i["linked_task_status"] or ""))
+            display_priority = str(i["linked_task_priority"] or display_priority)
+            display_due = str(i["linked_task_due_date"] or display_due)
+        elif linked_project_id is not None:
+            item_type = "project"
+            display_title = str(i["linked_project_name"] or display_title)
+            display_status = agenda_status_from_project_status(str(i["linked_project_status"] or ""))
+            display_priority = str(i["linked_project_priority"] or display_priority)
+            display_due = str(i["linked_project_due_date"] or display_due)
+        open_link = "-"
+        if linked_task_id is not None:
+            open_link = f"<button type='button' class='linkish list-open' data-list-entity='task' data-list-id='{linked_task_id}'>Open Task</button>"
+        elif linked_project_id is not None:
+            open_link = f"<button type='button' class='linkish list-open' data-list-entity='project' data-list-id='{linked_project_id}'>Open Project</button>"
+        item_rows.append(
             f"""
             <tr>
-              <td>{h(i['section'])}</td>
-              <td>{h(i['title'])}</td>
-              <td>{h(i['owner_name'] or '-')}</td>
+              <td><span class='pill'>{h(item_type.title())}</span></td>
               <td>
                 <form method='post' action='/agenda/item/update' class='inline-form'>
                   <input type='hidden' name='csrf_token' value='{{csrf}}' />
                   <input type='hidden' name='item_id' value='{i['id']}' />
-                  <select name='status' aria-label='Status for {h(i["title"])}'>
-                    {''.join([f"<option {'selected' if i['status'] == s else ''}>{h(s)}</option>" for s in ['Open', 'In Progress', 'Done']])}
-                  </select>
-                  <input type='number' name='minutes_estimate' value='{h(i['minutes_estimate'] or 10)}' min='1' aria-label='Minutes for {h(i["title"])}' />
+                  <input type='text' name='title' value='{h(display_title)}' aria-label='Agenda item title' />
+              </td>
+              <td><input type='text' name='section' value='{h(i['section'] or "General")}' aria-label='Agenda item section' /></td>
+              <td>
+                <select name='owner_user_id' aria-label='Agenda item owner'>
+                  <option value=''>Unassigned</option>
+                  {''.join([f"<option value='{u['id']}' {'selected' if str(i['owner_user_id'] or '') == str(u['id']) else ''}>{h(u['name'])}</option>" for u in users])}
+                </select>
+              </td>
+              <td>
+                <select name='status' class='quick-status' aria-label='Agenda item status'>
+                  {''.join([f"<option {'selected' if display_status == s else ''}>{h(s)}</option>" for s in AGENDA_ITEM_STATUSES])}
+                </select>
+              </td>
+              <td>
+                <select name='priority' class='quick-field' aria-label='Agenda item priority'>
+                  {''.join([f"<option {'selected' if display_priority == v else ''}>{h(v)}</option>" for v in ['Low','Medium','High','Critical']])}
+                </select>
+              </td>
+              <td><input type='date' name='due_date' value='{h(display_due)}' /></td>
+              <td><input type='number' name='minutes_estimate' value='{h(i['minutes_estimate'] or 10)}' min='1' /></td>
+              <td>{open_link}</td>
+              <td>
                   <button type='submit'>Save</button>
+                </form>
+                <form method='post' action='/agenda/item/convert' class='inline-form'>
+                  <input type='hidden' name='csrf_token' value='{{csrf}}' />
+                  <input type='hidden' name='item_id' value='{i['id']}' />
+                  <input type='hidden' name='agenda_id' value='{selected_id or ""}' />
+                  <input type='hidden' name='target' value='task' />
+                  <input type='hidden' name='team_id' value='' />
+                  <input type='hidden' name='space_id' value='' />
+                  <button type='submit' {'disabled' if linked_task_id is not None else ''}>To Task</button>
+                </form>
+                <form method='post' action='/agenda/item/convert' class='inline-form'>
+                  <input type='hidden' name='csrf_token' value='{{csrf}}' />
+                  <input type='hidden' name='item_id' value='{i['id']}' />
+                  <input type='hidden' name='agenda_id' value='{selected_id or ""}' />
+                  <input type='hidden' name='target' value='project' />
+                  <input type='hidden' name='team_id' value='' />
+                  <input type='hidden' name='space_id' value='' />
+                  <button type='submit' {'disabled' if linked_project_id is not None else ''}>To Project</button>
                 </form>
               </td>
             </tr>
             """
-            for i in items
-        ]
-    ) or "<tr><td colspan='4'>No agenda items yet.</td></tr>"
+        )
+    item_rows_html = "".join(item_rows) or "<tr><td colspan='10'>No agenda items yet.</td></tr>"
     note_rows = "".join(
         [
             f"""
@@ -5288,7 +5448,7 @@ def render_agenda_page(conn: sqlite3.Connection, org_id: int, selected_agenda_id
     return f"""
     <section class='card maker-hero'>
       <h2>Meeting Operations Hub</h2>
-      <p>Run recurring meetings (FTE weekly, student weekly, subcommittees), keep a decision-ready agenda, and preserve history.</p>
+      <p>Run meetings as a work board: agenda items, tasks, and projects in one queue with direct conversion and linking.</p>
     </section>
     <section class="two">
       <div class="card">
@@ -5319,12 +5479,33 @@ def render_agenda_page(conn: sqlite3.Connection, org_id: int, selected_agenda_id
           <label>Section <input name="section" required placeholder="Metrics Pulse" /></label>
           <label>Item <input name="title" required /></label>
           <label>Owner <select name='owner_user_id'><option value=''>Unassigned</option>{''.join([f"<option value='{u['id']}'>{h(u['name'])}</option>" for u in get_users_for_org(conn, org_id)])}</select></label>
+          <label>Priority <select name="priority"><option>Low</option><option selected>Medium</option><option>High</option><option>Critical</option></select></label>
+          <label>Due Date <input type="date" name="due_date" /></label>
           <label>Minutes <input type="number" name="minutes_estimate" value="10" min="1" /></label>
           <button type="submit">Add Item</button>
         </form>
+        <h4>Attach Existing Work</h4>
+        <div class='two compact-top'>
+          <form method="post" action="/agenda/item/attach" class="inline-form">
+            <input type="hidden" name="csrf_token" value="{{csrf}}" />
+            <input type="hidden" name="source_type" value="task" />
+            <label>Meeting <select name="agenda_id">{agenda_opts}</select></label>
+            <label>Task <select name="source_id">{task_attach_opts}</select></label>
+            <label>Section <input name="section" value="Work Queue" /></label>
+            <button type="submit">Add Task To Agenda</button>
+          </form>
+          <form method="post" action="/agenda/item/attach" class="inline-form">
+            <input type="hidden" name="csrf_token" value="{{csrf}}" />
+            <input type="hidden" name="source_type" value="project" />
+            <label>Meeting <select name="agenda_id">{agenda_opts}</select></label>
+            <label>Project <select name="source_id">{project_attach_opts}</select></label>
+            <label>Section <input name="section" value="Project Review" /></label>
+            <button type="submit">Add Project To Agenda</button>
+          </form>
+        </div>
         <table>
-          <thead><tr><th>Section</th><th>Item</th><th>Owner</th><th>Status / Minutes</th></tr></thead>
-          <tbody>{item_rows}</tbody>
+          <thead><tr><th>Type</th><th>Item</th><th>Section</th><th>Owner</th><th>Status</th><th>Priority</th><th>Due</th><th>Mins</th><th>Card</th><th>Actions</th></tr></thead>
+          <tbody>{item_rows_html}</tbody>
         </table>
       </div>
       <div class="card">
@@ -8042,6 +8223,27 @@ def render_admin_page(
             for o in orgs
         ]
     ) or "<li>No workspaces created yet.</li>"
+    org_edit_rows = "".join(
+        [
+            f"""
+            <tr>
+              <td colspan='4'>
+                <form method='post' action='/admin/workspaces/update' class='inline-form'>
+                  <input type='hidden' name='csrf_token' value='{{csrf}}' />
+                  <input type='hidden' name='workspace_id' value='{o['id']}' />
+                  <label>Name <input name='name' value='{h(o['name'])}' required /></label>
+                  <label>Slug <input name='slug' value='{h(o['slug'])}' required /></label>
+                  <label>Workspace Admin Email <input type='email' name='workspace_admin_email' value='{h(o['owner_email'] or "")}' /></label>
+                  <label>Admin Name (if creating) <input name='workspace_admin_name' placeholder='Workspace Admin' /></label>
+                  <label>Admin Temp Password (if creating) <input name='workspace_admin_password' minlength='12' placeholder='Optional (auto-generated if empty)' /></label>
+                  <button type='submit'>Save Workspace</button>
+                </form>
+              </td>
+            </tr>
+            """
+            for o in orgs
+        ]
+    ) or "<tr><td colspan='4'>No workspaces to edit.</td></tr>"
 
     workspace_panel = f"""
       <div class=\"card\">
@@ -8057,6 +8259,15 @@ def render_admin_page(
         </form>
         <p class='muted'>Each non-superuser admin account can control one workspace only.</p>
         <ul>{org_rows}</ul>
+        <hr />
+        <h4 id="workspace-editor">Edit Existing Workspace</h4>
+        <table>
+          <thead><tr><th>Workspace</th><th>Slug</th><th>Admin</th><th>Edit</th></tr></thead>
+          <tbody>
+            {"".join([f"<tr><td>{h(o['name'])}</td><td>{h(o['slug'])}</td><td>{h(o['owner_email'] or '-')}</td><td>Use form below</td></tr>" for o in orgs]) or "<tr><td colspan='4'>No workspaces available.</td></tr>"}
+          </tbody>
+        </table>
+        <div class='stack gap-sm'>{org_edit_rows}</div>
         <hr />
         <h4>Delete Workspace (Owner Only)</h4>
         <p class='muted'>Type the workspace slug and choose reassignment owner before deleting.</p>
@@ -9984,8 +10195,8 @@ def app(environ, start_response):
             conn.execute(
                 """
                 INSERT INTO meeting_items
-                (agenda_id, section, title, owner_user_id, status, minutes_estimate, sort_order, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                (agenda_id, section, title, owner_user_id, status, priority, due_date, minutes_estimate, description, item_type, sort_order, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     agenda_id,
@@ -9993,13 +10204,106 @@ def app(environ, start_response):
                     form.get("title", "Untitled Item"),
                     normalize_org_user_id(conn, org_id, form.get("owner_user_id"), fallback=user_id),
                     "Open",
+                    form.get("priority", "Medium") if form.get("priority", "Medium") in {"Low", "Medium", "High", "Critical"} else "Medium",
+                    parse_date(form.get("due_date", "")),
                     int(form.get("minutes_estimate", "10") or 10),
+                    form.get("description", ""),
+                    "agenda",
                     999,
                     iso(),
                 ),
             )
             conn.commit()
             return redirect(scoped(f"/agenda?agenda_id={agenda_id}&msg=Agenda%20item%20added")).wsgi(start_response)
+
+        if req.path == "/agenda/item/attach" and req.method == "POST":
+            gate = require_role(ctx, "student")
+            if gate:
+                return gate.wsgi(start_response)
+            form = req.form
+            agenda_id = to_int(form.get("agenda_id"))
+            source_type = str(form.get("source_type") or "").strip().lower()
+            source_id = to_int(form.get("source_id"))
+            section = str(form.get("section") or "Work Queue")
+            if agenda_id is None or source_id is None:
+                return redirect(scoped("/agenda?msg=Meeting%20and%20source%20are%20required")).wsgi(start_response)
+            agenda = conn.execute(
+                "SELECT id FROM meeting_agendas WHERE id = ? AND organization_id = ?",
+                (agenda_id, org_id),
+            ).fetchone()
+            if not agenda:
+                return redirect(scoped("/agenda?msg=Agenda%20not%20found")).wsgi(start_response)
+            if source_type == "task":
+                source = conn.execute(
+                    """
+                    SELECT id, title, status, priority, due_date, assignee_user_id
+                    FROM tasks
+                    WHERE id = ? AND organization_id = ? AND deleted_at IS NULL
+                    """,
+                    (source_id, org_id),
+                ).fetchone()
+                if not source:
+                    return redirect(scoped(f"/agenda?agenda_id={agenda_id}&msg=Task%20not%20found")).wsgi(start_response)
+                conn.execute(
+                    """
+                    INSERT INTO meeting_items
+                    (agenda_id, section, title, owner_user_id, status, priority, due_date, minutes_estimate, description, linked_task_id, item_type, sort_order, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        agenda_id,
+                        section,
+                        source["title"],
+                        source["assignee_user_id"],
+                        agenda_status_from_task_status(str(source["status"] or "")),
+                        source["priority"] or "Medium",
+                        source["due_date"],
+                        10,
+                        "",
+                        source["id"],
+                        "task",
+                        999,
+                        iso(),
+                    ),
+                )
+                conn.commit()
+                return redirect(scoped(f"/agenda?agenda_id={agenda_id}&msg=Task%20linked%20to%20agenda")).wsgi(start_response)
+            if source_type == "project":
+                source = conn.execute(
+                    """
+                    SELECT id, name, status, priority, due_date, owner_user_id
+                    FROM projects
+                    WHERE id = ? AND organization_id = ? AND deleted_at IS NULL
+                    """,
+                    (source_id, org_id),
+                ).fetchone()
+                if not source:
+                    return redirect(scoped(f"/agenda?agenda_id={agenda_id}&msg=Project%20not%20found")).wsgi(start_response)
+                conn.execute(
+                    """
+                    INSERT INTO meeting_items
+                    (agenda_id, section, title, owner_user_id, status, priority, due_date, minutes_estimate, description, linked_project_id, item_type, sort_order, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        agenda_id,
+                        section,
+                        source["name"],
+                        source["owner_user_id"],
+                        agenda_status_from_project_status(str(source["status"] or "")),
+                        source["priority"] or "Medium",
+                        source["due_date"],
+                        10,
+                        "",
+                        source["id"],
+                        "project",
+                        999,
+                        iso(),
+                    ),
+                )
+                conn.commit()
+                return redirect(scoped(f"/agenda?agenda_id={agenda_id}&msg=Project%20linked%20to%20agenda")).wsgi(start_response)
+            return redirect(scoped(f"/agenda?agenda_id={agenda_id}&msg=Unsupported%20source%20type")).wsgi(start_response)
 
         if req.path == "/agenda/item/update" and req.method == "POST":
             gate = require_role(ctx, "student")
@@ -10011,7 +10315,7 @@ def app(environ, start_response):
                 return redirect(scoped("/agenda?msg=Agenda%20item%20not%20found")).wsgi(start_response)
             target = conn.execute(
                 """
-                SELECT i.id, i.agenda_id
+                SELECT i.id, i.agenda_id, i.linked_task_id, i.linked_project_id
                 FROM meeting_items i
                 JOIN meeting_agendas a ON a.id = i.agenda_id
                 WHERE i.id = ? AND a.organization_id = ?
@@ -10021,15 +10325,165 @@ def app(environ, start_response):
             if not target:
                 return redirect(scoped("/agenda?msg=Agenda%20item%20not%20found")).wsgi(start_response)
             status = str(form.get("status") or "Open").strip()
-            if status not in {"Open", "In Progress", "Done"}:
+            if status not in set(AGENDA_ITEM_STATUSES):
                 status = "Open"
             minutes_estimate = max(1, to_int(form.get("minutes_estimate"), 10) or 10)
+            priority = str(form.get("priority") or "Medium").strip()
+            if priority not in {"Low", "Medium", "High", "Critical"}:
+                priority = "Medium"
+            owner_user_id = normalize_org_user_id(conn, org_id, form.get("owner_user_id"))
+            due_date = parse_date(form.get("due_date", ""))
+            section = str(form.get("section") or "General").strip() or "General"
+            title = str(form.get("title") or "Untitled Item").strip() or "Untitled Item"
             conn.execute(
-                "UPDATE meeting_items SET status = ?, minutes_estimate = ? WHERE id = ?",
-                (status, minutes_estimate, item_id),
+                "UPDATE meeting_items SET title = ?, section = ?, owner_user_id = ?, status = ?, priority = ?, due_date = ?, minutes_estimate = ? WHERE id = ?",
+                (title, section, owner_user_id, status, priority, due_date, minutes_estimate, item_id),
             )
+            linked_task_id = to_int(str(target["linked_task_id"])) if target["linked_task_id"] is not None else None
+            linked_project_id = to_int(str(target["linked_project_id"])) if target["linked_project_id"] is not None else None
+            if linked_task_id is not None:
+                conn.execute(
+                    """
+                    UPDATE tasks
+                    SET title = ?, status = ?, priority = ?, due_date = ?, assignee_user_id = ?, updated_at = ?
+                    WHERE id = ? AND organization_id = ? AND deleted_at IS NULL
+                    """,
+                    (
+                        title,
+                        task_status_from_agenda_status(status),
+                        priority,
+                        due_date,
+                        owner_user_id,
+                        iso(),
+                        linked_task_id,
+                        org_id,
+                    ),
+                )
+            if linked_project_id is not None:
+                conn.execute(
+                    """
+                    UPDATE projects
+                    SET name = ?, status = ?, priority = ?, due_date = ?, owner_user_id = ?, updated_at = ?
+                    WHERE id = ? AND organization_id = ? AND deleted_at IS NULL
+                    """,
+                    (
+                        title,
+                        project_status_from_agenda_status(status),
+                        priority,
+                        due_date,
+                        owner_user_id,
+                        iso(),
+                        linked_project_id,
+                        org_id,
+                    ),
+                )
             conn.commit()
             return redirect(scoped(f"/agenda?agenda_id={target['agenda_id']}&msg=Agenda%20item%20updated")).wsgi(start_response)
+
+        if req.path == "/agenda/item/convert" and req.method == "POST":
+            gate = require_role(ctx, "student")
+            if gate:
+                return gate.wsgi(start_response)
+            form = req.form
+            item_id = to_int(form.get("item_id"))
+            target_kind = str(form.get("target") or "").strip().lower()
+            agenda_id = to_int(form.get("agenda_id"))
+            if item_id is None or target_kind not in {"task", "project"}:
+                return redirect(scoped("/agenda?msg=Invalid%20conversion%20request")).wsgi(start_response)
+            row = conn.execute(
+                """
+                SELECT i.*, a.organization_id
+                FROM meeting_items i
+                JOIN meeting_agendas a ON a.id = i.agenda_id
+                WHERE i.id = ? AND a.organization_id = ?
+                """,
+                (item_id, org_id),
+            ).fetchone()
+            if not row:
+                return redirect(scoped("/agenda?msg=Agenda%20item%20not%20found")).wsgi(start_response)
+            if target_kind == "task":
+                existing_link = to_int(str(row["linked_task_id"])) if row["linked_task_id"] is not None else None
+                if existing_link is not None:
+                    return redirect(scoped(f"/agenda?agenda_id={row['agenda_id']}&msg=Agenda%20item%20already%20linked%20to%20task")).wsgi(start_response)
+                project_id, space_id, relation_error = resolve_task_project_and_space(
+                    conn,
+                    org_id,
+                    user_id,
+                    form.get("project_id"),
+                    form.get("space_id"),
+                )
+                if relation_error:
+                    return redirect(scoped(f"/agenda?agenda_id={row['agenda_id']}&msg={quote(relation_error)}")).wsgi(start_response)
+                cursor = conn.execute(
+                    """
+                    INSERT INTO tasks
+                    (organization_id, project_id, title, description, status, priority, assignee_user_id, reporter_user_id, due_date, planned_week, energy, estimate_hours, meta_json, created_at, updated_at, team_id, space_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        org_id,
+                        project_id,
+                        row["title"],
+                        row["description"] or "",
+                        task_status_from_agenda_status(str(row["status"] or "Open")),
+                        row["priority"] or "Medium",
+                        row["owner_user_id"],
+                        user_id,
+                        row["due_date"],
+                        "",
+                        "Medium",
+                        None,
+                        "{}",
+                        iso(),
+                        iso(),
+                        to_int(form.get("team_id")),
+                        space_id,
+                    ),
+                )
+                new_task_id = int(cursor.lastrowid)
+                conn.execute(
+                    "UPDATE meeting_items SET linked_task_id = ?, item_type = 'task' WHERE id = ?",
+                    (new_task_id, item_id),
+                )
+                conn.commit()
+                return redirect(scoped(f"/agenda?agenda_id={agenda_id or row['agenda_id']}&msg=Agenda%20item%20converted%20to%20task")).wsgi(start_response)
+            existing_link = to_int(str(row["linked_project_id"])) if row["linked_project_id"] is not None else None
+            if existing_link is not None:
+                return redirect(scoped(f"/agenda?agenda_id={row['agenda_id']}&msg=Agenda%20item%20already%20linked%20to%20project")).wsgi(start_response)
+            space_id = default_space_id_for_org(conn, org_id, preferred_space_id=to_int(form.get("space_id")))
+            cursor = conn.execute(
+                """
+                INSERT INTO projects
+                (organization_id, name, description, lane, status, priority, owner_user_id, start_date, due_date, tags, meta_json, created_by, created_at, updated_at, team_id, space_id, progress_pct)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    org_id,
+                    row["title"],
+                    row["description"] or "",
+                    "Core Operations",
+                    project_status_from_agenda_status(str(row["status"] or "Open")),
+                    row["priority"] or "Medium",
+                    row["owner_user_id"],
+                    dt.date.today().isoformat(),
+                    row["due_date"],
+                    "agenda",
+                    "{}",
+                    user_id,
+                    iso(),
+                    iso(),
+                    to_int(form.get("team_id")),
+                    space_id,
+                    0,
+                ),
+            )
+            new_project_id = int(cursor.lastrowid)
+            conn.execute(
+                "UPDATE meeting_items SET linked_project_id = ?, item_type = 'project' WHERE id = ?",
+                (new_project_id, item_id),
+            )
+            conn.commit()
+            return redirect(scoped(f"/agenda?agenda_id={agenda_id or row['agenda_id']}&msg=Agenda%20item%20converted%20to%20project")).wsgi(start_response)
 
         if req.path == "/agenda/note/new" and req.method == "POST":
             gate = require_role(ctx, "student")
@@ -11634,6 +12088,71 @@ def app(environ, start_response):
             ensure_default_report_templates(conn, new_org_id, workspace_admin_id)
             conn.commit()
             msg = f"Workspace created for {slug}.{temp_password_message}"
+            return redirect(f"/admin/users?msg={quote(msg)}").wsgi(start_response)
+
+        if req.path in {"/admin/workspaces/update", "/admin/orgs/update"} and req.method == "POST":
+            gate = require_role(ctx, "owner")
+            if gate:
+                return gate.wsgi(start_response)
+            form = req.form
+            workspace_id = to_int(form.get("workspace_id"))
+            if workspace_id is None:
+                return redirect("/admin/users?msg=Workspace%20id%20required").wsgi(start_response)
+            target = conn.execute("SELECT id, slug, name FROM organizations WHERE id = ?", (workspace_id,)).fetchone()
+            if not target:
+                return redirect("/admin/users?msg=Workspace%20not%20found").wsgi(start_response)
+
+            raw_slug = form.get("slug", "").strip().lower().replace(" ", "-")
+            slug = re.sub(r"[^a-z0-9-]", "-", raw_slug)
+            slug = re.sub(r"-+", "-", slug).strip("-")
+            if not slug:
+                return redirect("/admin/users?msg=Slug%20required").wsgi(start_response)
+            existing_slug = conn.execute("SELECT id FROM organizations WHERE slug = ? AND id != ?", (slug, workspace_id)).fetchone()
+            if existing_slug:
+                return redirect("/admin/users?msg=Slug%20already%20exists").wsgi(start_response)
+
+            name = (form.get("name") or "").strip() or str(target["name"] or "Workspace")
+            conn.execute("UPDATE organizations SET name = ?, slug = ? WHERE id = ?", (name, slug, workspace_id))
+
+            admin_email = (form.get("workspace_admin_email") or "").strip().lower()
+            admin_name = (form.get("workspace_admin_name") or "").strip()
+            admin_password = (form.get("workspace_admin_password") or "").strip()
+            temp_password_message = ""
+            if admin_email:
+                existing_admin = conn.execute("SELECT id FROM users WHERE email = ?", (admin_email,)).fetchone()
+                if existing_admin:
+                    workspace_admin_id = int(existing_admin["id"])
+                else:
+                    if admin_password and len(admin_password) < 12:
+                        return redirect("/admin/users?msg=Workspace%20admin%20password%20must%20be%20at%20least%2012%20characters").wsgi(start_response)
+                    if not admin_password:
+                        admin_password = secrets.token_urlsafe(12)
+                    pw_hash, pw_salt = hash_password(admin_password)
+                    conn.execute(
+                        "INSERT INTO users (email, name, password_hash, password_salt, is_active, is_superuser, created_at) VALUES (?, ?, ?, ?, 1, 0, ?)",
+                        (admin_email, admin_name or "Workspace Admin", pw_hash, pw_salt, iso()),
+                    )
+                    workspace_admin_id = int(conn.execute("SELECT id FROM users WHERE email = ?", (admin_email,)).fetchone()["id"])
+                    temp_password_message = f" New workspace admin temporary password: {admin_password}"
+
+                if not can_manage_workspace_admin_role(conn, workspace_admin_id, workspace_id):
+                    return redirect("/admin/users?msg=Selected%20workspace%20admin%20already%20manages%20another%20workspace").wsgi(start_response)
+
+                conn.execute(
+                    "UPDATE memberships SET role = 'staff' WHERE organization_id = ? AND role = 'workspace_admin' AND user_id != ?",
+                    (workspace_id, workspace_admin_id),
+                )
+                conn.execute(
+                    "INSERT OR IGNORE INTO memberships (user_id, organization_id, role, created_at) VALUES (?, ?, 'workspace_admin', ?)",
+                    (workspace_admin_id, workspace_id, iso()),
+                )
+                conn.execute(
+                    "UPDATE memberships SET role = 'workspace_admin' WHERE user_id = ? AND organization_id = ?",
+                    (workspace_admin_id, workspace_id),
+                )
+
+            conn.commit()
+            msg = f"Workspace updated: {slug}.{temp_password_message}"
             return redirect(f"/admin/users?msg={quote(msg)}").wsgi(start_response)
 
         if req.path in {"/admin/workspaces/delete", "/admin/orgs/delete"} and req.method == "POST":
