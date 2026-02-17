@@ -35,10 +35,12 @@
       <article class="wiki-content">
         <h1>Getting Started</h1>
         <p><strong>Repository:</strong> <a href="https://github.com/ianroy/makerflowPM" target="_blank" rel="noreferrer">github.com/ianroy/makerflowPM</a></p>
-        <h2>Startup</h2>
+
+        <h2>Local Startup (Recommended First)</h2>
         <pre><code>git clone https://github.com/ianroy/makerflowPM.git
 cd makerflowPM
 cp .env.example .env
+pip install -r requirements.txt
 python3 app/server.py</code></pre>
         <p>Open <code>http://127.0.0.1:8080/login</code>.</p>
 
@@ -47,28 +49,26 @@ python3 app/server.py</code></pre>
           <li><code>admin@makerflow.local</code> / <code>ChangeMeMeow!2026</code></li>
         </ul>
 
-        <h2>Core User Roles</h2>
-        <ul>
-          <li><strong>Owner</strong>: global governance and high-risk admin actions.</li>
-          <li><strong>Workspace Admin</strong>: manages one workspace/department.</li>
-          <li><strong>Manager/Staff/Student/Viewer</strong>: scoped by permissions and nav visibility.</li>
-        </ul>
-
         <h2>First-Day Setup Checklist</h2>
         <ol>
-          <li>Create workspaces for each department or service unit.</li>
-          <li>Create teams and spaces (labs, studios, branches, rooms).</li>
-          <li>Define default statuses and labels by board.</li>
-          <li>Import current project/task data from CSV.</li>
-          <li>Set user roles and email preference defaults.</li>
+          <li>Create workspaces for departments.</li>
+          <li>Create teams and spaces (labs/rooms/branches).</li>
+          <li>Import data from CSV where needed.</li>
+          <li>Set role permissions and sidebar visibility defaults.</li>
+          <li>Validate email preferences and security settings.</li>
         </ol>
 
-        <h2>Deployment Paths</h2>
+        <h2>Production Paths</h2>
         <ul>
-          <li><strong>Droplet (recommended for SQLite persistence):</strong> <code>./scripts/deploy_production.sh ...</code></li>
-          <li><strong>App Platform:</strong> <code>doctl apps create --spec .do/app.yaml</code></li>
+          <li><strong>DigitalOcean Droplet:</strong> <code>./scripts/deploy_production.sh ...</code></li>
+          <li><strong>DigitalOcean App Platform:</strong> <code>doctl apps create --spec .do/app.yaml</code></li>
+          <li><strong>Managed PostgreSQL:</strong> set <code>MAKERSPACE_DATABASE_URL</code> and redeploy</li>
         </ul>
-        <p>For App Platform, use <code>/healthz</code> as the health check and keep startup bound to <code>0.0.0.0:$PORT</code>.</p>
+
+        <h2>Fast Validation Commands</h2>
+        <pre><code>python3 scripts/smoke_test.py
+python3 scripts/usability_test.py
+python3 scripts/accessibility_audit.py</code></pre>
       </article>
     </main>
   </body>

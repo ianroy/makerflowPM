@@ -33,60 +33,80 @@
         <a href="/website/wiki/release-notes.html">Release Notes</a>
       </aside>
       <article class="wiki-content">
-        <h1>Production Deployment</h1>
+        <h1>Deployment Guide (DigitalOcean + Local)</h1>
         <p><strong>Repository:</strong> <a href="https://github.com/ianroy/makerflowPM" target="_blank" rel="noreferrer">github.com/ianroy/makerflowPM</a></p>
-        <p>Use the deployment script for a low-cost VM setup with <code>systemd + nginx + TLS</code>.</p>
+
+        <h2>Local Test Environment</h2>
+        <pre><code>git clone https://github.com/ianroy/makerflowPM.git
+cd makerflowPM
+cp .env.example .env
+pip install -r requirements.txt
+python3 app/server.py</code></pre>
+        <p>Open <code>http://127.0.0.1:8080/login</code>.</p>
+
+        <h2>DigitalOcean Droplet (Recommended)</h2>
         <pre><code>./scripts/deploy_production.sh \
-  --ssh ubuntu@YOUR_SERVER_IP \
+  --ssh ubuntu@YOUR_DROPLET_IP \
   --domain makerflow.org \
   --admin-email admin@yourdomain.edu \
   --admin-password 'REPLACE_WITH_STRONG_PASSWORD'</code></pre>
 
-        <h2>What the Script Configures</h2>
+        <h2>DigitalOcean App Platform</h2>
+        <p>Use the included spec: <code>.do/app.yaml</code>.</p>
+        <pre><code>doctl apps create --spec .do/app.yaml
+doctl apps update &lt;APP_ID&gt; --spec .do/app.yaml</code></pre>
+
+        <p>If configuring manually, use:</p>
+        <pre><code>Build command: pip install -r requirements.txt
+Run command: bash -lc "python3 scripts/bootstrap_db.py && gunicorn wsgi:application --bind 0.0.0.0:$PORT --workers 2 --threads 2 --timeout 120"
+HTTP port: 8080
+Health check path: /readyz</code></pre>
+
+        <h2>Managed PostgreSQL Setup</h2>
+        <ol>
+          <li>Create a DO Managed PostgreSQL cluster.</li>
+          <li>Add your app as a trusted source.</li>
+          <li>Set <code>MAKERSPACE_DATABASE_URL</code> in app environment variables.</li>
+          <li>Redeploy.</li>
+        </ol>
+        <pre><code>postgresql://doadmin:REPLACE_PASSWORD@REPLACE_HOST:25060/defaultdb?sslmode=require</code></pre>
+
+        <h2>Troubleshooting (Field-tested)</h2>
+
+        <h3>Run Command Not Executable</h3>
         <ul>
-          <li>Uploads source code to <code>/opt/makerflow-pm</code>.</li>
-          <li>Creates/updates <code>makerflow.service</code>.</li>
-          <li>Creates nginx site and reverse proxy.</li>
-          <li>Optionally issues cert via certbot.</li>
-          <li>Installs daily backup cron for DB snapshots.</li>
+          <li>Clear broken custom run command overrides in DO UI.</li>
+          <li>Use the exact run command above.</li>
+        </ul>
+
+        <h3>Health Check Failures</h3>
+        <ul>
+          <li>Confirm bind target is <code>0.0.0.0:$PORT</code>.</li>
+          <li>Confirm health route is <code>/readyz</code> or <code>/healthz</code>.</li>
+          <li>Increase initial delay to 30-60 seconds for cold starts.</li>
+        </ul>
+
+        <h3>Missing Tables (e.g., <code>spaces</code>)</h3>
+        <ul>
+          <li>Ensure startup runs <code>python3 scripts/bootstrap_db.py</code> before gunicorn.</li>
+        </ul>
+
+        <h3>Login Loop / Session Issues</h3>
+        <ul>
+          <li>Set stable <code>MAKERSPACE_SECRET_KEY</code>.</li>
+          <li>Set <code>MAKERSPACE_COOKIE_SECURE=1</code> for HTTPS production.</li>
+          <li>Verify database writes are succeeding for sessions.</li>
+        </ul>
+
+        <h3>CSRF Token Mismatch</h3>
+        <ul>
+          <li>Log out and clear cookies.</li>
+          <li>Use one canonical HTTPS domain (avoid mixed hostnames).</li>
         </ul>
 
         <h2>Validation Commands</h2>
-        <pre><code>sudo systemctl status makerflow
-sudo nginx -t
-curl -i http://127.0.0.1:8080/healthz</code></pre>
-
-        <h2>DigitalOcean App Platform</h2>
-        <p>Use the included App Platform spec for container-style deploys:</p>
-        <pre><code>doctl apps create --spec .do/app.yaml
-doctl apps update &lt;APP_ID&gt; --spec .do/app.yaml</code></pre>
-        <p>Use these service commands in the App Platform UI/spec:</p>
-        <pre><code>Build command: pip install -r requirements.txt
-Run command: gunicorn wsgi:application --bind 0.0.0.0:$PORT --workers 2 --threads 2 --timeout 120</code></pre>
-        <p>The spec is configured for App Platform health checks:</p>
-        <ul>
-          <li>Run command binds to <code>0.0.0.0:$PORT</code>.</li>
-          <li>Build command installs runtime dependencies from <code>requirements.txt</code>.</li>
-          <li>Service HTTP port is <code>8080</code>.</li>
-          <li>Health check path is <code>/healthz</code>.</li>
-          <li>Initial delay is set to <code>30s</code>.</li>
-        </ul>
-
-        <h2>Health Check Troubleshooting</h2>
-        <ul>
-          <li>Verify App Platform uses the spec from <code>.do/app.yaml</code>.</li>
-          <li>Confirm <code>/healthz</code> returns <code>200 OK</code> without login.</li>
-          <li>Confirm no custom startup command overrides the bind address.</li>
-          <li>If deploys still fail, increase initial delay to <code>45-60s</code>.</li>
-        </ul>
-
-        <h2>Security Requirements</h2>
-        <ul>
-          <li>Set <code>MAKERSPACE_COOKIE_SECURE=1</code>.</li>
-          <li>Use a 64+ character <code>MAKERSPACE_SECRET_KEY</code>.</li>
-          <li>Rotate bootstrap passwords immediately after first login.</li>
-          <li>Restrict SSH to key-based auth.</li>
-        </ul>
+        <pre><code>curl -i http://127.0.0.1:8080/healthz
+curl -i http://127.0.0.1:8080/readyz</code></pre>
       </article>
     </main>
   </body>

@@ -33,36 +33,50 @@
         <a href="/website/wiki/release-notes.html">Release Notes</a>
       </aside>
       <article class="wiki-content">
-        <h1>Architecture</h1>
-        <h2>Stack</h2>
+        <h1>Architecture + Version Matrix</h1>
+
+        <h2>Core Architecture</h2>
         <ul>
-          <li>Backend: Python stdlib WSGI app (<code>app/server.py</code>)</li>
-          <li>Database: SQLite (<code>data/makerspace_ops.db</code>)</li>
-          <li>Frontend: server-rendered HTML with progressive JS enhancements</li>
-          <li>Static assets: <code>app/static/</code></li>
+          <li>Backend: Python WSGI app in <code>app/server.py</code></li>
+          <li>Frontend: server-rendered HTML with progressive enhancement in <code>app/static/app.js</code></li>
+          <li>Style system: <code>app/static/style.css</code></li>
+          <li>Persistence: SQLite by default, PostgreSQL when <code>MAKERSPACE_DATABASE_URL</code> is set</li>
         </ul>
 
-        <h2>Design Principles</h2>
+        <h2>Software Version Inventory</h2>
         <ul>
-          <li>Low deployment friction for university IT constraints.</li>
-          <li>Explicit route handling for readability and auditability.</li>
-          <li>Data portability and recoverability over vendor lock-in.</li>
-          <li>Role-based permission model with workspace-level governance.</li>
+          <li>Python: <code>3.11.9</code></li>
+          <li>Gunicorn: <code>&gt;=21.0.0</code></li>
+          <li>Flask: <code>&gt;=3.0.0</code></li>
+          <li>Werkzeug: <code>&gt;=3.0.0</code></li>
+          <li>psycopg[binary]: <code>&gt;=3.1.18</code></li>
+          <li>pypdf: <code>&gt;=4.3.1</code></li>
         </ul>
 
-        <h2>Runtime Request Path</h2>
+        <h2>Request Flow</h2>
         <ol>
-          <li>WSGI entrypoint validates path and serves public/static routes.</li>
-          <li>Session context and role resolved from cookie/session table.</li>
-          <li>CSRF validation enforced for state-changing methods.</li>
-          <li>Route handlers execute SQL and render HTML or JSON payloads.</li>
+          <li>WSGI entrypoint resolves path and user session context.</li>
+          <li>CSRF and role gates apply to mutating requests.</li>
+          <li>Organization-scoped SQL executes.</li>
+          <li>HTML or JSON response is returned with security headers.</li>
         </ol>
 
-        <h2>Scalability Path</h2>
+        <h2>Role Model</h2>
+        <ol>
+          <li><code>viewer</code></li>
+          <li><code>student</code></li>
+          <li><code>staff</code></li>
+          <li><code>manager</code></li>
+          <li><code>workspace_admin</code></li>
+          <li><code>owner</code></li>
+        </ol>
+
+        <h2>Build and Ops Toolchain</h2>
         <ul>
-          <li>Current target: 10-20 active users on one VM.</li>
-          <li>Next stage: PostgreSQL, worker model, and queue-backed jobs.</li>
-          <li>Future: SSO IdP integration and centralized observability.</li>
+          <li>Git + GitHub + GitHub Desktop</li>
+          <li>DigitalOcean (Droplet and App Platform)</li>
+          <li>DigitalOcean Managed PostgreSQL</li>
+          <li>OpenAI Codex (GPT-5.3 workflow) for iterative engineering and documentation</li>
         </ul>
       </article>
     </main>
