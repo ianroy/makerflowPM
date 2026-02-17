@@ -276,8 +276,26 @@ body[data-theme="dark"] .theme-switch .theme-switch-knob {
   border-color: #93c5f2;
 }
 
-.logout-form {
+.account-menu {
   margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.logout-form {
+  opacity: 0;
+  max-width: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition: opacity 0.16s ease, max-width 0.16s ease;
+}
+
+.account-menu:hover .logout-form,
+.account-menu:focus-within .logout-form {
+  opacity: 1;
+  max-width: 120px;
+  pointer-events: auto;
 }
 
 .logout-btn {
@@ -290,6 +308,17 @@ body[data-theme="dark"] .theme-switch .theme-switch-knob {
 }
 
 .logout-btn:hover {
+  background: #b81f33;
+  border-color: #b81f33;
+}
+
+.danger-btn {
+  background: #d7263d;
+  border-color: #d7263d;
+  color: #fff;
+}
+
+.danger-btn:hover {
   background: #b81f33;
   border-color: #b81f33;
 }

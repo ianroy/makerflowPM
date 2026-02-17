@@ -504,7 +504,6 @@ NAV_PRIMARY_ITEMS: List[Dict[str, str]] = [
     {"key": "onboarding", "path": "/onboarding", "label": "Onboarding", "min_role": "viewer"},
     {"key": "spaces", "path": "/spaces", "label": "Spaces", "min_role": "viewer"},
     {"key": "assets", "path": "/assets", "label": "Assets", "min_role": "viewer"},
-    {"key": "consumables", "path": "/consumables", "label": "Consumables", "min_role": "viewer"},
     {"key": "partnerships", "path": "/partnerships", "label": "Partnerships", "min_role": "viewer"},
 ]
 
@@ -4064,16 +4063,6 @@ def render_layout(
               <a class="side-mini-link" href="{h(with_space('/assets', active_space_id))}">Machines</a>
               <a class="side-mini-link" href="{h(with_space('/consumables', active_space_id))}">Consumables</a>
             </div>
-            <details>
-              <summary>Add New Space</summary>
-              <form method="post" action="/settings/spaces/new" class="sidebar-mini-form">
-                <input type="hidden" name="csrf_token" value="{h(ctx.get('csrf', ''))}" />
-                <label>Name <input name="name" required placeholder="New Space" /></label>
-                <label>Location <input name="location" placeholder="Building/Floor" /></label>
-                <label>Description <textarea name="description" placeholder="What this space supports"></textarea></label>
-                <button type="submit">Add Space</button>
-              </form>
-            </details>
           </section>
           <div class="sidebar-foot">
             <h4>Workspaces</h4>
@@ -4096,12 +4085,14 @@ def render_layout(
             </button>
             <button type="button" class="btn ghost" id="activity-toggle" aria-expanded="false" aria-controls="activity-drawer">Activity</button>
             <span class="pill soft" id="activity-count" aria-live="polite">0</span>
-            <a class="user-chip top-link-chip" href="{h(with_space('/settings', active_space_id))}" title="Open user settings">{h(user['name'])}</a>
-            <a class="user-chip top-link-chip" href="/admin/users#workspace-editor" title="Open workspace editor">{h(org['name']) if org else 'Workspace'}</a>
-            <form method="post" action="/logout" class="logout-form">
-              <input type="hidden" name="csrf_token" value="{h(ctx.get('csrf', ''))}" />
-              <button type="submit" class="logout-btn">Logout</button>
-            </form>
+            <div class="account-menu">
+              <a class="user-chip top-link-chip account-user-chip" href="{h(with_space('/settings', active_space_id))}" title="Open user settings">{h(user['name'])}</a>
+              <a class="user-chip top-link-chip" href="/admin/users#workspace-editor" title="Open workspace editor">{h(org['name']) if org else 'Workspace'}</a>
+              <form method="post" action="/logout" class="logout-form">
+                <input type="hidden" name="csrf_token" value="{h(ctx.get('csrf', ''))}" />
+                <button type="submit" class="logout-btn">Logout</button>
+              </form>
+            </div>
           </div>
         </header>
         """
@@ -8311,7 +8302,7 @@ def render_admin_page(
             </select>
           </label>
           <label>Item ID <input type="number" min="1" name="item_id" required /></label>
-          <button type="submit" class="ghost">Purge Item</button>
+          <button type="submit" class="danger-btn">Purge Item</button>
         </form>
       </div>
       <div class="card">
@@ -8327,7 +8318,7 @@ def render_admin_page(
         >
           <input type="hidden" name="csrf_token" value="{{csrf}}" />
           <label>Keyword <input name="keyword" required value="QA" /></label>
-          <button type="submit" class="ghost">Purge Matching Data</button>
+          <button type="submit" class="danger-btn">Purge Matching Data</button>
         </form>
       </div>
     </section>
