@@ -2303,6 +2303,164 @@ summary:focus-visible {
   outline-offset: 2px;
 }
 
+.agenda-monday-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.agenda-left-pane {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.agenda-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.agenda-toolbar-right {
+  margin-left: auto;
+}
+
+.agenda-group {
+  padding: 0.7rem;
+}
+
+.agenda-group-head {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.45rem;
+}
+
+.agenda-group-head h3 {
+  margin: 0;
+}
+
+.agenda-group-toggle,
+.agenda-subitem-toggle {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  padding: 0.1rem 0.25rem;
+}
+
+.agenda-grid-table {
+  table-layout: fixed;
+}
+
+.agenda-grid-table th,
+.agenda-grid-table td {
+  vertical-align: middle;
+}
+
+.agenda-grid-table th {
+  position: relative;
+}
+
+.agenda-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+}
+
+.agenda-cell-check {
+  width: 40px;
+  text-align: center;
+}
+
+.agenda-cell-topic {
+  font-weight: 600;
+}
+
+.agenda-cell-comments {
+  white-space: nowrap;
+}
+
+.agenda-comment-open {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.agenda-link-badge {
+  margin-left: 0.45rem;
+}
+
+.agenda-topic-parent {
+  background: color-mix(in srgb, var(--card-soft) 88%, #174069 12%);
+}
+
+.agenda-subitems-shell td {
+  background: color-mix(in srgb, var(--card-soft) 94%, #223f5d 6%);
+}
+
+.agenda-subitems-table {
+  width: 100%;
+  margin: 0.25rem 0 0.45rem;
+}
+
+.agenda-subitem {
+  opacity: 0.95;
+}
+
+.agenda-subitem-actions {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.agenda-add-row td {
+  background: color-mix(in srgb, var(--card-soft) 90%, #1f4d72 10%);
+}
+
+.agenda-add-form input[type="text"] {
+  min-width: 180px;
+}
+
+.agenda-right-panel {
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+}
+
+.agenda-right-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin-bottom: 0.45rem;
+}
+
+.agenda-updates-list {
+  display: grid;
+  gap: 0.45rem;
+  margin-bottom: 0.45rem;
+}
+
+.agenda-update-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.5rem;
+  background: var(--card-soft);
+}
+
+.agenda-update-card header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.45rem;
+  margin-bottom: 0.2rem;
+}
+
 @media (max-width: 900px) {
   .container {
     padding: 0.75rem;
@@ -2340,6 +2498,15 @@ summary:focus-visible {
 
   .kanban-board {
     grid-auto-columns: minmax(280px, 88vw);
+  }
+
+  .agenda-monday-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .agenda-right-panel {
+    position: static;
+    max-height: none;
   }
 
   table,

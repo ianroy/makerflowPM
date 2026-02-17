@@ -2666,6 +2666,189 @@
     });
   }
 
+  function initAgendaMondayBoard() {
+    const board = document.getElementById("agenda-monday-board");
+    if (!board) {
+      return;
+    }
+    const rightPanel = document.getElementById("agenda-right-panel");
+    const panelTitle = document.getElementById("agenda-panel-title");
+    const panelMeta = document.getElementById("agenda-panel-meta");
+    const panelUpdates = document.getElementById("agenda-panel-updates");
+    const panelItemId = document.getElementById("agenda-panel-item-id");
+    const panelBody = document.getElementById("agenda-panel-update-body");
+    const panelForm = document.getElementById("agenda-panel-update-form");
+    const panelClose = document.getElementById("agenda-panel-close");
+    const search = document.getElementById("agenda-grid-search");
+
+    const loadPanel = async (itemId) => {
+      const response = await fetch(withSpace(`/api/agenda/item/detail?item_id=${encodeURIComponent(String(itemId))}`), {
+        credentials: "same-origin",
+      });
+      if (!response.ok) {
+        throw new Error("Could not load agenda item details.");
+      }
+      const payload = await response.json();
+      if (!payload || payload.ok === false || !payload.item) {
+        throw new Error("Could not load agenda item details.");
+      }
+      const item = payload.item;
+      const updates = Array.isArray(payload.updates) ? payload.updates : [];
+      if (panelItemId) {
+        panelItemId.value = String(item.id || "");
+      }
+      if (panelTitle) {
+        panelTitle.textContent = String(item.title || "Agenda Item");
+      }
+      if (panelMeta) {
+        panelMeta.textContent = `${String(item.meeting_date || "-")} · ${String(item.agenda_title || "-")} · Status: ${String(item.status || "-")}`;
+      }
+      if (panelUpdates) {
+        panelUpdates.innerHTML = updates.length
+          ? updates.map((u) => `
+              <article class="agenda-update-card">
+                <header><strong>${escapeHtml(String(u.author_name || "Unknown"))}</strong><span class="muted">${escapeHtml(String(u.created_at || ""))}</span></header>
+                <p>${escapeHtml(String(u.body || ""))}</p>
+              </article>
+            `).join("")
+          : "<p class='muted'>No updates yet.</p>";
+      }
+      if (rightPanel) {
+        rightPanel.hidden = false;
+      }
+    };
+
+    if (panelClose) {
+      panelClose.addEventListener("click", () => {
+        if (rightPanel) {
+          rightPanel.hidden = true;
+        }
+      });
+    }
+
+    document.addEventListener("click", async (event) => {
+      const commentButton = event.target.closest(".agenda-comment-open[data-item-id]");
+      if (commentButton) {
+        const itemId = commentButton.getAttribute("data-item-id") || "";
+        if (!itemId) {
+          return;
+        }
+        try {
+          await loadPanel(itemId);
+        } catch (_err) {
+          setModalFeedback("Could not open agenda updates panel.", true);
+        }
+        return;
+      }
+      const groupToggle = event.target.closest(".agenda-group-toggle[data-agenda-group]");
+      if (groupToggle) {
+        const key = groupToggle.getAttribute("data-agenda-group") || "";
+        const body = document.querySelector(`[data-agenda-group-body='${escapeCssValue(key)}']`);
+        if (body instanceof HTMLElement) {
+          const expanded = groupToggle.getAttribute("aria-expanded") !== "false";
+          groupToggle.setAttribute("aria-expanded", expanded ? "false" : "true");
+          groupToggle.textContent = expanded ? "▸" : "▾";
+          body.hidden = expanded;
+        }
+        return;
+      }
+      const subToggle = event.target.closest(".agenda-subitem-toggle[data-parent-id]");
+      if (subToggle) {
+        const parentId = subToggle.getAttribute("data-parent-id") || "";
+        const shell = document.querySelector(`[data-parent-shell='${escapeCssValue(parentId)}']`);
+        if (shell instanceof HTMLElement) {
+          const expanded = subToggle.getAttribute("aria-expanded") === "true";
+          subToggle.setAttribute("aria-expanded", expanded ? "false" : "true");
+          subToggle.textContent = expanded ? "▸" : "▾";
+          shell.hidden = expanded;
+        }
+      }
+    });
+
+    if (panelForm) {
+      panelForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const itemId = panelItemId ? String(panelItemId.value || "").trim() : "";
+        const body = panelBody ? String(panelBody.value || "").trim() : "";
+        if (!itemId || !body) {
+          return;
+        }
+        try {
+          await postForm("/api/agenda/item/updates/add", { item_id: itemId, body });
+          if (panelBody) {
+            panelBody.value = "";
+          }
+          await loadPanel(itemId);
+        } catch (_err) {
+          setModalFeedback("Could not post agenda update.", true);
+        }
+      });
+    }
+
+    document.addEventListener("change", async (event) => {
+      const field = event.target.closest(".agenda-row-field[data-item-id][data-field]");
+      if (!(field instanceof HTMLInputElement || field instanceof HTMLSelectElement || field instanceof HTMLTextAreaElement)) {
+        return;
+      }
+      const itemId = field.getAttribute("data-item-id") || "";
+      const key = field.getAttribute("data-field") || "";
+      if (!itemId || !key) {
+        return;
+      }
+      try {
+        await postForm("/api/agenda/item/save", { item_id: itemId, [key]: field.value });
+      } catch (_err) {
+        setModalFeedback("Could not update agenda item field.", true);
+      }
+    });
+
+    if (search instanceof HTMLInputElement) {
+      search.addEventListener("input", () => {
+        const query = String(search.value || "").trim().toLowerCase();
+        board.querySelectorAll(".agenda-topic-row, .agenda-topic-parent").forEach((row) => {
+          if (!(row instanceof HTMLElement)) {
+            return;
+          }
+          const text = String(row.textContent || "").toLowerCase();
+          row.hidden = Boolean(query) && !text.includes(query);
+        });
+      });
+    }
+
+    board.querySelectorAll("table[data-resizable-table='agenda']").forEach((table) => {
+      if (!(table instanceof HTMLTableElement)) {
+        return;
+      }
+      const cols = table.querySelectorAll("colgroup col");
+      table.querySelectorAll(".agenda-resize-handle").forEach((handle) => {
+        handle.addEventListener("mousedown", (event) => {
+          const th = handle.closest("th");
+          if (!(th instanceof HTMLTableCellElement)) {
+            return;
+          }
+          const index = Array.from(th.parentElement?.children || []).indexOf(th);
+          if (index < 0 || index >= cols.length) {
+            return;
+          }
+          event.preventDefault();
+          const col = cols[index];
+          const startX = event.clientX;
+          const startWidth = col.getBoundingClientRect().width || th.getBoundingClientRect().width;
+          const onMove = (moveEvent) => {
+            const next = Math.max(80, startWidth + (moveEvent.clientX - startX));
+            col.style.width = `${next}px`;
+          };
+          const onUp = () => {
+            document.removeEventListener("mousemove", onMove);
+            document.removeEventListener("mouseup", onUp);
+          };
+          document.addEventListener("mousemove", onMove);
+          document.addEventListener("mouseup", onUp);
+        });
+      });
+    });
+  }
+
   function initSpaceContextForms() {
     if (!activeSpaceId) {
       return;
@@ -5860,6 +6043,7 @@
   initAssetBoard();
   initConsumableBoard();
   initPartnershipBoard();
+  initAgendaMondayBoard();
   refreshSemanticTones(document);
   initSemanticButtonStyles();
 })();

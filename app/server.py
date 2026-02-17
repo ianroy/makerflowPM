@@ -1608,6 +1608,7 @@ def run_schema_upgrades(conn: sqlite3.Connection) -> None:
     ensure_column(conn, "meeting_items", "priority", "TEXT DEFAULT 'Medium'")
     ensure_column(conn, "meeting_items", "due_date", "TEXT")
     ensure_column(conn, "meeting_items", "description", "TEXT")
+    ensure_column(conn, "meeting_items", "parent_item_id", "INTEGER")
 
     conn.executescript(
         """
@@ -1978,6 +1979,7 @@ def init_db() -> None:
         CREATE TABLE IF NOT EXISTS meeting_items (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             agenda_id INTEGER NOT NULL,
+            parent_item_id INTEGER,
             section TEXT NOT NULL,
             title TEXT NOT NULL,
             owner_user_id INTEGER,
@@ -1992,9 +1994,22 @@ def init_db() -> None:
             sort_order INTEGER DEFAULT 0,
             created_at TEXT NOT NULL,
             FOREIGN KEY (agenda_id) REFERENCES meeting_agendas(id) ON DELETE CASCADE,
+            FOREIGN KEY (parent_item_id) REFERENCES meeting_items(id) ON DELETE CASCADE,
             FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE SET NULL,
             FOREIGN KEY (linked_task_id) REFERENCES tasks(id) ON DELETE SET NULL,
             FOREIGN KEY (linked_project_id) REFERENCES projects(id) ON DELETE SET NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS meeting_item_updates (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            organization_id INTEGER NOT NULL,
+            item_id INTEGER NOT NULL,
+            author_user_id INTEGER,
+            body TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY (item_id) REFERENCES meeting_items(id) ON DELETE CASCADE,
+            FOREIGN KEY (author_user_id) REFERENCES users(id) ON DELETE SET NULL
         );
 
         CREATE TABLE IF NOT EXISTS calendar_events (
@@ -5719,6 +5734,344 @@ def render_agenda_page(conn: sqlite3.Connection, org_id: int, selected_agenda_id
         <li>Decisions with accountable owner and due date</li>
         <li>Upcoming events/workshops and onboarding needs</li>
       </ol>
+    </section>
+    """
+
+
+def render_agenda_monday_page(conn: sqlite3.Connection, org_id: int) -> str:
+    agendas = conn.execute(
+        """
+        SELECT a.id, a.title, a.meeting_date, a.notes, a.status, a.priority, a.lane,
+               a.owner_user_id, a.team_id, a.space_id, a.due_date, a.description
+        FROM meeting_agendas a
+        WHERE a.organization_id = ?
+        ORDER BY a.meeting_date DESC, a.id DESC
+        LIMIT 120
+        """,
+        (org_id,),
+    ).fetchall()
+    agenda_map: Dict[int, Dict[str, object]] = {}
+    for row in agendas:
+        agenda_map[int(row["id"])] = {
+            "id": int(row["id"]),
+            "title": str(row["title"] or "Untitled Meeting"),
+            "meeting_date": str(row["meeting_date"] or ""),
+            "status": str(row["status"] or "Planned"),
+            "priority": str(row["priority"] or "Medium"),
+            "lane": str(row["lane"] or LANES[0]),
+            "owner_user_id": row["owner_user_id"],
+            "team_id": row["team_id"],
+            "space_id": row["space_id"],
+            "due_date": str(row["due_date"] or ""),
+            "description": str(row["description"] or ""),
+            "notes": str(row["notes"] or ""),
+        }
+    agenda_ids = [int(a["id"]) for a in agendas]
+    users = get_users_for_org(conn, org_id)
+    teams = get_teams_for_org(conn, org_id)
+    spaces = get_spaces_for_org(conn, org_id)
+    owner_opts = "".join([f"<option value='{u['id']}'>{h(u['name'])}</option>" for u in users])
+    agenda_opts = "".join(
+        [
+            f"<option value='{a['id']}'>{h(a['meeting_date'])} - {h(a['title'])}</option>"
+            for a in agendas
+        ]
+    )
+    task_attach_opts = "".join(
+        [
+            f"<option value='{r['id']}'>{h(r['title'])} · {h(r['status'])}</option>"
+            for r in conn.execute(
+                """
+                SELECT id, title, status
+                FROM tasks
+                WHERE organization_id = ? AND deleted_at IS NULL
+                ORDER BY updated_at DESC, id DESC
+                LIMIT 300
+                """,
+                (org_id,),
+            ).fetchall()
+        ]
+    )
+    project_attach_opts = "".join(
+        [
+            f"<option value='{r['id']}'>{h(r['name'])} · {h(r['status'])}</option>"
+            for r in conn.execute(
+                """
+                SELECT id, name, status
+                FROM projects
+                WHERE organization_id = ? AND deleted_at IS NULL
+                ORDER BY updated_at DESC, id DESC
+                LIMIT 300
+                """,
+                (org_id,),
+            ).fetchall()
+        ]
+    )
+
+    items_by_agenda: Dict[int, List[sqlite3.Row]] = {int(aid): [] for aid in agenda_ids}
+    subitems_by_parent: Dict[int, List[sqlite3.Row]] = {}
+    if agenda_ids:
+        placeholders = ",".join(["?"] * len(agenda_ids))
+        item_rows = conn.execute(
+            f"""
+            SELECT i.id, i.agenda_id, i.parent_item_id, i.section, i.title, i.owner_user_id, i.status, i.priority, i.due_date, i.minutes_estimate, i.sort_order, i.created_at,
+                   u.name AS owner_name,
+                   t.id AS linked_task_id, t.title AS linked_task_title, t.status AS linked_task_status,
+                   p.id AS linked_project_id, p.name AS linked_project_name, p.status AS linked_project_status,
+                   (SELECT COUNT(*) FROM meeting_item_updates mu WHERE mu.item_id = i.id) AS updates_count,
+                   COALESCE((SELECT MAX(mu.created_at) FROM meeting_item_updates mu WHERE mu.item_id = i.id), i.created_at) AS last_updated
+            FROM meeting_items i
+            LEFT JOIN users u ON u.id = i.owner_user_id
+            LEFT JOIN tasks t ON t.id = i.linked_task_id AND t.organization_id = ? AND t.deleted_at IS NULL
+            LEFT JOIN projects p ON p.id = i.linked_project_id AND p.organization_id = ? AND p.deleted_at IS NULL
+            WHERE i.agenda_id IN ({placeholders})
+            ORDER BY i.sort_order, i.id
+            """,
+            (org_id, org_id, *agenda_ids),
+        ).fetchall()
+        for row in item_rows:
+            agenda_id = int(row["agenda_id"])
+            parent_item_id = to_int(str(row["parent_item_id"])) if row["parent_item_id"] is not None else None
+            if parent_item_id is None:
+                items_by_agenda.setdefault(agenda_id, []).append(row)
+            else:
+                subitems_by_parent.setdefault(parent_item_id, []).append(row)
+
+    def item_title(row: sqlite3.Row) -> str:
+        if row["linked_task_id"] is not None:
+            return str(row["linked_task_title"] or row["title"] or "Untitled")
+        if row["linked_project_id"] is not None:
+            return str(row["linked_project_name"] or row["title"] or "Untitled")
+        return str(row["title"] or "Untitled")
+
+    def item_status(row: sqlite3.Row) -> str:
+        if row["linked_task_id"] is not None:
+            return agenda_status_from_task_status(str(row["linked_task_status"] or ""))
+        if row["linked_project_id"] is not None:
+            return agenda_status_from_project_status(str(row["linked_project_status"] or ""))
+        return str(row["status"] or "Open")
+
+    def last_updated_label(row: sqlite3.Row) -> str:
+        raw = str(row["last_updated"] or row["created_at"] or "")
+        return raw.split("T", 1)[0] if "T" in raw else raw
+
+    def owner_select(row: sqlite3.Row) -> str:
+        current = str(row["owner_user_id"] or "")
+        opts = ["<option value=''>Unassigned</option>"]
+        for u in users:
+            selected = " selected" if current == str(u["id"]) else ""
+            opts.append(f"<option value='{u['id']}'{selected}>{h(u['name'])}</option>")
+        return "".join(opts)
+
+    def item_row_markup(row: sqlite3.Row, is_subitem: bool = False) -> str:
+        row_title = item_title(row)
+        row_status = item_status(row)
+        row_priority = str(row["priority"] or "Medium")
+        row_id = int(row["id"])
+        updates_count = int(row["updates_count"] or 0)
+        linked_badge = ""
+        if row["linked_task_id"] is not None:
+            linked_badge = f"<button type='button' class='linkish list-open' data-list-entity='task' data-list-id='{row['linked_task_id']}'>Task</button>"
+        elif row["linked_project_id"] is not None:
+            linked_badge = f"<button type='button' class='linkish list-open' data-list-entity='project' data-list-id='{row['linked_project_id']}'>Project</button>"
+        subitem_cls = " agenda-subitem" if is_subitem else ""
+        return f"""
+        <tr class='agenda-topic-row{subitem_cls}' data-item-id='{row_id}'>
+          <td class='agenda-cell-check'><input type='checkbox' aria-label='Select agenda item' /></td>
+          <td class='agenda-cell-topic'>
+            {h(row_title)}
+            <span class='agenda-link-badge'>{linked_badge}</span>
+          </td>
+          <td class='agenda-cell-comments'>
+            <button type='button' class='agenda-comment-open' data-item-id='{row_id}' aria-label='Open updates panel'>💬 {updates_count}</button>
+          </td>
+          <td>
+            <select class='agenda-row-field' data-item-id='{row_id}' data-field='owner_user_id'>
+              {owner_select(row)}
+            </select>
+          </td>
+          <td>
+            <select class='agenda-row-field quick-status' data-item-id='{row_id}' data-field='status'>
+              {''.join([f"<option {'selected' if row_status == s else ''}>{h(s)}</option>" for s in AGENDA_ITEM_STATUSES])}
+            </select>
+          </td>
+          <td>{h(last_updated_label(row))}</td>
+        </tr>
+        """
+
+    group_blocks: List[str] = []
+    for agenda in agendas:
+        agenda_id = int(agenda["id"])
+        parent_rows = items_by_agenda.get(agenda_id, [])
+        topic_rows: List[str] = []
+        for parent in parent_rows:
+            parent_id = int(parent["id"])
+            children = subitems_by_parent.get(parent_id, [])
+            expander = ""
+            sub_table = ""
+            if children:
+                expander = f"<button type='button' class='agenda-subitem-toggle' data-parent-id='{parent_id}' aria-expanded='false'>▸</button>"
+                child_rows = "".join([item_row_markup(child, is_subitem=True) for child in children])
+                sub_table = f"""
+                <tr class='agenda-subitems-shell' data-parent-shell='{parent_id}' hidden>
+                  <td colspan='6'>
+                    <table class='agenda-subitems-table'>
+                      <thead><tr><th></th><th>Subitem</th><th>Updates</th><th>Owner</th><th>Status</th><th>Last updated</th></tr></thead>
+                      <tbody>{child_rows}</tbody>
+                    </table>
+                    <div class='agenda-subitem-actions'>
+                      <form method='post' action='/agenda/item/new' class='inline-form'>
+                        <input type='hidden' name='csrf_token' value='{{csrf}}' />
+                        <input type='hidden' name='agenda_id' value='{agenda_id}' />
+                        <input type='hidden' name='parent_item_id' value='{parent_id}' />
+                        <input type='hidden' name='section' value='{h(str(parent['section'] or "General"))}' />
+                        <input type='text' name='title' placeholder='+ Add subitem' required />
+                        <button type='submit' class='btn btn-green-solid'>Add Subitem</button>
+                      </form>
+                      <form method='post' action='/agenda/item/attach' class='inline-form'>
+                        <input type='hidden' name='csrf_token' value='{{csrf}}' />
+                        <input type='hidden' name='agenda_id' value='{agenda_id}' />
+                        <input type='hidden' name='parent_item_id' value='{parent_id}' />
+                        <input type='hidden' name='section' value='{h(str(parent['section'] or "General"))}' />
+                        <input type='hidden' name='source_type' value='task' />
+                        <label>Link task <select name='source_id'>{task_attach_opts}</select></label>
+                        <button type='submit' class='btn btn-green-solid'>Link Task</button>
+                      </form>
+                      <form method='post' action='/agenda/item/attach' class='inline-form'>
+                        <input type='hidden' name='csrf_token' value='{{csrf}}' />
+                        <input type='hidden' name='agenda_id' value='{agenda_id}' />
+                        <input type='hidden' name='parent_item_id' value='{parent_id}' />
+                        <input type='hidden' name='section' value='{h(str(parent['section'] or "General"))}' />
+                        <input type='hidden' name='source_type' value='project' />
+                        <label>Link project <select name='source_id'>{project_attach_opts}</select></label>
+                        <button type='submit' class='btn btn-green-solid'>Link Project</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+                """
+            topic_rows.append(
+                f"""
+                <tr class='agenda-topic-parent'>
+                  <td class='agenda-cell-check'><input type='checkbox' aria-label='Select agenda item' /></td>
+                  <td class='agenda-cell-topic'>{expander}{h(item_title(parent))}</td>
+                  <td class='agenda-cell-comments'><button type='button' class='agenda-comment-open' data-item-id='{parent_id}' aria-label='Open updates panel'>💬 {int(parent['updates_count'] or 0)}</button></td>
+                  <td><select class='agenda-row-field' data-item-id='{parent_id}' data-field='owner_user_id'>{owner_select(parent)}</select></td>
+                  <td><select class='agenda-row-field quick-status' data-item-id='{parent_id}' data-field='status'>{''.join([f"<option {'selected' if item_status(parent) == s else ''}>{h(s)}</option>" for s in AGENDA_ITEM_STATUSES])}</select></td>
+                  <td>{h(last_updated_label(parent))}</td>
+                </tr>
+                {sub_table}
+                """
+            )
+        if not topic_rows:
+            topic_rows.append("<tr><td colspan='6' class='muted'>No topics yet. Add an item below.</td></tr>")
+
+        add_item_row = f"""
+        <tr class='agenda-add-row'>
+          <td class='agenda-cell-check'><input type='checkbox' disabled /></td>
+          <td colspan='5'>
+            <form method='post' action='/agenda/item/new' class='inline-form agenda-add-form'>
+              <input type='hidden' name='csrf_token' value='{{csrf}}' />
+              <input type='hidden' name='agenda_id' value='{agenda_id}' />
+              <input type='text' name='title' placeholder='+ Add item' required />
+              <input type='text' name='section' value='General' />
+              <select name='owner_user_id'><option value=''>Unassigned</option>{owner_opts}</select>
+              <button type='submit' class='btn btn-green-solid'>Add</button>
+            </form>
+          </td>
+        </tr>
+        """
+        group_blocks.append(
+            f"""
+            <section class='agenda-group card' data-agenda-id='{agenda_id}'>
+              <header class='agenda-group-head'>
+                <button type='button' class='agenda-group-toggle' data-agenda-group='{agenda_id}' aria-expanded='true'>▾</button>
+                <h3>{h(agenda['meeting_date'])}</h3>
+                <span class='muted'>{len(parent_rows)} Items</span>
+                <button type='button' class='btn ghost list-open' data-list-entity='agenda' data-list-id='{agenda_id}'>Open Meeting</button>
+              </header>
+              <div class='agenda-group-body' data-agenda-group-body='{agenda_id}'>
+                <table class='agenda-grid-table' data-resizable-table='agenda'>
+                  <colgroup>
+                    <col style='width:42px' />
+                    <col style='width:48%' />
+                    <col style='width:130px' />
+                    <col style='width:180px' />
+                    <col style='width:180px' />
+                    <col style='width:170px' />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th data-col-key='topic'>Item<span class='agenda-resize-handle' role='separator' aria-orientation='vertical'></span></th>
+                      <th data-col-key='updates'>Updates<span class='agenda-resize-handle' role='separator' aria-orientation='vertical'></span></th>
+                      <th data-col-key='owner'>Assigned to<span class='agenda-resize-handle' role='separator' aria-orientation='vertical'></span></th>
+                      <th data-col-key='status'>Status<span class='agenda-resize-handle' role='separator' aria-orientation='vertical'></span></th>
+                      <th data-col-key='updated'>Last updated</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {''.join(topic_rows)}
+                    {add_item_row}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            """
+        )
+
+    team_opts = "".join([f"<option value='{t['id']}'>{h(t['name'])}</option>" for t in teams])
+    space_opts = "".join([f"<option value='{s['id']}'>{h(s['name'])}</option>" for s in spaces])
+    return f"""
+    <section class='card maker-hero'>
+      <h2>Agenda Board</h2>
+      <p>Monday-style meeting agenda workflow with grouped sessions, inline status controls, one-level subitems, and a right-side updates panel.</p>
+    </section>
+    <section class='card agenda-toolbar'>
+      <form method='post' action='/agenda/item/new' class='inline-form'>
+        <input type='hidden' name='csrf_token' value='{{csrf}}' />
+        <label>Meeting <select name='agenda_id'>{agenda_opts}</select></label>
+        <label>New item <input name='title' required placeholder='New item' /></label>
+        <label>Section <input name='section' value='General' /></label>
+        <label>Owner <select name='owner_user_id'><option value=''>Unassigned</option>{owner_opts}</select></label>
+        <button type='submit' class='btn btn-green-solid'>New Item</button>
+      </form>
+      <div class='inline-form agenda-toolbar-right'>
+        <label>Search <input type='search' id='agenda-grid-search' placeholder='Search items...' /></label>
+      </div>
+    </section>
+    <section class='agenda-monday-layout' id='agenda-monday-board'>
+      <div class='agenda-left-pane'>
+        {''.join(group_blocks) if group_blocks else "<section class='card'><p class='muted'>No meeting agendas yet.</p></section>"}
+        <section class='card'>
+          <h3>Create Meeting</h3>
+          <form method="post" action="/agenda/new" class='inline-form'>
+            <input type="hidden" name="csrf_token" value="{{csrf}}" />
+            <label>Meeting Name <input name="title" required value="Weekly Makerspace Tactical Meeting" /></label>
+            <label>Date <input type="date" name="meeting_date" required value="{dt.date.today().isoformat()}" /></label>
+            <label>Status <select name='status'>{''.join([f"<option>{h(s)}</option>" for s in AGENDA_STATUSES])}</select></label>
+            <label>Priority <select name='priority'><option>Low</option><option selected>Medium</option><option>High</option><option>Critical</option></select></label>
+            <label>Lane <select name='lane'>{''.join([f"<option>{h(lane)}</option>" for lane in LANES])}</select></label>
+            <label>Owner <select name='owner_user_id'><option value=''>Unassigned</option>{owner_opts}</select></label>
+            <label>Team <select name='team_id'><option value=''>No team</option>{team_opts}</select></label>
+            <label>Space <select name='space_id'><option value=''>No space</option>{space_opts}</select></label>
+            <button type='submit' class='btn btn-green-solid'>Create Meeting</button>
+          </form>
+        </section>
+      </div>
+      <aside class='agenda-right-panel card' id='agenda-right-panel' hidden>
+        <header class='agenda-right-head'>
+          <h3 id='agenda-panel-title'>Agenda Item</h3>
+          <button type='button' class='btn ghost' id='agenda-panel-close'>Close</button>
+        </header>
+        <p class='muted' id='agenda-panel-meta'>Select a comment icon on an item to view updates.</p>
+        <div id='agenda-panel-updates' class='agenda-updates-list'></div>
+        <form id='agenda-panel-update-form' class='inline-form'>
+          <input type='hidden' id='agenda-panel-item-id' />
+          <label>Add update <textarea id='agenda-panel-update-body' required placeholder='Write an update and mention others with @'></textarea></label>
+          <button type='submit' class='btn btn-green-solid'>Post Update</button>
+        </form>
+      </aside>
     </section>
     """
 
@@ -9720,7 +10073,7 @@ def app(environ, start_response):
 
             line_items = conn.execute(
                 """
-                SELECT i.id, i.section, i.minutes_estimate, i.sort_order,
+                SELECT i.id, i.parent_item_id, i.section, i.minutes_estimate, i.sort_order,
                        t.id AS task_id, t.title AS task_title, t.status AS task_status, t.priority AS task_priority, t.due_date AS task_due_date,
                        p.id AS project_id, p.name AS project_name, p.status AS project_status, p.priority AS project_priority, p.due_date AS project_due_date
                 FROM meeting_items i
@@ -9745,6 +10098,7 @@ def app(environ, start_response):
                             "due_date": row["task_due_date"] or "",
                             "section": row["section"] or "General",
                             "minutes_estimate": row["minutes_estimate"] or 10,
+                            "parent_item_id": row["parent_item_id"] or "",
                         }
                     )
                     continue
@@ -9760,6 +10114,7 @@ def app(environ, start_response):
                             "due_date": row["project_due_date"] or "",
                             "section": row["section"] or "General",
                             "minutes_estimate": row["minutes_estimate"] or 10,
+                            "parent_item_id": row["parent_item_id"] or "",
                         }
                     )
             task_options = conn.execute(
@@ -9878,6 +10233,19 @@ def app(environ, start_response):
             ).fetchone()
             if not target:
                 return json_response({"ok": False, "error": "not_found"}, status="404 Not Found").wsgi(start_response)
+            parent_item_id = to_int(form.get("parent_item_id"))
+            if parent_item_id is not None:
+                parent = conn.execute(
+                    """
+                    SELECT i.id, i.parent_item_id
+                    FROM meeting_items i
+                    JOIN meeting_agendas a ON a.id = i.agenda_id
+                    WHERE i.id = ? AND i.agenda_id = ? AND a.organization_id = ?
+                    """,
+                    (parent_item_id, agenda_id, org_id),
+                ).fetchone()
+                if not parent or parent["parent_item_id"] is not None:
+                    return json_response({"ok": False, "error": "invalid_parent"}, status="400 Bad Request").wsgi(start_response)
             if source_type == "task":
                 source = conn.execute(
                     """
@@ -9892,11 +10260,12 @@ def app(environ, start_response):
                 conn.execute(
                     """
                     INSERT INTO meeting_items
-                    (agenda_id, section, title, owner_user_id, status, priority, due_date, minutes_estimate, description, linked_task_id, item_type, sort_order, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    (agenda_id, parent_item_id, section, title, owner_user_id, status, priority, due_date, minutes_estimate, description, linked_task_id, item_type, sort_order, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         agenda_id,
+                        parent_item_id,
                         section,
                         source["title"] or "Untitled Task",
                         source["assignee_user_id"],
@@ -9927,11 +10296,12 @@ def app(environ, start_response):
                 conn.execute(
                     """
                     INSERT INTO meeting_items
-                    (agenda_id, section, title, owner_user_id, status, priority, due_date, minutes_estimate, description, linked_project_id, item_type, sort_order, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    (agenda_id, parent_item_id, section, title, owner_user_id, status, priority, due_date, minutes_estimate, description, linked_project_id, item_type, sort_order, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         agenda_id,
+                        parent_item_id,
                         section,
                         source["name"] or "Untitled Project",
                         source["owner_user_id"],
@@ -9949,6 +10319,157 @@ def app(environ, start_response):
                 conn.commit()
                 return json_response({"ok": True, "agenda_id": agenda_id, "source_type": "project"}).wsgi(start_response)
             return json_response({"ok": False, "error": "invalid_source_type"}, status="400 Bad Request").wsgi(start_response)
+
+        if req.path == "/api/agenda/item/save" and req.method == "POST":
+            gate = require_role(ctx, "student")
+            if gate:
+                return json_response({"ok": False, "error": "forbidden"}, status="403 Forbidden").wsgi(start_response)
+            form = req.form
+            item_id = to_int(form.get("item_id"))
+            if item_id is None:
+                return json_response({"ok": False, "error": "invalid_item"}, status="400 Bad Request").wsgi(start_response)
+            target = conn.execute(
+                """
+                SELECT i.*, a.organization_id, t.id AS linked_task_exists, p.id AS linked_project_exists
+                FROM meeting_items i
+                JOIN meeting_agendas a ON a.id = i.agenda_id
+                LEFT JOIN tasks t ON t.id = i.linked_task_id AND t.organization_id = ? AND t.deleted_at IS NULL
+                LEFT JOIN projects p ON p.id = i.linked_project_id AND p.organization_id = ? AND p.deleted_at IS NULL
+                WHERE i.id = ? AND a.organization_id = ?
+                """,
+                (org_id, org_id, item_id, org_id),
+            ).fetchone()
+            if not target:
+                return json_response({"ok": False, "error": "not_found"}, status="404 Not Found").wsgi(start_response)
+            title = str(form.get("title") or target["title"] or "Untitled").strip() or str(target["title"] or "Untitled")
+            section = str(form.get("section") or target["section"] or "General").strip() or "General"
+            status = str(form.get("status") or target["status"] or "Open").strip()
+            if status not in AGENDA_ITEM_STATUSES:
+                status = str(target["status"] or "Open")
+            priority = str(form.get("priority") or target["priority"] or "Medium").strip()
+            if priority not in {"Low", "Medium", "High", "Critical"}:
+                priority = str(target["priority"] or "Medium")
+            due_date = parse_date(str(form.get("due_date") or "")) if "due_date" in form else target["due_date"]
+            minutes_estimate = max(1, to_int(form.get("minutes_estimate"), int(target["minutes_estimate"] or 10)) or 10)
+            owner_user_id = normalize_org_user_id(conn, org_id, form.get("owner_user_id"), fallback=to_int(target["owner_user_id"]))
+            conn.execute(
+                "UPDATE meeting_items SET title = ?, section = ?, owner_user_id = ?, status = ?, priority = ?, due_date = ?, minutes_estimate = ? WHERE id = ?",
+                (title, section, owner_user_id, status, priority, due_date, minutes_estimate, item_id),
+            )
+            if target["linked_task_exists"] is not None:
+                conn.execute(
+                    """
+                    UPDATE tasks
+                    SET title = ?, status = ?, priority = ?, due_date = ?, assignee_user_id = ?, updated_at = ?
+                    WHERE id = ? AND organization_id = ? AND deleted_at IS NULL
+                    """,
+                    (title, task_status_from_agenda_status(status), priority, due_date, owner_user_id, iso(), target["linked_task_id"], org_id),
+                )
+            elif target["linked_project_exists"] is not None:
+                conn.execute(
+                    """
+                    UPDATE projects
+                    SET name = ?, status = ?, priority = ?, due_date = ?, owner_user_id = ?, updated_at = ?
+                    WHERE id = ? AND organization_id = ? AND deleted_at IS NULL
+                    """,
+                    (title, project_status_from_agenda_status(status), priority, due_date, owner_user_id, iso(), target["linked_project_id"], org_id),
+                )
+            conn.commit()
+            return json_response({"ok": True, "item_id": item_id, "status": status}).wsgi(start_response)
+
+        if req.path == "/api/agenda/item/detail":
+            item_id = to_int(req.query.get("item_id"))
+            if item_id is None:
+                return json_response({"ok": False, "error": "invalid_item"}, status="400 Bad Request").wsgi(start_response)
+            row = conn.execute(
+                """
+                SELECT i.id, i.agenda_id, i.parent_item_id, i.section, i.title, i.status, i.priority, i.due_date, i.minutes_estimate, i.description,
+                       i.linked_task_id, i.linked_project_id, i.item_type,
+                       a.title AS agenda_title, a.meeting_date,
+                       u.name AS owner_name
+                FROM meeting_items i
+                JOIN meeting_agendas a ON a.id = i.agenda_id
+                LEFT JOIN users u ON u.id = i.owner_user_id
+                WHERE i.id = ? AND a.organization_id = ?
+                """,
+                (item_id, org_id),
+            ).fetchone()
+            if not row:
+                return json_response({"ok": False, "error": "not_found"}, status="404 Not Found").wsgi(start_response)
+            updates = conn.execute(
+                """
+                SELECT mu.id, mu.body, mu.created_at, u.name AS author_name
+                FROM meeting_item_updates mu
+                LEFT JOIN users u ON u.id = mu.author_user_id
+                WHERE mu.organization_id = ? AND mu.item_id = ?
+                ORDER BY mu.created_at DESC, mu.id DESC
+                LIMIT 80
+                """,
+                (org_id, item_id),
+            ).fetchall()
+            return json_response(
+                {
+                    "ok": True,
+                    "item": {
+                        "id": row["id"],
+                        "agenda_id": row["agenda_id"],
+                        "agenda_title": row["agenda_title"] or "",
+                        "meeting_date": row["meeting_date"] or "",
+                        "parent_item_id": row["parent_item_id"] or "",
+                        "section": row["section"] or "General",
+                        "title": row["title"] or "Untitled",
+                        "status": row["status"] or "Open",
+                        "priority": row["priority"] or "Medium",
+                        "due_date": row["due_date"] or "",
+                        "minutes_estimate": row["minutes_estimate"] or 10,
+                        "description": row["description"] or "",
+                        "item_type": row["item_type"] or "agenda",
+                        "owner_name": row["owner_name"] or "",
+                        "linked_task_id": row["linked_task_id"] or "",
+                        "linked_project_id": row["linked_project_id"] or "",
+                    },
+                    "updates": [
+                        {
+                            "id": r["id"],
+                            "body": r["body"] or "",
+                            "created_at": r["created_at"] or "",
+                            "author_name": r["author_name"] or "Unknown",
+                        }
+                        for r in updates
+                    ],
+                }
+            ).wsgi(start_response)
+
+        if req.path == "/api/agenda/item/updates/add" and req.method == "POST":
+            gate = require_role(ctx, "student")
+            if gate:
+                return json_response({"ok": False, "error": "forbidden"}, status="403 Forbidden").wsgi(start_response)
+            item_id = to_int(req.form.get("item_id"))
+            body = str(req.form.get("body") or "").strip()
+            if item_id is None or not body:
+                return json_response({"ok": False, "error": "invalid_request"}, status="400 Bad Request").wsgi(start_response)
+            if len(body) > 4000:
+                body = body[:4000]
+            target = conn.execute(
+                """
+                SELECT i.id
+                FROM meeting_items i
+                JOIN meeting_agendas a ON a.id = i.agenda_id
+                WHERE i.id = ? AND a.organization_id = ?
+                """,
+                (item_id, org_id),
+            ).fetchone()
+            if not target:
+                return json_response({"ok": False, "error": "not_found"}, status="404 Not Found").wsgi(start_response)
+            conn.execute(
+                """
+                INSERT INTO meeting_item_updates (organization_id, item_id, author_user_id, body, created_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (org_id, item_id, user_id, body, iso()),
+            )
+            conn.commit()
+            return json_response({"ok": True}).wsgi(start_response)
 
         if req.path == "/api/activity":
             limit = to_int(req.query.get("limit"), 40) or 40
@@ -10595,8 +11116,7 @@ def app(environ, start_response):
             return json_response({"tasks": data}).wsgi(start_response)
 
         if req.path == "/agenda":
-            selected_agenda_id = to_int(req.query.get("agenda_id"))
-            content = render_agenda_page(conn, org_id, selected_agenda_id=selected_agenda_id)
+            content = render_agenda_monday_page(conn, org_id)
             page = render_layout("Meeting Agenda", fill_csrf(content, csrf_token), req, ctx, notice)
             return Response(page).wsgi(start_response)
 
@@ -10703,14 +11223,28 @@ def app(environ, start_response):
             ).fetchone()
             if not agenda:
                 return redirect(scoped("/agenda?msg=Agenda%20not%20found")).wsgi(start_response)
+            parent_item_id = to_int(form.get("parent_item_id"))
+            if parent_item_id is not None:
+                parent = conn.execute(
+                    """
+                    SELECT i.id, i.parent_item_id
+                    FROM meeting_items i
+                    JOIN meeting_agendas a ON a.id = i.agenda_id
+                    WHERE i.id = ? AND i.agenda_id = ? AND a.organization_id = ?
+                    """,
+                    (parent_item_id, agenda_id, org_id),
+                ).fetchone()
+                if not parent or parent["parent_item_id"] is not None:
+                    return redirect(scoped(f"/agenda?agenda_id={agenda_id}&msg=Invalid%20subitem%20parent")).wsgi(start_response)
             conn.execute(
                 """
                 INSERT INTO meeting_items
-                (agenda_id, section, title, owner_user_id, status, priority, due_date, minutes_estimate, description, item_type, sort_order, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (agenda_id, parent_item_id, section, title, owner_user_id, status, priority, due_date, minutes_estimate, description, item_type, sort_order, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     agenda_id,
+                    parent_item_id,
                     form.get("section", "General"),
                     form.get("title", "Untitled Item"),
                     normalize_org_user_id(conn, org_id, form.get("owner_user_id"), fallback=user_id),
@@ -10736,6 +11270,7 @@ def app(environ, start_response):
             source_type = str(form.get("source_type") or "").strip().lower()
             source_id = to_int(form.get("source_id"))
             section = str(form.get("section") or "Work Queue")
+            parent_item_id = to_int(form.get("parent_item_id"))
             if agenda_id is None or source_id is None:
                 return redirect(scoped("/agenda?msg=Meeting%20and%20source%20are%20required")).wsgi(start_response)
             agenda = conn.execute(
@@ -10744,6 +11279,18 @@ def app(environ, start_response):
             ).fetchone()
             if not agenda:
                 return redirect(scoped("/agenda?msg=Agenda%20not%20found")).wsgi(start_response)
+            if parent_item_id is not None:
+                parent = conn.execute(
+                    """
+                    SELECT i.id, i.parent_item_id
+                    FROM meeting_items i
+                    JOIN meeting_agendas a ON a.id = i.agenda_id
+                    WHERE i.id = ? AND i.agenda_id = ? AND a.organization_id = ?
+                    """,
+                    (parent_item_id, agenda_id, org_id),
+                ).fetchone()
+                if not parent or parent["parent_item_id"] is not None:
+                    return redirect(scoped(f"/agenda?agenda_id={agenda_id}&msg=Invalid%20subitem%20parent")).wsgi(start_response)
             if source_type == "task":
                 source = conn.execute(
                     """
@@ -10758,11 +11305,12 @@ def app(environ, start_response):
                 conn.execute(
                     """
                     INSERT INTO meeting_items
-                    (agenda_id, section, title, owner_user_id, status, priority, due_date, minutes_estimate, description, linked_task_id, item_type, sort_order, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    (agenda_id, parent_item_id, section, title, owner_user_id, status, priority, due_date, minutes_estimate, description, linked_task_id, item_type, sort_order, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         agenda_id,
+                        parent_item_id,
                         section,
                         source["title"],
                         source["assignee_user_id"],
@@ -10793,11 +11341,12 @@ def app(environ, start_response):
                 conn.execute(
                     """
                     INSERT INTO meeting_items
-                    (agenda_id, section, title, owner_user_id, status, priority, due_date, minutes_estimate, description, linked_project_id, item_type, sort_order, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    (agenda_id, parent_item_id, section, title, owner_user_id, status, priority, due_date, minutes_estimate, description, linked_project_id, item_type, sort_order, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         agenda_id,
+                        parent_item_id,
                         section,
                         source["name"],
                         source["owner_user_id"],
