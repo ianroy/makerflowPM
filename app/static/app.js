@@ -2674,14 +2674,323 @@
     const rightPanel = document.getElementById("agenda-right-panel");
     const panelTitle = document.getElementById("agenda-panel-title");
     const panelMeta = document.getElementById("agenda-panel-meta");
+    const panelLinked = document.getElementById("agenda-panel-linked");
     const panelUpdates = document.getElementById("agenda-panel-updates");
+    const panelFiles = document.getElementById("agenda-panel-files");
+    const panelActivity = document.getElementById("agenda-panel-activity");
     const panelItemId = document.getElementById("agenda-panel-item-id");
+    const panelFileItemId = document.getElementById("agenda-panel-file-item-id");
     const panelBody = document.getElementById("agenda-panel-update-body");
     const panelForm = document.getElementById("agenda-panel-update-form");
+    const panelFileForm = document.getElementById("agenda-panel-file-form");
+    const panelFileName = document.getElementById("agenda-panel-file-name");
+    const panelFileUrl = document.getElementById("agenda-panel-file-url");
     const panelClose = document.getElementById("agenda-panel-close");
     const search = document.getElementById("agenda-grid-search");
+    const ownerFilter = document.getElementById("agenda-filter-owner");
+    const statusFilter = document.getElementById("agenda-filter-status");
+    const sortSelect = document.getElementById("agenda-sort");
+    const groupBySelect = document.getElementById("agenda-group-by");
+    const hideColumns = Array.from(document.querySelectorAll("[data-agenda-hide-col]"));
+    const panelTabButtons = Array.from(document.querySelectorAll(".agenda-panel-tab[data-agenda-tab]"));
+    const stateKey = "makerflow-agenda-board-state-v2";
+    const colWidthKey = "makerflow-agenda-col-widths-v1";
+    const rawState = readStorageJSON(stateKey, {});
+    const state = {
+      search: String(rawState.search || ""),
+      owner: String(rawState.owner || ""),
+      status: String(rawState.status || ""),
+      sort: ["default", "updated_desc", "updated_asc", "title_asc", "title_desc"].includes(String(rawState.sort || ""))
+        ? String(rawState.sort)
+        : "default",
+      groupBy: ["none", "section", "owner", "status"].includes(String(rawState.groupBy || ""))
+        ? String(rawState.groupBy)
+        : "none",
+      hiddenCols: rawState.hiddenCols && typeof rawState.hiddenCols === "object" ? rawState.hiddenCols : {},
+    };
+    const colWidths = readStorageJSON(colWidthKey, {});
+    let activeTab = "updates";
+    let activeItemId = "";
 
-    const loadPanel = async (itemId) => {
+    const saveState = () => {
+      writeStorageJSON(stateKey, state);
+    };
+
+    const setPanelTab = (tab) => {
+      const next = ["updates", "files", "activity"].includes(String(tab || "")) ? String(tab) : "updates";
+      activeTab = next;
+      panelTabButtons.forEach((button) => {
+        if (!(button instanceof HTMLButtonElement)) {
+          return;
+        }
+        const key = button.getAttribute("data-agenda-tab") || "";
+        button.classList.toggle("active", key === next);
+      });
+      if (rightPanel) {
+        rightPanel.querySelectorAll("[data-agenda-tab-panel]").forEach((node) => {
+          if (!(node instanceof HTMLElement)) {
+            return;
+          }
+          node.hidden = (node.getAttribute("data-agenda-tab-panel") || "") !== next;
+        });
+      }
+    };
+
+    const setSelectedRow = (itemId) => {
+      board.querySelectorAll(".agenda-topic-row[data-item-id]").forEach((row) => {
+        if (!(row instanceof HTMLElement)) {
+          return;
+        }
+        row.classList.toggle("agenda-row-selected", String(row.getAttribute("data-item-id") || "") === String(itemId || ""));
+      });
+    };
+
+    const applyHiddenColumns = () => {
+      const map = {
+        updates: "hideUpdates",
+        owner: "hideOwner",
+        status: "hideStatus",
+        updated: "hideUpdated",
+      };
+      Object.keys(map).forEach((key) => {
+        const attr = map[key];
+        board.dataset[attr] = state.hiddenCols[key] ? "1" : "0";
+      });
+      hideColumns.forEach((node) => {
+        if (!(node instanceof HTMLInputElement)) {
+          return;
+        }
+        const key = String(node.getAttribute("data-agenda-hide-col") || "").trim();
+        node.checked = Boolean(state.hiddenCols[key]);
+      });
+    };
+
+    const applyColumnWidths = () => {
+      board.querySelectorAll("table[data-resizable-table='agenda']").forEach((table) => {
+        table.querySelectorAll("colgroup col[data-col-index]").forEach((col) => {
+          if (!(col instanceof HTMLElement)) {
+            return;
+          }
+          const key = String(col.getAttribute("data-col-index") || "").trim();
+          const width = Number.parseFloat(String(colWidths[key] || ""));
+          if (Number.isFinite(width) && width >= 80) {
+            col.style.width = `${Math.round(width)}px`;
+          }
+        });
+      });
+    };
+
+    const getParentPairs = (tbody) => {
+      const parents = Array.from(tbody.querySelectorAll("tr.agenda-topic-parent[data-item-id]"));
+      return parents.map((parent) => {
+        const itemId = String(parent.getAttribute("data-item-id") || "").trim();
+        const shell = itemId
+          ? tbody.querySelector(`tr.agenda-subitems-shell[data-parent-shell='${escapeCssValue(itemId)}']`)
+          : null;
+        return { parent, shell };
+      });
+    };
+
+    const pairGroupLabel = (pair) => {
+      const row = pair.parent;
+      if (!(row instanceof HTMLElement)) {
+        return "No value";
+      }
+      if (state.groupBy === "section") {
+        return String(row.dataset.section || "General").trim() || "General";
+      }
+      if (state.groupBy === "owner") {
+        return String(row.dataset.ownerLabel || "Unassigned").trim() || "Unassigned";
+      }
+      if (state.groupBy === "status") {
+        return String(row.dataset.status || "No status").trim() || "No status";
+      }
+      return "";
+    };
+
+    const sortValueForPair = (pair) => {
+      const row = pair.parent;
+      if (!(row instanceof HTMLElement)) {
+        return "";
+      }
+      if (state.sort === "updated_desc" || state.sort === "updated_asc") {
+        return parseTimestampMs(row.dataset.updated || "");
+      }
+      if (state.sort === "title_asc" || state.sort === "title_desc") {
+        return sortableValue(String(row.dataset.title || ""));
+      }
+      return 0;
+    };
+
+    const applyRowFiltersAndOrdering = () => {
+      board.querySelectorAll(".agenda-group-body").forEach((groupBody) => {
+        if (!(groupBody instanceof HTMLElement)) {
+          return;
+        }
+        const table = groupBody.querySelector("table.agenda-grid-table");
+        if (!(table instanceof HTMLTableElement) || !table.tBodies[0]) {
+          return;
+        }
+        const tbody = table.tBodies[0];
+        tbody.querySelectorAll(".agenda-inline-group-row").forEach((row) => row.remove());
+        const pairs = getParentPairs(tbody);
+        const searchQuery = String(state.search || "").trim().toLowerCase();
+        const ownerId = String(state.owner || "").trim();
+        const statusValue = String(state.status || "").trim();
+        let visibleCount = 0;
+
+        pairs.forEach((pair) => {
+          if (!(pair.parent instanceof HTMLElement)) {
+            return;
+          }
+          const row = pair.parent;
+          const rowOwner = String(row.dataset.ownerId || "").trim();
+          const rowStatus = String(row.dataset.status || "").trim();
+          const rowText = [
+            row.dataset.title || "",
+            row.dataset.section || "",
+            row.dataset.ownerLabel || "",
+            row.dataset.status || "",
+            row.textContent || "",
+          ].join(" ").toLowerCase();
+          const matchesSearch = !searchQuery || rowText.includes(searchQuery);
+          const matchesOwner = !ownerId || rowOwner === ownerId;
+          const matchesStatus = !statusValue || rowStatus === statusValue;
+          const visible = matchesSearch && matchesOwner && matchesStatus;
+          row.hidden = !visible;
+          const toggle = row.querySelector(".agenda-subitem-toggle[data-parent-id]");
+          const expanded = toggle instanceof HTMLElement && toggle.getAttribute("aria-expanded") === "true";
+          if (pair.shell instanceof HTMLElement) {
+            pair.shell.hidden = !visible || !expanded;
+          }
+          if (visible) {
+            visibleCount += 1;
+          }
+        });
+
+        const visiblePairs = pairs.filter((pair) => pair.parent instanceof HTMLElement && !pair.parent.hidden);
+        const hiddenPairs = pairs.filter((pair) => !(pair.parent instanceof HTMLElement) || pair.parent.hidden);
+        if (state.sort !== "default") {
+          visiblePairs.sort((left, right) => {
+            const lv = sortValueForPair(left);
+            const rv = sortValueForPair(right);
+            const cmp = compareValues(lv, rv);
+            const desc = state.sort.endsWith("_desc");
+            return desc ? -cmp : cmp;
+          });
+        }
+
+        const anchor =
+          tbody.querySelector("tr.agenda-empty-row")
+          || tbody.querySelector("tr.agenda-add-row");
+        [...visiblePairs, ...hiddenPairs].forEach((pair) => {
+          if (pair.parent instanceof HTMLElement) {
+            if (anchor) {
+              tbody.insertBefore(pair.parent, anchor);
+            } else {
+              tbody.appendChild(pair.parent);
+            }
+          }
+          if (pair.shell instanceof HTMLElement) {
+            if (anchor) {
+              tbody.insertBefore(pair.shell, anchor);
+            } else {
+              tbody.appendChild(pair.shell);
+            }
+          }
+        });
+
+        if (state.groupBy !== "none") {
+          let currentLabel = "";
+          visiblePairs.forEach((pair) => {
+            if (!(pair.parent instanceof HTMLElement) || pair.parent.hidden) {
+              return;
+            }
+            const label = pairGroupLabel(pair) || "No value";
+            if (label !== currentLabel) {
+              currentLabel = label;
+              const marker = document.createElement("tr");
+              marker.className = "agenda-inline-group-row";
+              marker.innerHTML = `<td colspan="6">${escapeHtml(label)}</td>`;
+              tbody.insertBefore(marker, pair.parent);
+            }
+          });
+        }
+
+        const staticEmpty = tbody.querySelector(".agenda-empty-static");
+        const filterEmpty = tbody.querySelector(".agenda-empty-filter");
+        if (staticEmpty instanceof HTMLElement) {
+          staticEmpty.hidden = pairs.length > 0;
+        }
+        if (filterEmpty instanceof HTMLElement) {
+          filterEmpty.hidden = visibleCount > 0 || pairs.length === 0;
+        }
+      });
+      refreshSemanticTones(board);
+    };
+
+    const renderPanelUpdates = (updates) => {
+      if (!panelUpdates) {
+        return;
+      }
+      const rows = Array.isArray(updates) ? updates : [];
+      if (!rows.length) {
+        panelUpdates.innerHTML = "<p class='muted'>No updates yet.</p>";
+        return;
+      }
+      panelUpdates.innerHTML = rows
+        .map((u) => `
+          <article class="agenda-update-card">
+            <header><strong>${escapeHtml(String(u.author_name || "Unknown"))}</strong><span class="muted">${escapeHtml(formatCommentTimestamp(u.created_at || ""))}</span></header>
+            <p>${escapeHtml(String(u.body || ""))}</p>
+          </article>
+        `)
+        .join("");
+    };
+
+    const renderPanelFiles = (files) => {
+      if (!panelFiles) {
+        return;
+      }
+      const rows = Array.isArray(files) ? files : [];
+      if (!rows.length) {
+        panelFiles.innerHTML = "<p class='muted'>No files linked yet.</p>";
+        return;
+      }
+      panelFiles.innerHTML = rows
+        .map((file) => `
+          <article class="agenda-file-card">
+            <header>
+              <a href="${escapeHtml(String(file.file_url || "#"))}" target="_blank" rel="noreferrer">${escapeHtml(String(file.file_name || "File"))}</a>
+              <button type="button" class="btn danger-btn" data-agenda-file-delete="${escapeHtml(String(file.id || ""))}">Remove</button>
+            </header>
+            <p class="muted">${escapeHtml(String(file.uploader_name || "Unknown"))} · ${escapeHtml(formatCommentTimestamp(file.created_at || ""))}</p>
+          </article>
+        `)
+        .join("");
+    };
+
+    const renderPanelActivity = (activity) => {
+      if (!panelActivity) {
+        return;
+      }
+      const rows = Array.isArray(activity) ? activity : [];
+      if (!rows.length) {
+        panelActivity.innerHTML = "<p class='muted'>No activity yet.</p>";
+        return;
+      }
+      panelActivity.innerHTML = rows
+        .map((entry) => `
+          <article class="agenda-activity-card">
+            <header><strong>${escapeHtml(String(entry.label || "Activity"))}</strong><span class="muted">${escapeHtml(formatCommentTimestamp(entry.created_at || ""))}</span></header>
+            <p>${escapeHtml(String(entry.summary || ""))}</p>
+            <p class="muted">${escapeHtml(String(entry.author_name || "Unknown"))}</p>
+          </article>
+        `)
+        .join("");
+    };
+
+    const loadPanel = async (itemId, tabHint) => {
       const response = await fetch(withSpace(`/api/agenda/item/detail?item_id=${encodeURIComponent(String(itemId))}`), {
         credentials: "same-origin",
       });
@@ -2694,8 +3003,13 @@
       }
       const item = payload.item;
       const updates = Array.isArray(payload.updates) ? payload.updates : [];
+      const files = Array.isArray(payload.files) ? payload.files : [];
+      const activity = Array.isArray(payload.activity) ? payload.activity : [];
       if (panelItemId) {
         panelItemId.value = String(item.id || "");
+      }
+      if (panelFileItemId) {
+        panelFileItemId.value = String(item.id || "");
       }
       if (panelTitle) {
         panelTitle.textContent = String(item.title || "Agenda Item");
@@ -2703,19 +3017,31 @@
       if (panelMeta) {
         panelMeta.textContent = `${String(item.meeting_date || "-")} · ${String(item.agenda_title || "-")} · Status: ${String(item.status || "-")}`;
       }
-      if (panelUpdates) {
-        panelUpdates.innerHTML = updates.length
-          ? updates.map((u) => `
-              <article class="agenda-update-card">
-                <header><strong>${escapeHtml(String(u.author_name || "Unknown"))}</strong><span class="muted">${escapeHtml(String(u.created_at || ""))}</span></header>
-                <p>${escapeHtml(String(u.body || ""))}</p>
-              </article>
-            `).join("")
-          : "<p class='muted'>No updates yet.</p>";
+      if (panelLinked) {
+        const links = [];
+        const linkedTaskId = String(item.linked_task_id || "").trim();
+        const linkedProjectId = String(item.linked_project_id || "").trim();
+        if (linkedTaskId) {
+          links.push(
+            `<button type="button" class="linkish list-open" data-list-entity="task" data-list-id="${escapeHtml(linkedTaskId)}">Linked task: ${escapeHtml(String(item.linked_task_title || linkedTaskId))}</button>`,
+          );
+        }
+        if (linkedProjectId) {
+          links.push(
+            `<button type="button" class="linkish list-open" data-list-entity="project" data-list-id="${escapeHtml(linkedProjectId)}">Linked project: ${escapeHtml(String(item.linked_project_title || linkedProjectId))}</button>`,
+          );
+        }
+        panelLinked.innerHTML = links.join(" ");
       }
+      renderPanelUpdates(updates);
+      renderPanelFiles(files);
+      renderPanelActivity(activity);
+      activeItemId = String(item.id || "");
+      setSelectedRow(activeItemId);
       if (rightPanel) {
         rightPanel.hidden = false;
       }
+      setPanelTab(tabHint || activeTab || "updates");
     };
 
     if (panelClose) {
@@ -2723,6 +3049,8 @@
         if (rightPanel) {
           rightPanel.hidden = true;
         }
+        activeItemId = "";
+        setSelectedRow("");
       });
     }
 
@@ -2734,9 +3062,46 @@
           return;
         }
         try {
-          await loadPanel(itemId);
+          await loadPanel(itemId, "updates");
         } catch (_err) {
           setModalFeedback("Could not open agenda updates panel.", true);
+        }
+        return;
+      }
+      const openButton = event.target.closest(".agenda-row-open[data-item-id]");
+      if (openButton) {
+        const itemId = openButton.getAttribute("data-item-id") || "";
+        if (!itemId) {
+          return;
+        }
+        try {
+          await loadPanel(itemId, activeTab || "updates");
+        } catch (_err) {
+          setModalFeedback("Could not open agenda item details.", true);
+        }
+        return;
+      }
+      const panelTab = event.target.closest(".agenda-panel-tab[data-agenda-tab]");
+      if (panelTab) {
+        setPanelTab(panelTab.getAttribute("data-agenda-tab") || "updates");
+        return;
+      }
+      const removeFileButton = event.target.closest("[data-agenda-file-delete]");
+      if (removeFileButton) {
+        const fileId = String(removeFileButton.getAttribute("data-agenda-file-delete") || "").trim();
+        if (!fileId) {
+          return;
+        }
+        if (!window.confirm("Remove this linked file?")) {
+          return;
+        }
+        try {
+          await postForm("/api/agenda/item/files/delete", { file_id: fileId });
+          if (activeItemId) {
+            await loadPanel(activeItemId, "files");
+          }
+        } catch (_err) {
+          setModalFeedback("Could not remove linked file.", true);
         }
         return;
       }
@@ -2755,7 +3120,7 @@
       const subToggle = event.target.closest(".agenda-subitem-toggle[data-parent-id]");
       if (subToggle) {
         const parentId = subToggle.getAttribute("data-parent-id") || "";
-        const shell = document.querySelector(`[data-parent-shell='${escapeCssValue(parentId)}']`);
+        const shell = board.querySelector(`[data-parent-shell='${escapeCssValue(parentId)}']`);
         if (shell instanceof HTMLElement) {
           const expanded = subToggle.getAttribute("aria-expanded") === "true";
           subToggle.setAttribute("aria-expanded", expanded ? "false" : "true");
@@ -2778,9 +3143,33 @@
           if (panelBody) {
             panelBody.value = "";
           }
-          await loadPanel(itemId);
+          await loadPanel(itemId, "updates");
         } catch (_err) {
           setModalFeedback("Could not post agenda update.", true);
+        }
+      });
+    }
+
+    if (panelFileForm) {
+      panelFileForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const itemId = panelFileItemId ? String(panelFileItemId.value || "").trim() : "";
+        const fileName = panelFileName ? String(panelFileName.value || "").trim() : "";
+        const fileUrl = panelFileUrl ? String(panelFileUrl.value || "").trim() : "";
+        if (!itemId || !fileUrl) {
+          return;
+        }
+        try {
+          await postForm("/api/agenda/item/files/add", { item_id: itemId, file_name: fileName, file_url: fileUrl });
+          if (panelFileName) {
+            panelFileName.value = "";
+          }
+          if (panelFileUrl) {
+            panelFileUrl.value = "";
+          }
+          await loadPanel(itemId, "files");
+        } catch (_err) {
+          setModalFeedback("Could not add linked file.", true);
         }
       });
     }
@@ -2788,6 +3177,13 @@
     document.addEventListener("change", async (event) => {
       const field = event.target.closest(".agenda-row-field[data-item-id][data-field]");
       if (!(field instanceof HTMLInputElement || field instanceof HTMLSelectElement || field instanceof HTMLTextAreaElement)) {
+        const hideBox = event.target.closest("[data-agenda-hide-col]");
+        if (hideBox instanceof HTMLInputElement) {
+          const key = String(hideBox.getAttribute("data-agenda-hide-col") || "").trim();
+          state.hiddenCols[key] = hideBox.checked;
+          applyHiddenColumns();
+          saveState();
+        }
         return;
       }
       const itemId = field.getAttribute("data-item-id") || "";
@@ -2796,22 +3192,70 @@
         return;
       }
       try {
-        await postForm("/api/agenda/item/save", { item_id: itemId, [key]: field.value });
+        const payload = await postForm("/api/agenda/item/save", { item_id: itemId, [key]: field.value });
+        const row = field.closest(".agenda-topic-row[data-item-id]");
+        if (row instanceof HTMLElement) {
+          const nowStamp = String(payload.updated_at || new Date().toISOString());
+          row.dataset.updated = nowStamp;
+          if (key === "status") {
+            row.dataset.status = String(field.value || "");
+          }
+          if (key === "owner_user_id" && field instanceof HTMLSelectElement) {
+            row.dataset.ownerId = String(field.value || "");
+            row.dataset.ownerLabel = String(field.selectedOptions?.[0]?.textContent || "Unassigned").trim();
+          }
+          const updatedCell = row.querySelector(".agenda-col-updated");
+          if (updatedCell instanceof HTMLElement) {
+            updatedCell.innerHTML = `<span class="pill soft">${escapeHtml(formatCommentTimestamp(nowStamp))}</span>`;
+          }
+        }
+        applyRowFiltersAndOrdering();
+        if (activeItemId && activeItemId === itemId) {
+          await loadPanel(itemId, activeTab || "updates");
+        }
       } catch (_err) {
         setModalFeedback("Could not update agenda item field.", true);
       }
     });
 
     if (search instanceof HTMLInputElement) {
+      search.value = state.search;
       search.addEventListener("input", () => {
-        const query = String(search.value || "").trim().toLowerCase();
-        board.querySelectorAll(".agenda-topic-row, .agenda-topic-parent").forEach((row) => {
-          if (!(row instanceof HTMLElement)) {
-            return;
-          }
-          const text = String(row.textContent || "").toLowerCase();
-          row.hidden = Boolean(query) && !text.includes(query);
-        });
+        state.search = String(search.value || "");
+        saveState();
+        applyRowFiltersAndOrdering();
+      });
+    }
+    if (ownerFilter instanceof HTMLSelectElement) {
+      ownerFilter.value = state.owner;
+      ownerFilter.addEventListener("change", () => {
+        state.owner = String(ownerFilter.value || "");
+        saveState();
+        applyRowFiltersAndOrdering();
+      });
+    }
+    if (statusFilter instanceof HTMLSelectElement) {
+      statusFilter.value = state.status;
+      statusFilter.addEventListener("change", () => {
+        state.status = String(statusFilter.value || "");
+        saveState();
+        applyRowFiltersAndOrdering();
+      });
+    }
+    if (sortSelect instanceof HTMLSelectElement) {
+      sortSelect.value = state.sort;
+      sortSelect.addEventListener("change", () => {
+        state.sort = String(sortSelect.value || "default");
+        saveState();
+        applyRowFiltersAndOrdering();
+      });
+    }
+    if (groupBySelect instanceof HTMLSelectElement) {
+      groupBySelect.value = state.groupBy;
+      groupBySelect.addEventListener("change", () => {
+        state.groupBy = String(groupBySelect.value || "none");
+        saveState();
+        applyRowFiltersAndOrdering();
       });
     }
 
@@ -2819,34 +3263,55 @@
       if (!(table instanceof HTMLTableElement)) {
         return;
       }
-      const cols = table.querySelectorAll("colgroup col");
       table.querySelectorAll(".agenda-resize-handle").forEach((handle) => {
         handle.addEventListener("mousedown", (event) => {
           const th = handle.closest("th");
           if (!(th instanceof HTMLTableCellElement)) {
             return;
           }
-          const index = Array.from(th.parentElement?.children || []).indexOf(th);
-          if (index < 0 || index >= cols.length) {
+          const colIndex = String(th.getAttribute("data-col-index") || "").trim();
+          if (!colIndex) {
+            return;
+          }
+          const firstCol = board.querySelector(`col[data-col-index='${escapeCssValue(colIndex)}']`);
+          if (!(firstCol instanceof HTMLElement)) {
             return;
           }
           event.preventDefault();
-          const col = cols[index];
           const startX = event.clientX;
-          const startWidth = col.getBoundingClientRect().width || th.getBoundingClientRect().width;
+          const startWidth = firstCol.getBoundingClientRect().width || th.getBoundingClientRect().width;
           const onMove = (moveEvent) => {
-            const next = Math.max(80, startWidth + (moveEvent.clientX - startX));
-            col.style.width = `${next}px`;
+            const next = Math.max(80, Math.round(startWidth + (moveEvent.clientX - startX)));
+            board.querySelectorAll(`col[data-col-index='${escapeCssValue(colIndex)}']`).forEach((node) => {
+              if (node instanceof HTMLElement) {
+                node.style.width = `${next}px`;
+              }
+            });
+            colWidths[colIndex] = next;
           };
           const onUp = () => {
             document.removeEventListener("mousemove", onMove);
             document.removeEventListener("mouseup", onUp);
+            writeStorageJSON(colWidthKey, colWidths);
           };
           document.addEventListener("mousemove", onMove);
           document.addEventListener("mouseup", onUp);
         });
       });
     });
+    panelTabButtons.forEach((button) => {
+      if (!(button instanceof HTMLButtonElement)) {
+        return;
+      }
+      button.addEventListener("click", () => {
+        setPanelTab(button.getAttribute("data-agenda-tab") || "updates");
+      });
+    });
+
+    applyHiddenColumns();
+    applyColumnWidths();
+    applyRowFiltersAndOrdering();
+    setPanelTab(activeTab);
   }
 
   function initSpaceContextForms() {

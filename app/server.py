@@ -5868,7 +5868,7 @@ def render_agenda_monday_page(conn: sqlite3.Connection, org_id: int) -> str:
             return agenda_status_from_task_status(str(row["linked_task_status"] or ""))
         if row["linked_project_id"] is not None:
             return agenda_status_from_project_status(str(row["linked_project_status"] or ""))
-        return str(row["status"] or "Open")
+        return str(row["status"] or "Not Discussed")
 
     def last_updated_label(row: sqlite3.Row) -> str:
         raw = str(row["last_updated"] or row["created_at"] or "")
@@ -6120,7 +6120,7 @@ def render_agenda_monday_page(conn: sqlite3.Connection, org_id: int) -> str:
       <div class='agenda-toolbar-actions'>
         <label class='agenda-toolbar-search'>Search <input type='search' id='agenda-grid-search' placeholder='Search items...' /></label>
         <label>Person <select id='agenda-filter-owner'><option value=''>All</option>{owner_filter_opts}</select></label>
-        <label>Status <select id='agenda-filter-status'><option value=''>All</option>{agenda_status_filter_opts}</select></label>
+        <label>Filter <select id='agenda-filter-status'><option value=''>All statuses</option>{agenda_status_filter_opts}</select></label>
         <label>Sort
           <select id='agenda-sort'>
             <option value='default'>Default</option>
@@ -10548,16 +10548,19 @@ def app(environ, start_response):
                 return json_response({"ok": False, "error": "invalid_item"}, status="400 Bad Request").wsgi(start_response)
             row = conn.execute(
                 """
-                SELECT i.id, i.agenda_id, i.parent_item_id, i.section, i.title, i.status, i.priority, i.due_date, i.minutes_estimate, i.description,
+                SELECT i.id, i.agenda_id, i.parent_item_id, i.section, i.title, i.status, i.priority, i.due_date, i.minutes_estimate, i.description, i.updated_at, i.created_at,
                        i.linked_task_id, i.linked_project_id, i.item_type,
+                       t.title AS linked_task_title, p.name AS linked_project_title,
                        a.title AS agenda_title, a.meeting_date,
                        u.name AS owner_name
                 FROM meeting_items i
                 JOIN meeting_agendas a ON a.id = i.agenda_id
                 LEFT JOIN users u ON u.id = i.owner_user_id
+                LEFT JOIN tasks t ON t.id = i.linked_task_id AND t.organization_id = ? AND t.deleted_at IS NULL
+                LEFT JOIN projects p ON p.id = i.linked_project_id AND p.organization_id = ? AND p.deleted_at IS NULL
                 WHERE i.id = ? AND a.organization_id = ?
                 """,
-                (item_id, org_id),
+                (org_id, org_id, item_id, org_id),
             ).fetchone()
             if not row:
                 return json_response({"ok": False, "error": "not_found"}, status="404 Not Found").wsgi(start_response)
@@ -10572,6 +10575,60 @@ def app(environ, start_response):
                 """,
                 (org_id, item_id),
             ).fetchall()
+            files = conn.execute(
+                """
+                SELECT f.id, f.file_name, f.file_url, f.created_at, u.name AS uploader_name
+                FROM meeting_item_files f
+                LEFT JOIN users u ON u.id = f.uploader_user_id
+                WHERE f.organization_id = ? AND f.item_id = ?
+                ORDER BY f.created_at DESC, f.id DESC
+                LIMIT 80
+                """,
+                (org_id, item_id),
+            ).fetchall()
+            audit_rows = conn.execute(
+                """
+                SELECT a.id, a.action, a.details, a.created_at, u.name AS actor_name
+                FROM audit_log a
+                LEFT JOIN users u ON u.id = a.user_id
+                WHERE a.organization_id = ? AND a.entity = 'meeting_items' AND a.entity_id = ?
+                ORDER BY a.id DESC
+                LIMIT 80
+                """,
+                (org_id, str(item_id)),
+            ).fetchall()
+            activity_items: List[Dict[str, str]] = []
+            for r in updates:
+                activity_items.append(
+                    {
+                        "kind": "update",
+                        "label": "Update posted",
+                        "summary": str(r["body"] or "")[:260],
+                        "author_name": str(r["author_name"] or "Unknown"),
+                        "created_at": str(r["created_at"] or ""),
+                    }
+                )
+            for r in files:
+                activity_items.append(
+                    {
+                        "kind": "file",
+                        "label": "File linked",
+                        "summary": str(r["file_name"] or "File"),
+                        "author_name": str(r["uploader_name"] or "Unknown"),
+                        "created_at": str(r["created_at"] or ""),
+                    }
+                )
+            for r in audit_rows:
+                activity_items.append(
+                    {
+                        "kind": "audit",
+                        "label": str(r["action"] or "activity").replace("_", " ").title(),
+                        "summary": audit_details_summary(r["details"]),
+                        "author_name": str(r["actor_name"] or "Unknown"),
+                        "created_at": str(r["created_at"] or ""),
+                    }
+                )
+            activity_items.sort(key=lambda item: item.get("created_at", ""), reverse=True)
             return json_response(
                 {
                     "ok": True,
@@ -10583,15 +10640,18 @@ def app(environ, start_response):
                         "parent_item_id": row["parent_item_id"] or "",
                         "section": row["section"] or "General",
                         "title": row["title"] or "Untitled",
-                        "status": row["status"] or "Open",
+                        "status": row["status"] or "Not Discussed",
                         "priority": row["priority"] or "Medium",
                         "due_date": row["due_date"] or "",
                         "minutes_estimate": row["minutes_estimate"] or 10,
                         "description": row["description"] or "",
+                        "updated_at": row["updated_at"] or row["created_at"] or "",
                         "item_type": row["item_type"] or "agenda",
                         "owner_name": row["owner_name"] or "",
                         "linked_task_id": row["linked_task_id"] or "",
                         "linked_project_id": row["linked_project_id"] or "",
+                        "linked_task_title": row["linked_task_title"] or "",
+                        "linked_project_title": row["linked_project_title"] or "",
                     },
                     "updates": [
                         {
@@ -10602,6 +10662,17 @@ def app(environ, start_response):
                         }
                         for r in updates
                     ],
+                    "files": [
+                        {
+                            "id": r["id"],
+                            "file_name": r["file_name"] or "File",
+                            "file_url": r["file_url"] or "",
+                            "created_at": r["created_at"] or "",
+                            "uploader_name": r["uploader_name"] or "Unknown",
+                        }
+                        for r in files
+                    ],
+                    "activity": activity_items[:120],
                 }
             ).wsgi(start_response)
 
@@ -10626,12 +10697,113 @@ def app(environ, start_response):
             ).fetchone()
             if not target:
                 return json_response({"ok": False, "error": "not_found"}, status="404 Not Found").wsgi(start_response)
+            created_at = iso()
             conn.execute(
                 """
                 INSERT INTO meeting_item_updates (organization_id, item_id, author_user_id, body, created_at)
                 VALUES (?, ?, ?, ?, ?)
                 """,
-                (org_id, item_id, user_id, body, iso()),
+                (org_id, item_id, user_id, body, created_at),
+            )
+            conn.execute("UPDATE meeting_items SET updated_at = ? WHERE id = ?", (created_at, item_id))
+            log_action(
+                conn,
+                org_id,
+                user_id,
+                "agenda_item_update_posted",
+                "meeting_items",
+                str(item_id),
+                json.dumps({"summary": body[:180], "source": "updates_panel"}),
+            )
+            conn.commit()
+            return json_response({"ok": True}).wsgi(start_response)
+
+        if req.path == "/api/agenda/item/files/add" and req.method == "POST":
+            gate = require_role(ctx, "student")
+            if gate:
+                return json_response({"ok": False, "error": "forbidden"}, status="403 Forbidden").wsgi(start_response)
+            item_id = to_int(req.form.get("item_id"))
+            file_name = str(req.form.get("file_name") or "").strip()
+            file_url = str(req.form.get("file_url") or "").strip()
+            if item_id is None or not file_url:
+                return json_response({"ok": False, "error": "invalid_request"}, status="400 Bad Request").wsgi(start_response)
+            if not re.match(r"^https?://", file_url, flags=re.IGNORECASE):
+                return json_response({"ok": False, "error": "invalid_url"}, status="400 Bad Request").wsgi(start_response)
+            target = conn.execute(
+                """
+                SELECT i.id
+                FROM meeting_items i
+                JOIN meeting_agendas a ON a.id = i.agenda_id
+                WHERE i.id = ? AND a.organization_id = ?
+                """,
+                (item_id, org_id),
+            ).fetchone()
+            if not target:
+                return json_response({"ok": False, "error": "not_found"}, status="404 Not Found").wsgi(start_response)
+            safe_name = file_name[:220]
+            if not safe_name:
+                safe_name = file_url.rstrip("/").rsplit("/", 1)[-1] or "Linked file"
+            created_at = iso()
+            cursor = conn.execute(
+                """
+                INSERT INTO meeting_item_files (organization_id, item_id, uploader_user_id, file_name, file_url, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (org_id, item_id, user_id, safe_name, file_url, created_at),
+            )
+            conn.execute("UPDATE meeting_items SET updated_at = ? WHERE id = ?", (created_at, item_id))
+            log_action(
+                conn,
+                org_id,
+                user_id,
+                "agenda_item_file_added",
+                "meeting_items",
+                str(item_id),
+                json.dumps({"summary": safe_name, "source": "files_panel", "url": file_url[:280]}),
+            )
+            conn.commit()
+            return json_response(
+                {
+                    "ok": True,
+                    "file": {
+                        "id": int(cursor.lastrowid or 0),
+                        "file_name": safe_name,
+                        "file_url": file_url,
+                        "created_at": created_at,
+                    },
+                }
+            ).wsgi(start_response)
+
+        if req.path == "/api/agenda/item/files/delete" and req.method == "POST":
+            gate = require_role(ctx, "student")
+            if gate:
+                return json_response({"ok": False, "error": "forbidden"}, status="403 Forbidden").wsgi(start_response)
+            file_id = to_int(req.form.get("file_id"))
+            if file_id is None:
+                return json_response({"ok": False, "error": "invalid_request"}, status="400 Bad Request").wsgi(start_response)
+            row = conn.execute(
+                """
+                SELECT f.id, f.item_id, f.file_name
+                FROM meeting_item_files f
+                JOIN meeting_items i ON i.id = f.item_id
+                JOIN meeting_agendas a ON a.id = i.agenda_id
+                WHERE f.id = ? AND f.organization_id = ? AND a.organization_id = ?
+                """,
+                (file_id, org_id, org_id),
+            ).fetchone()
+            if not row:
+                return json_response({"ok": False, "error": "not_found"}, status="404 Not Found").wsgi(start_response)
+            created_at = iso()
+            conn.execute("DELETE FROM meeting_item_files WHERE id = ? AND organization_id = ?", (file_id, org_id))
+            conn.execute("UPDATE meeting_items SET updated_at = ? WHERE id = ?", (created_at, row["item_id"]))
+            log_action(
+                conn,
+                org_id,
+                user_id,
+                "agenda_item_file_removed",
+                "meeting_items",
+                str(row["item_id"]),
+                json.dumps({"summary": str(row["file_name"] or "File removed"), "source": "files_panel"}),
             )
             conn.commit()
             return json_response({"ok": True}).wsgi(start_response)
@@ -11404,8 +11576,8 @@ def app(environ, start_response):
             conn.execute(
                 """
                 INSERT INTO meeting_items
-                (agenda_id, parent_item_id, section, title, owner_user_id, status, priority, due_date, minutes_estimate, description, item_type, sort_order, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (agenda_id, parent_item_id, section, title, owner_user_id, status, priority, due_date, minutes_estimate, description, item_type, sort_order, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     agenda_id,
@@ -11413,13 +11585,14 @@ def app(environ, start_response):
                     form.get("section", "General"),
                     form.get("title", "Untitled Item"),
                     normalize_org_user_id(conn, org_id, form.get("owner_user_id"), fallback=user_id),
-                    "Open",
+                    "Not Discussed",
                     form.get("priority", "Medium") if form.get("priority", "Medium") in {"Low", "Medium", "High", "Critical"} else "Medium",
                     parse_date(form.get("due_date", "")),
                     int(form.get("minutes_estimate", "10") or 10),
                     form.get("description", ""),
                     "agenda",
                     999,
+                    iso(),
                     iso(),
                 ),
             )
@@ -11470,8 +11643,8 @@ def app(environ, start_response):
                 conn.execute(
                     """
                     INSERT INTO meeting_items
-                    (agenda_id, parent_item_id, section, title, owner_user_id, status, priority, due_date, minutes_estimate, description, linked_task_id, item_type, sort_order, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    (agenda_id, parent_item_id, section, title, owner_user_id, status, priority, due_date, minutes_estimate, description, linked_task_id, item_type, sort_order, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         agenda_id,
@@ -11487,6 +11660,7 @@ def app(environ, start_response):
                         source["id"],
                         "task",
                         999,
+                        iso(),
                         iso(),
                     ),
                 )
@@ -11506,8 +11680,8 @@ def app(environ, start_response):
                 conn.execute(
                     """
                     INSERT INTO meeting_items
-                    (agenda_id, parent_item_id, section, title, owner_user_id, status, priority, due_date, minutes_estimate, description, linked_project_id, item_type, sort_order, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    (agenda_id, parent_item_id, section, title, owner_user_id, status, priority, due_date, minutes_estimate, description, linked_project_id, item_type, sort_order, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         agenda_id,
@@ -11523,6 +11697,7 @@ def app(environ, start_response):
                         source["id"],
                         "project",
                         999,
+                        iso(),
                         iso(),
                     ),
                 )
@@ -11549,9 +11724,9 @@ def app(environ, start_response):
             ).fetchone()
             if not target:
                 return redirect(scoped("/agenda?msg=Agenda%20item%20not%20found")).wsgi(start_response)
-            status = str(form.get("status") or "Open").strip()
+            status = str(form.get("status") or "Not Discussed").strip()
             if status not in set(AGENDA_ITEM_STATUSES):
-                status = "Open"
+                status = "Not Discussed"
             minutes_estimate = max(1, to_int(form.get("minutes_estimate"), 10) or 10)
             priority = str(form.get("priority") or "Medium").strip()
             if priority not in {"Low", "Medium", "High", "Critical"}:
@@ -11561,8 +11736,8 @@ def app(environ, start_response):
             section = str(form.get("section") or "General").strip() or "General"
             title = str(form.get("title") or "Untitled Item").strip() or "Untitled Item"
             conn.execute(
-                "UPDATE meeting_items SET title = ?, section = ?, owner_user_id = ?, status = ?, priority = ?, due_date = ?, minutes_estimate = ? WHERE id = ?",
-                (title, section, owner_user_id, status, priority, due_date, minutes_estimate, item_id),
+                "UPDATE meeting_items SET title = ?, section = ?, owner_user_id = ?, status = ?, priority = ?, due_date = ?, minutes_estimate = ?, updated_at = ? WHERE id = ?",
+                (title, section, owner_user_id, status, priority, due_date, minutes_estimate, iso(), item_id),
             )
             linked_task_id = to_int(str(target["linked_task_id"])) if target["linked_task_id"] is not None else None
             linked_project_id = to_int(str(target["linked_project_id"])) if target["linked_project_id"] is not None else None
@@ -11650,7 +11825,7 @@ def app(environ, start_response):
                         project_id,
                         row["title"],
                         row["description"] or "",
-                        task_status_from_agenda_status(str(row["status"] or "Open")),
+                        task_status_from_agenda_status(str(row["status"] or "Not Discussed")),
                         row["priority"] or "Medium",
                         row["owner_user_id"],
                         user_id,
@@ -11667,8 +11842,8 @@ def app(environ, start_response):
                 )
                 new_task_id = int(cursor.lastrowid)
                 conn.execute(
-                    "UPDATE meeting_items SET linked_task_id = ?, item_type = 'task' WHERE id = ?",
-                    (new_task_id, item_id),
+                    "UPDATE meeting_items SET linked_task_id = ?, item_type = 'task', updated_at = ? WHERE id = ?",
+                    (new_task_id, iso(), item_id),
                 )
                 conn.commit()
                 return redirect(scoped(f"/agenda?agenda_id={agenda_id or row['agenda_id']}&msg=Agenda%20item%20converted%20to%20task")).wsgi(start_response)
@@ -11687,7 +11862,7 @@ def app(environ, start_response):
                     row["title"],
                     row["description"] or "",
                     "Core Operations",
-                    project_status_from_agenda_status(str(row["status"] or "Open")),
+                    project_status_from_agenda_status(str(row["status"] or "Not Discussed")),
                     row["priority"] or "Medium",
                     row["owner_user_id"],
                     dt.date.today().isoformat(),
@@ -11704,8 +11879,8 @@ def app(environ, start_response):
             )
             new_project_id = int(cursor.lastrowid)
             conn.execute(
-                "UPDATE meeting_items SET linked_project_id = ?, item_type = 'project' WHERE id = ?",
-                (new_project_id, item_id),
+                "UPDATE meeting_items SET linked_project_id = ?, item_type = 'project', updated_at = ? WHERE id = ?",
+                (new_project_id, iso(), item_id),
             )
             conn.commit()
             return redirect(scoped(f"/agenda?agenda_id={agenda_id or row['agenda_id']}&msg=Agenda%20item%20converted%20to%20project")).wsgi(start_response)
