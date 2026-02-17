@@ -4276,15 +4276,28 @@ def build_dashboard(
         "SELECT COUNT(*) FROM partnerships WHERE organization_id = ? AND deleted_at IS NULL AND next_followup <= ?",
         (org_id, (dt.date.today() + dt.timedelta(days=7)).isoformat()),
     )
+    maintenance_where = "organization_id = ? AND deleted_at IS NULL"
+    maintenance_params: List[object] = [org_id]
+    if active_space_name:
+        maintenance_where += " AND space = ?"
+        maintenance_params.append(active_space_name)
+    maintenance_where += " AND next_maintenance <= ?"
+    maintenance_params.append((dt.date.today() + dt.timedelta(days=14)).isoformat())
     maintenance_due = query_scalar(
         conn,
-        "SELECT COUNT(*) FROM equipment_assets WHERE organization_id = ? AND deleted_at IS NULL AND (? = '' OR space = ?) AND next_maintenance <= ?",
-        (org_id, active_space_name, active_space_name, (dt.date.today() + dt.timedelta(days=14)).isoformat()),
+        f"SELECT COUNT(*) FROM equipment_assets WHERE {maintenance_where}",
+        tuple(maintenance_params),
     )
+    consumables_where = "organization_id = ? AND deleted_at IS NULL"
+    consumables_params: List[object] = [org_id]
+    if active_space_id is not None:
+        consumables_where += " AND space_id = ?"
+        consumables_params.append(active_space_id)
+    consumables_where += " AND (status IN ('Low','Out') OR quantity_on_hand <= reorder_point)"
     consumables_low = query_scalar(
         conn,
-        "SELECT COUNT(*) FROM consumables WHERE organization_id = ? AND deleted_at IS NULL AND (? IS NULL OR space_id = ?) AND (status IN ('Low','Out') OR quantity_on_hand <= reorder_point)",
-        (org_id, active_space_id, active_space_id),
+        f"SELECT COUNT(*) FROM consumables WHERE {consumables_where}",
+        tuple(consumables_params),
     )
 
     my_focus = conn.execute(
@@ -5199,17 +5212,21 @@ def render_agenda_page(conn: sqlite3.Connection, org_id: int, selected_agenda_id
             (selected_id,),
         ).fetchall()
 
-    note_sources = conn.execute(
-        """
+    note_sql = """
         SELECT n.*, u.name AS author_name
         FROM meeting_note_sources n
         LEFT JOIN users u ON u.id = n.created_by
-        WHERE n.organization_id = ? AND (? IS NULL OR n.linked_agenda_id = ? OR n.linked_agenda_id IS NULL)
-        ORDER BY CASE WHEN n.linked_agenda_id = ? THEN 0 ELSE 1 END, n.updated_at DESC
-        LIMIT 80
-        """,
-        (org_id, selected_id, selected_id, selected_id),
-    ).fetchall()
+        WHERE n.organization_id = ?
+    """
+    note_params: List[object] = [org_id]
+    if selected_id is not None:
+        note_sql += " AND (n.linked_agenda_id = ? OR n.linked_agenda_id IS NULL)"
+        note_sql += " ORDER BY CASE WHEN n.linked_agenda_id = ? THEN 0 ELSE 1 END, n.updated_at DESC"
+        note_params.extend([selected_id, selected_id])
+    else:
+        note_sql += " ORDER BY n.updated_at DESC"
+    note_sql += " LIMIT 80"
+    note_sources = conn.execute(note_sql, tuple(note_params)).fetchall()
 
     agenda_opts = "".join(
         [
@@ -5708,15 +5725,17 @@ def report_metric_payloads(
     )
 
     # Assets by status
-    asset_rows = conn.execute(
-        """
+    asset_sql = """
         SELECT status, COUNT(*) AS c
         FROM equipment_assets
-        WHERE organization_id = ? AND deleted_at IS NULL AND (? = '' OR space = ?)
-        GROUP BY status
-        """,
-        (org_id, space_name, space_name),
-    ).fetchall()
+        WHERE organization_id = ? AND deleted_at IS NULL
+    """
+    asset_params: List[object] = [org_id]
+    if space_name:
+        asset_sql += " AND space = ?"
+        asset_params.append(space_name)
+    asset_sql += " GROUP BY status"
+    asset_rows = conn.execute(asset_sql, tuple(asset_params)).fetchall()
     asset_counts = {str(r["status"]): int(r["c"] or 0) for r in asset_rows}
     asset_labels = [status for status in ASSET_STATUSES if asset_counts.get(status, 0) > 0]
     for label in sorted(asset_counts.keys()):
@@ -5730,19 +5749,19 @@ def report_metric_payloads(
     )
 
     # Consumables low/out by space
-    low_rows = conn.execute(
-        """
+    low_sql = """
         SELECT COALESCE(s.name, 'Unassigned') AS space_name, COUNT(*) AS c
         FROM consumables c
         LEFT JOIN spaces s ON s.id = c.space_id
         WHERE c.organization_id = ? AND c.deleted_at IS NULL
-          AND (? IS NULL OR c.space_id = ?)
           AND (c.status IN ('Low','Out') OR c.quantity_on_hand <= c.reorder_point)
-        GROUP BY COALESCE(s.name, 'Unassigned')
-        ORDER BY c DESC, space_name
-        """,
-        (org_id, selected_space_id, selected_space_id),
-    ).fetchall()
+    """
+    low_params: List[object] = [org_id]
+    if selected_space_id is not None:
+        low_sql += " AND c.space_id = ?"
+        low_params.append(selected_space_id)
+    low_sql += " GROUP BY COALESCE(s.name, 'Unassigned') ORDER BY c DESC, space_name"
+    low_rows = conn.execute(low_sql, tuple(low_params)).fetchall()
     low_labels = [str(r["space_name"]) for r in low_rows]
     low_values = [float(r["c"] or 0) for r in low_rows]
     data["consumables_low_by_space"] = report_payload(
@@ -7366,18 +7385,19 @@ def render_spaces_page(conn: sqlite3.Connection, org_id: int) -> str:
 
 
 def render_consumables_page(conn: sqlite3.Connection, org_id: int, selected_space_id: Optional[int] = None) -> str:
-    rows = conn.execute(
-        """
+    rows_sql = """
         SELECT c.*, s.name AS space_name, u.name AS owner_name
         FROM consumables c
         LEFT JOIN spaces s ON s.id = c.space_id
         LEFT JOIN users u ON u.id = c.owner_user_id
-        WHERE c.organization_id = ? AND c.deleted_at IS NULL AND (? IS NULL OR c.space_id = ?)
-        ORDER BY CASE c.status WHEN 'Out' THEN 1 WHEN 'Low' THEN 2 ELSE 3 END, c.name
-        LIMIT 300
-        """,
-        (org_id, selected_space_id, selected_space_id),
-    ).fetchall()
+        WHERE c.organization_id = ? AND c.deleted_at IS NULL
+    """
+    rows_params: List[object] = [org_id]
+    if selected_space_id is not None:
+        rows_sql += " AND c.space_id = ?"
+        rows_params.append(selected_space_id)
+    rows_sql += " ORDER BY CASE c.status WHEN 'Out' THEN 1 WHEN 'Low' THEN 2 ELSE 3 END, c.name LIMIT 300"
+    rows = conn.execute(rows_sql, tuple(rows_params)).fetchall()
     users = get_users_for_org(conn, org_id)
     spaces = get_spaces_for_org(conn, org_id)
     owner_opts = "".join([f"<option value='{u['id']}'>{h(u['name'])}</option>" for u in users])
@@ -7679,16 +7699,18 @@ def render_intake_page(conn: sqlite3.Connection, org_id: int) -> str:
 
 
 def render_assets_page(conn: sqlite3.Connection, org_id: int, selected_space_name: str = "") -> str:
-    rows = conn.execute(
-        """
+    rows_sql = """
         SELECT a.*, u.name as owner_name
         FROM equipment_assets a
         LEFT JOIN users u ON u.id = a.owner_user_id
-        WHERE a.organization_id = ? AND a.deleted_at IS NULL AND (? = '' OR a.space = ?)
-        ORDER BY COALESCE(a.next_maintenance, '9999-12-31')
-        """,
-        (org_id, selected_space_name, selected_space_name),
-    ).fetchall()
+        WHERE a.organization_id = ? AND a.deleted_at IS NULL
+    """
+    rows_params: List[object] = [org_id]
+    if selected_space_name:
+        rows_sql += " AND a.space = ?"
+        rows_params.append(selected_space_name)
+    rows_sql += " ORDER BY COALESCE(a.next_maintenance, '9999-12-31')"
+    rows = conn.execute(rows_sql, tuple(rows_params)).fetchall()
     users = get_users_for_org(conn, org_id)
     spaces = get_spaces_for_org(conn, org_id)
     owner_opts = "".join([f"<option value='{u['id']}'>{h(u['name'])}</option>" for u in users])
