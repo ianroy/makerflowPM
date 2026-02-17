@@ -8730,7 +8730,11 @@ def import_csv(conn: sqlite3.Connection, org_id: int, entity: str, file_obj: cgi
 
 def fill_csrf(content: str, csrf_token: str) -> str:
     """Fill csrf placeholders used by server-rendered templates."""
-    return content.replace("{{csrf}}", h(csrf_token))
+    safe = h(csrf_token)
+    # Handle both placeholder styles:
+    # - {{csrf}} in normal template literals
+    # - {csrf} emitted by f-strings when {{csrf}} is not quadruple-escaped
+    return content.replace("{{csrf}}", safe).replace("{csrf}", safe)
 
 
 def app(environ, start_response):
