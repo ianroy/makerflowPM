@@ -8813,7 +8813,17 @@ def app(environ, start_response):
             user = conn.execute(
                 "SELECT * FROM users WHERE email = ? AND is_active = 1", (email,)
             ).fetchone()
-            if not user or not verify_password(password, user["password_hash"], user["password_salt"]):
+            valid_password = False
+            if user:
+                try:
+                    valid_password = verify_password(
+                        password,
+                        str(user["password_hash"] or ""),
+                        str(user["password_salt"] or ""),
+                    )
+                except Exception:
+                    valid_password = False
+            if not user or not valid_password:
                 return Response(render_login(req, "Invalid credentials.")).wsgi(start_response)
 
             raw_session, _csrf = create_session(
@@ -12028,6 +12038,9 @@ def app(environ, start_response):
             return redirect(scoped(f"/data-hub?msg={quote(message)}")).wsgi(start_response)
 
         return Response("<h1>404 Not Found</h1>", status="404 Not Found").wsgi(start_response)
+    except Exception:
+        traceback.print_exc()
+        return Response("<h1>500 Internal Server Error</h1><p>An unexpected server error occurred.</p>", status="500 Internal Server Error").wsgi(start_response)
     finally:
         conn.close()
 
