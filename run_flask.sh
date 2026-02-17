@@ -4,15 +4,10 @@
 set -e
 
 # Configuration
-<<<<<<< HEAD
 # App Platform requires binding to 0.0.0.0 and honoring $PORT.
 # Keep MAKERSPACE_* vars as explicit overrides when provided.
 HOST="${MAKERSPACE_HOST:-0.0.0.0}"
 PORT="${PORT:-${MAKERSPACE_PORT:-8080}}"
-=======
-HOST="${MAKERSPACE_HOST:-127.0.0.1}"
-PORT="${MAKERSPACE_PORT:-8080}"
->>>>>>> 9d3315fdc2df7040fcea568cf3964dcdbb4739d6
 WORKERS="${GUNICORN_WORKERS:-4}"
 THREADS="${GUNICORN_THREADS:-2}"
 
