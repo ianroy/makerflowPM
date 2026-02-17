@@ -967,6 +967,120 @@
     }, "Save Project");
   }
 
+  async function openAgendaEditor(agendaId) {
+    const lookups = await getLookups();
+    const response = await fetch(withSpace(`/api/agenda/detail?agenda_id=${encodeURIComponent(String(agendaId))}`), {
+      credentials: "same-origin",
+    });
+    if (!response.ok) {
+      throw new Error("Could not load agenda details.");
+    }
+    const payload = await response.json();
+    if (!payload || payload.ok === false || !payload.agenda) {
+      throw new Error("Could not load agenda details.");
+    }
+    const agenda = payload.agenda || {};
+    const items = Array.isArray(payload.items) ? payload.items : [];
+    const taskOptions = Array.isArray(payload.task_options) ? payload.task_options : [];
+    const projectOptions = Array.isArray(payload.project_options) ? payload.project_options : [];
+
+    const lineRows = items.length
+      ? items.map((item) => {
+          const sourceType = String(item.source_type || "agenda");
+          const sourceId = String(item.source_id || "");
+          const openButton = (sourceType === "task" || sourceType === "project") && sourceId
+            ? `<button type="button" class="linkish list-open" data-list-entity="${escapeHtml(sourceType)}" data-list-id="${escapeHtml(sourceId)}">${escapeHtml(String(item.title || "Untitled"))}</button>`
+            : escapeHtml(String(item.title || "Untitled"));
+          return `
+            <tr>
+              <td><span class="pill">${escapeHtml(sourceType.toUpperCase())}</span></td>
+              <td>${openButton}</td>
+              <td>${escapeHtml(String(item.section || "General"))}</td>
+              <td>${escapeHtml(String(item.status || "-"))}</td>
+              <td>${escapeHtml(String(item.priority || "-"))}</td>
+              <td>${escapeHtml(String(item.due_date || "-"))}</td>
+              <td>${escapeHtml(String(item.minutes_estimate || 10))}</td>
+            </tr>
+          `;
+        }).join("")
+      : "<tr><td colspan='7'>No linked task/project items yet. Use Add Task or Add Project below.</td></tr>";
+
+    const taskSelectOptions = taskOptions.length
+      ? taskOptions.map((task) => `<option value="${escapeHtml(String(task.id))}">${escapeHtml(String(task.title || "Untitled"))} · ${escapeHtml(String(task.status || ""))}</option>`).join("")
+      : "<option value=''>No active tasks available</option>";
+    const projectSelectOptions = projectOptions.length
+      ? projectOptions.map((project) => `<option value="${escapeHtml(String(project.id))}">${escapeHtml(String(project.name || "Untitled"))} · ${escapeHtml(String(project.status || ""))}</option>`).join("")
+      : "<option value=''>No active projects available</option>";
+
+    const formHtml = `
+      <input type="hidden" name="agenda_id" value="${escapeHtml(String(agenda.id || agendaId))}" />
+      <section class="entity-editor">
+        <div class="entity-editor-title">
+          <label>Meeting Title <input name="title" required value="${escapeHtml(String(agenda.title || ""))}" /></label>
+        </div>
+        <div class="entity-editor-meta-grid">
+          <label>Status <select name="status">${fixedOptions(lookups.agenda_statuses || ["Planned", "Active", "Done"], String(agenda.status || "Planned"))}</select></label>
+          <label>Priority <select name="priority">${fixedOptions(lookups.priorities || ["Low", "Medium", "High", "Critical"], String(agenda.priority || "Medium"))}</select></label>
+          <label>Lane <select name="lane">${fixedOptions(lookups.lanes || [], String(agenda.lane || "Core Operations"))}</select></label>
+          <label>Owner <select name="owner_user_id">${selectOptions(lookups.users || [], agenda.owner_user_id || "", "Unassigned")}</select></label>
+          <label>Team <select name="team_id">${selectOptions(lookups.teams || [], agenda.team_id || "", "No team")}</select></label>
+          <label>Space <select name="space_id">${selectOptions(lookups.spaces || [], agenda.space_id || "", "No space")}</select></label>
+          <label>Meeting Date <input type="date" name="meeting_date" value="${escapeHtml(String(agenda.meeting_date || ""))}" /></label>
+          <label>Due Date <input type="date" name="due_date" value="${escapeHtml(String(agenda.due_date || ""))}" /></label>
+        </div>
+        <div class="entity-editor-columns">
+          <div class="entity-editor-main">
+            <label class="field-block">Description <textarea name="description">${escapeHtml(String(agenda.description || ""))}</textarea></label>
+            <label class="field-block">Notes <textarea name="notes">${escapeHtml(String(agenda.notes || ""))}</textarea></label>
+            <h4>Agenda Line Items (from Tasks + Projects)</h4>
+            <table>
+              <thead><tr><th>Type</th><th>Item</th><th>Section</th><th>Status</th><th>Priority</th><th>Due</th><th>Mins</th></tr></thead>
+              <tbody>${lineRows}</tbody>
+            </table>
+            <div class="inline-actions">
+              <label>Task
+                <select id="agenda-attach-task-${escapeHtml(String(agenda.id || agendaId))}">${taskSelectOptions}</select>
+              </label>
+              <button
+                type="button"
+                class="btn btn-green-solid"
+                data-agenda-attach="task"
+                data-agenda-id="${escapeHtml(String(agenda.id || agendaId))}"
+                data-source-select="agenda-attach-task-${escapeHtml(String(agenda.id || agendaId))}"
+              >Add Task</button>
+            </div>
+            <div class="inline-actions">
+              <label>Project
+                <select id="agenda-attach-project-${escapeHtml(String(agenda.id || agendaId))}">${projectSelectOptions}</select>
+              </label>
+              <button
+                type="button"
+                class="btn btn-green-solid"
+                data-agenda-attach="project"
+                data-agenda-id="${escapeHtml(String(agenda.id || agendaId))}"
+                data-source-select="agenda-attach-project-${escapeHtml(String(agenda.id || agendaId))}"
+              >Add Project</button>
+            </div>
+          </div>
+          <aside class="entity-editor-side">
+            <p class="muted">Agenda line items are linked records from tasks and projects so meeting execution stays aligned with real work.</p>
+            <p class="muted">Tip: open any line item to comment directly on the linked task or project.</p>
+          </aside>
+        </div>
+      </section>
+    `;
+
+    openModal("Edit Meeting Agenda", formHtml, async (formData) => {
+      const savePayload = Object.fromEntries(formData.entries());
+      try {
+        await postForm("/api/agenda/save", savePayload);
+        window.location.href = withSpace(`/agenda?agenda_id=${encodeURIComponent(String(agenda.id || agendaId))}&msg=Agenda%20updated`);
+      } catch (err) {
+        setModalFeedback(describeRequestError(err, "agenda"), true);
+      }
+    }, "Save Agenda");
+  }
+
   function applyProjectUpdate(card, payload, serverStatus) {
     const status = serverStatus || payload.status || card.dataset.status || "Planned";
     card.dataset.name = payload.name || card.dataset.name || "";
@@ -2218,6 +2332,44 @@
     });
 
     modalForm.addEventListener("click", async (event) => {
+      const attachButton = event.target.closest("[data-agenda-attach][data-agenda-id][data-source-select]");
+      if (attachButton) {
+        event.preventDefault();
+        const sourceType = attachButton.getAttribute("data-agenda-attach") || "";
+        const agendaId = attachButton.getAttribute("data-agenda-id") || "";
+        const selectId = attachButton.getAttribute("data-source-select") || "";
+        const sourceSelect = modalForm.querySelector(`#${escapeCssValue(selectId)}`);
+        if (!(sourceSelect instanceof HTMLSelectElement)) {
+          setModalFeedback("Could not find source selector.", true);
+          return;
+        }
+        const sourceId = String(sourceSelect.value || "").trim();
+        if (!sourceId) {
+          setModalFeedback(`Select a ${sourceType || "source"} to attach.`, true);
+          return;
+        }
+        if (attachButton instanceof HTMLButtonElement) {
+          attachButton.disabled = true;
+        }
+        try {
+          await postForm("/api/agenda/item/attach", {
+            agenda_id: agendaId,
+            source_type: sourceType,
+            source_id: sourceId,
+            section: sourceType === "project" ? "Project Review" : "Work Queue",
+          });
+          await openAgendaEditor(agendaId);
+          setModalFeedback(`${sourceType === "project" ? "Project" : "Task"} added to agenda.`, false);
+        } catch (err) {
+          setModalFeedback(describeRequestError(err, "agenda item"), true);
+        } finally {
+          if (attachButton instanceof HTMLButtonElement) {
+            attachButton.disabled = false;
+          }
+        }
+        return;
+      }
+
       const commentButton = event.target.closest("[data-comment-submit='1']");
       if (commentButton) {
         event.preventDefault();
@@ -4535,6 +4687,12 @@
           setModalFeedback("Could not open task editor.", true);
         });
       }
+      return;
+    }
+    if (entity === "agenda") {
+      openAgendaEditor(id).catch(() => {
+        setModalFeedback("Could not open agenda editor.", true);
+      });
       return;
     }
     const config = listEntityConfig(entity);

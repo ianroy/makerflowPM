@@ -359,10 +359,15 @@ body[data-theme="dark"] .theme-switch .theme-switch-knob {
   font-size: 0.9rem;
 }
 
-.nav-link.active,
 .nav-link:hover {
   border-color: #9fcaff;
   background: #e6f2ff;
+}
+
+.nav-link.active {
+  border-color: #3e78b3;
+  background: #bddcff;
+  color: #0f2a40;
 }
 
 body[data-theme="dark"] .nav-link {
@@ -370,10 +375,15 @@ body[data-theme="dark"] .nav-link {
   color: #e9f2ff;
 }
 
-body[data-theme="dark"] .nav-link.active,
 body[data-theme="dark"] .nav-link:hover {
   background: #27425d;
   border-color: #5f86ac;
+}
+
+body[data-theme="dark"] .nav-link.active {
+  background: #183148;
+  border-color: #8ab4dc;
+  color: #f5fbff;
 }
 
 body[data-theme="dark"] .space-chip {
@@ -627,7 +637,7 @@ textarea {
 
 button,
 .btn {
-  background: linear-gradient(90deg, #0b7bd9, #00a882);
+  background: #0b7bd9;
   border: 1px solid #0b7bd9;
   color: #fff;
   border-radius: 10px;
@@ -659,12 +669,14 @@ button.ghost {
 }
 
 .scope-btn.active {
-  background: linear-gradient(90deg, #095ca3, #07876c);
+  background: #095ca3;
+  border-color: #095ca3;
 }
 
 .btn.active,
 .team-filter-btn.active {
-  background: linear-gradient(90deg, #095ca3, #07876c);
+  background: #095ca3;
+  border-color: #095ca3;
 }
 
 .inline-actions {

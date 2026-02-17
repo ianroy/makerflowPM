@@ -504,7 +504,6 @@ NAV_PRIMARY_ITEMS: List[Dict[str, str]] = [
     {"key": "intake", "path": "/intake", "label": "Intake", "min_role": "viewer"},
     {"key": "onboarding", "path": "/onboarding", "label": "Onboarding", "min_role": "viewer"},
     {"key": "spaces", "path": "/spaces", "label": "Spaces", "min_role": "viewer"},
-    {"key": "assets", "path": "/assets", "label": "Assets", "min_role": "viewer"},
     {"key": "partnerships", "path": "/partnerships", "label": "Partnerships", "min_role": "viewer"},
 ]
 
@@ -4079,7 +4078,7 @@ def render_layout(
             <h4>Space Management</h4>
             <div class="side-links">
               <a class="side-mini-link" href="{h(with_space('/spaces', active_space_id))}">Manage Spaces</a>
-              <a class="side-mini-link" href="{h(with_space('/assets', active_space_id))}">Machines</a>
+              <a class="side-mini-link" href="{h(with_space('/assets', active_space_id))}">Assets</a>
               <a class="side-mini-link" href="{h(with_space('/consumables', active_space_id))}">Consumables</a>
             </div>
           </section>
@@ -4739,6 +4738,7 @@ def build_lookups(conn: sqlite3.Connection, org_id: int, role: str = "viewer") -
         "consumable_statuses": CONSUMABLE_STATUSES,
         "partnership_stages": PARTNERSHIP_STAGES,
         "partnership_healths": ["Strong", "Medium", "At Risk"],
+        "agenda_statuses": AGENDA_STATUSES,
         "priorities": ["Low", "Medium", "High", "Critical"],
         "energies": ["Low", "Medium", "High"],
         "lanes": LANES,
@@ -5400,7 +5400,7 @@ def render_agenda_page(conn: sqlite3.Connection, org_id: int, selected_agenda_id
                 f"""
                 <article class='kanban-card project-card'>
                   <div class='card-topline'>
-                    <h5 class='card-title-label'><a href='{agenda_link}'>{h(str(a["title"]))}</a></h5>
+                    <h5 class='card-title-label'><button type='button' class='linkish list-open' data-list-entity='agenda' data-list-id='{a["id"]}'>{h(str(a["title"]))}</button></h5>
                     <span class='pill'>{h(str(a["priority"]))}</span>
                   </div>
                   <p class='muted meta-line-1'>{h(str(a["meeting_date"]))} · {h(str(a["lane"]))}</p>
@@ -5456,7 +5456,7 @@ def render_agenda_page(conn: sqlite3.Connection, org_id: int, selected_agenda_id
         agenda_row_parts.append(
             f"""
             <tr>
-              <td><a href='{agenda_link}'>{h(str(a["title"]))}</a></td>
+              <td><button type='button' class='linkish list-open' data-list-entity='agenda' data-list-id='{a["id"]}'>{h(str(a["title"]))}</button></td>
               <td>{h(str(a["meeting_date"]))}</td>
               <td>
                 <form method='post' action='/agenda/update' class='inline'>
@@ -9697,6 +9697,258 @@ def app(environ, start_response):
 
         if req.path == "/api/lookups":
             return json_response(build_lookups(conn, org_id, role=str(ctx.get("role") or "viewer"))).wsgi(start_response)
+
+        if req.path == "/api/agenda/detail":
+            agenda_id = to_int(req.query.get("agenda_id"))
+            if agenda_id is None:
+                return json_response({"ok": False, "error": "invalid_agenda"}, status="400 Bad Request").wsgi(start_response)
+            agenda = conn.execute(
+                """
+                SELECT a.id, a.title, a.meeting_date, a.notes, a.status, a.priority, a.lane, a.team_id, a.space_id,
+                       a.due_date, a.description, a.owner_user_id,
+                       u.name AS owner_name, t.name AS team_name, s.name AS space_name
+                FROM meeting_agendas a
+                LEFT JOIN users u ON u.id = a.owner_user_id
+                LEFT JOIN teams t ON t.id = a.team_id
+                LEFT JOIN spaces s ON s.id = a.space_id
+                WHERE a.id = ? AND a.organization_id = ?
+                """,
+                (agenda_id, org_id),
+            ).fetchone()
+            if not agenda:
+                return json_response({"ok": False, "error": "not_found"}, status="404 Not Found").wsgi(start_response)
+
+            line_items = conn.execute(
+                """
+                SELECT i.id, i.section, i.minutes_estimate, i.sort_order,
+                       t.id AS task_id, t.title AS task_title, t.status AS task_status, t.priority AS task_priority, t.due_date AS task_due_date,
+                       p.id AS project_id, p.name AS project_name, p.status AS project_status, p.priority AS project_priority, p.due_date AS project_due_date
+                FROM meeting_items i
+                LEFT JOIN tasks t ON t.id = i.linked_task_id AND t.organization_id = ? AND t.deleted_at IS NULL
+                LEFT JOIN projects p ON p.id = i.linked_project_id AND p.organization_id = ? AND p.deleted_at IS NULL
+                WHERE i.agenda_id = ?
+                ORDER BY i.sort_order, i.id
+                """,
+                (org_id, org_id, agenda_id),
+            ).fetchall()
+            items_payload: List[Dict[str, object]] = []
+            for row in line_items:
+                if row["task_id"] is not None:
+                    items_payload.append(
+                        {
+                            "id": row["id"],
+                            "source_type": "task",
+                            "source_id": row["task_id"],
+                            "title": row["task_title"] or "Untitled Task",
+                            "status": row["task_status"] or "",
+                            "priority": row["task_priority"] or "Medium",
+                            "due_date": row["task_due_date"] or "",
+                            "section": row["section"] or "General",
+                            "minutes_estimate": row["minutes_estimate"] or 10,
+                        }
+                    )
+                    continue
+                if row["project_id"] is not None:
+                    items_payload.append(
+                        {
+                            "id": row["id"],
+                            "source_type": "project",
+                            "source_id": row["project_id"],
+                            "title": row["project_name"] or "Untitled Project",
+                            "status": row["project_status"] or "",
+                            "priority": row["project_priority"] or "Medium",
+                            "due_date": row["project_due_date"] or "",
+                            "section": row["section"] or "General",
+                            "minutes_estimate": row["minutes_estimate"] or 10,
+                        }
+                    )
+            task_options = conn.execute(
+                """
+                SELECT id, title, status
+                FROM tasks
+                WHERE organization_id = ?
+                  AND deleted_at IS NULL
+                  AND status NOT IN ('Done', 'Cancelled')
+                ORDER BY updated_at DESC, id DESC
+                LIMIT 200
+                """,
+                (org_id,),
+            ).fetchall()
+            project_options = conn.execute(
+                """
+                SELECT id, name, status
+                FROM projects
+                WHERE organization_id = ?
+                  AND deleted_at IS NULL
+                  AND status != 'Complete'
+                ORDER BY updated_at DESC, id DESC
+                LIMIT 200
+                """,
+                (org_id,),
+            ).fetchall()
+            return json_response(
+                {
+                    "ok": True,
+                    "agenda": {
+                        "id": agenda["id"],
+                        "title": agenda["title"] or "Untitled Meeting",
+                        "meeting_date": agenda["meeting_date"] or "",
+                        "notes": agenda["notes"] or "",
+                        "status": agenda["status"] or "Planned",
+                        "priority": agenda["priority"] or "Medium",
+                        "lane": agenda["lane"] or LANES[0],
+                        "team_id": agenda["team_id"] or "",
+                        "team_name": agenda["team_name"] or "",
+                        "space_id": agenda["space_id"] or "",
+                        "space_name": agenda["space_name"] or "",
+                        "due_date": agenda["due_date"] or "",
+                        "description": agenda["description"] or "",
+                        "owner_user_id": agenda["owner_user_id"] or "",
+                        "owner_name": agenda["owner_name"] or "",
+                    },
+                    "items": items_payload,
+                    "task_options": [{"id": row["id"], "title": row["title"], "status": row["status"]} for row in task_options],
+                    "project_options": [{"id": row["id"], "name": row["name"], "status": row["status"]} for row in project_options],
+                }
+            ).wsgi(start_response)
+
+        if req.path == "/api/agenda/save" and req.method == "POST":
+            gate = require_role(ctx, "student")
+            if gate:
+                return json_response({"ok": False, "error": "forbidden"}, status="403 Forbidden").wsgi(start_response)
+            form = req.form
+            agenda_id = to_int(form.get("agenda_id"))
+            if agenda_id is None:
+                return json_response({"ok": False, "error": "invalid_agenda"}, status="400 Bad Request").wsgi(start_response)
+            current = conn.execute(
+                "SELECT * FROM meeting_agendas WHERE id = ? AND organization_id = ?",
+                (agenda_id, org_id),
+            ).fetchone()
+            if not current:
+                return json_response({"ok": False, "error": "not_found"}, status="404 Not Found").wsgi(start_response)
+            status = str(form.get("status") or current["status"] or "Planned").strip()
+            if status not in AGENDA_STATUSES:
+                status = str(current["status"] or "Planned")
+            priority = str(form.get("priority") or current["priority"] or "Medium").strip()
+            if priority not in {"Low", "Medium", "High", "Critical"}:
+                priority = str(current["priority"] or "Medium")
+            lane = str(form.get("lane") or current["lane"] or LANES[0]).strip()
+            if lane not in LANES:
+                lane = str(current["lane"] or LANES[0])
+            conn.execute(
+                """
+                UPDATE meeting_agendas
+                SET title = ?, meeting_date = ?, owner_user_id = ?, status = ?, priority = ?, lane = ?, team_id = ?, space_id = ?, due_date = ?, description = ?, notes = ?, updated_at = ?
+                WHERE id = ? AND organization_id = ?
+                """,
+                (
+                    str(form.get("title") or current["title"] or "Untitled Meeting").strip() or str(current["title"] or "Untitled Meeting"),
+                    parse_date(form.get("meeting_date", "")) or current["meeting_date"],
+                    normalize_org_user_id(conn, org_id, form.get("owner_user_id"), fallback=to_int(current["owner_user_id"])),
+                    status,
+                    priority,
+                    lane,
+                    to_int(form.get("team_id"), to_int(current["team_id"])),
+                    to_int(form.get("space_id"), to_int(current["space_id"])),
+                    parse_date(form.get("due_date", "")) if "due_date" in form else current["due_date"],
+                    form.get("description", current["description"] or ""),
+                    form.get("notes", current["notes"] or ""),
+                    iso(),
+                    agenda_id,
+                    org_id,
+                ),
+            )
+            conn.commit()
+            return json_response({"ok": True, "agenda_id": agenda_id, "status": status}).wsgi(start_response)
+
+        if req.path == "/api/agenda/item/attach" and req.method == "POST":
+            gate = require_role(ctx, "student")
+            if gate:
+                return json_response({"ok": False, "error": "forbidden"}, status="403 Forbidden").wsgi(start_response)
+            form = req.form
+            agenda_id = to_int(form.get("agenda_id"))
+            source_id = to_int(form.get("source_id"))
+            source_type = str(form.get("source_type") or "").strip().lower()
+            section = str(form.get("section") or "General").strip() or "General"
+            if agenda_id is None or source_id is None:
+                return json_response({"ok": False, "error": "invalid_request"}, status="400 Bad Request").wsgi(start_response)
+            target = conn.execute(
+                "SELECT id FROM meeting_agendas WHERE id = ? AND organization_id = ?",
+                (agenda_id, org_id),
+            ).fetchone()
+            if not target:
+                return json_response({"ok": False, "error": "not_found"}, status="404 Not Found").wsgi(start_response)
+            if source_type == "task":
+                source = conn.execute(
+                    """
+                    SELECT id, title, status, priority, due_date, assignee_user_id
+                    FROM tasks
+                    WHERE id = ? AND organization_id = ? AND deleted_at IS NULL
+                    """,
+                    (source_id, org_id),
+                ).fetchone()
+                if not source:
+                    return json_response({"ok": False, "error": "source_not_found"}, status="404 Not Found").wsgi(start_response)
+                conn.execute(
+                    """
+                    INSERT INTO meeting_items
+                    (agenda_id, section, title, owner_user_id, status, priority, due_date, minutes_estimate, description, linked_task_id, item_type, sort_order, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        agenda_id,
+                        section,
+                        source["title"] or "Untitled Task",
+                        source["assignee_user_id"],
+                        agenda_status_from_task_status(str(source["status"] or "")),
+                        source["priority"] or "Medium",
+                        source["due_date"],
+                        10,
+                        "",
+                        source["id"],
+                        "task",
+                        next_meeting_item_sort_order(conn, agenda_id),
+                        iso(),
+                    ),
+                )
+                conn.commit()
+                return json_response({"ok": True, "agenda_id": agenda_id, "source_type": "task"}).wsgi(start_response)
+            if source_type == "project":
+                source = conn.execute(
+                    """
+                    SELECT id, name, status, priority, due_date, owner_user_id
+                    FROM projects
+                    WHERE id = ? AND organization_id = ? AND deleted_at IS NULL
+                    """,
+                    (source_id, org_id),
+                ).fetchone()
+                if not source:
+                    return json_response({"ok": False, "error": "source_not_found"}, status="404 Not Found").wsgi(start_response)
+                conn.execute(
+                    """
+                    INSERT INTO meeting_items
+                    (agenda_id, section, title, owner_user_id, status, priority, due_date, minutes_estimate, description, linked_project_id, item_type, sort_order, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        agenda_id,
+                        section,
+                        source["name"] or "Untitled Project",
+                        source["owner_user_id"],
+                        agenda_status_from_project_status(str(source["status"] or "")),
+                        source["priority"] or "Medium",
+                        source["due_date"],
+                        10,
+                        "",
+                        source["id"],
+                        "project",
+                        next_meeting_item_sort_order(conn, agenda_id),
+                        iso(),
+                    ),
+                )
+                conn.commit()
+                return json_response({"ok": True, "agenda_id": agenda_id, "source_type": "project"}).wsgi(start_response)
+            return json_response({"ok": False, "error": "invalid_source_type"}, status="400 Bad Request").wsgi(start_response)
 
         if req.path == "/api/activity":
             limit = to_int(req.query.get("limit"), 40) or 40
