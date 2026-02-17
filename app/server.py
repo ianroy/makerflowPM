@@ -80,6 +80,7 @@ LANES = [
 
 TASK_STATUSES = ["Todo", "In Progress", "Blocked", "Done", "Cancelled"]
 PROJECT_STATUSES = ["Planned", "Active", "Blocked", "Complete", "Cancelled"]
+AGENDA_STATUSES = ["Planned", "Active", "Done"]
 AGENDA_ITEM_STATUSES = ["Open", "In Progress", "Done"]
 INTAKE_STATUSES = ["Triage", "Planned", "Active", "On Hold", "Done", "Rejected"]
 ASSET_STATUSES = ["Operational", "Needs Service", "Down"]
@@ -1594,6 +1595,14 @@ def run_schema_upgrades(conn: sqlite3.Connection) -> None:
     ensure_column(conn, "partnerships", "deleted_at", "TEXT")
     ensure_column(conn, "partnerships", "deleted_by_user_id", "INTEGER")
     ensure_column(conn, "onboarding_templates", "doc_url", "TEXT")
+    ensure_column(conn, "meeting_agendas", "status", "TEXT DEFAULT 'Planned'")
+    ensure_column(conn, "meeting_agendas", "priority", "TEXT DEFAULT 'Medium'")
+    ensure_column(conn, "meeting_agendas", "lane", "TEXT DEFAULT 'Core Operations'")
+    ensure_column(conn, "meeting_agendas", "team_id", "INTEGER")
+    ensure_column(conn, "meeting_agendas", "space_id", "INTEGER")
+    ensure_column(conn, "meeting_agendas", "due_date", "TEXT")
+    ensure_column(conn, "meeting_agendas", "updated_at", "TEXT")
+    ensure_column(conn, "meeting_agendas", "description", "TEXT")
     ensure_column(conn, "meeting_items", "linked_task_id", "INTEGER")
     ensure_column(conn, "meeting_items", "linked_project_id", "INTEGER")
     ensure_column(conn, "meeting_items", "item_type", "TEXT DEFAULT 'agenda'")
@@ -1951,10 +1960,20 @@ def init_db() -> None:
             title TEXT NOT NULL,
             meeting_date TEXT NOT NULL,
             owner_user_id INTEGER,
+            status TEXT NOT NULL DEFAULT 'Planned',
+            priority TEXT NOT NULL DEFAULT 'Medium',
+            lane TEXT NOT NULL DEFAULT 'Core Operations',
+            team_id INTEGER,
+            space_id INTEGER,
+            due_date TEXT,
+            description TEXT,
             notes TEXT,
             created_at TEXT NOT NULL,
+            updated_at TEXT,
             FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-            FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE SET NULL
+            FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE SET NULL,
+            FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE SET NULL,
+            FOREIGN KEY (space_id) REFERENCES spaces(id) ON DELETE SET NULL
         );
 
         CREATE TABLE IF NOT EXISTS meeting_items (
@@ -4086,9 +4105,11 @@ def render_layout(
             <button type="button" class="btn ghost" id="activity-toggle" aria-expanded="false" aria-controls="activity-drawer">Activity</button>
             <span class="pill soft" id="activity-count" aria-live="polite">0</span>
             <div class="account-menu">
-              <a class="user-chip top-link-chip account-user-chip" href="{h(with_space('/settings', active_space_id))}" title="Open user settings">{h(user['name'])}</a>
-              <a class="user-chip top-link-chip" href="/admin/users#workspace-editor" title="Open workspace editor">{h(org['name']) if org else 'Workspace'}</a>
-              <form method="post" action="/logout" class="logout-form">
+              <div class="account-identity">
+                <a class="user-chip top-link-chip account-user-chip" href="{h(with_space('/settings', active_space_id))}" title="Open user settings">{h(user['name'])}</a>
+                <a class="user-chip top-link-chip account-workspace-chip" href="/admin/users#workspace-editor" title="Open workspace editor">{h(org['name']) if org else 'Workspace'}</a>
+              </div>
+              <form method="post" action="/logout" class="logout-tray">
                 <input type="hidden" name="csrf_token" value="{h(ctx.get('csrf', ''))}" />
                 <button type="submit" class="logout-btn">Logout</button>
               </form>
@@ -5225,17 +5246,50 @@ def project_status_from_agenda_status(status: str) -> str:
 def render_agenda_page(conn: sqlite3.Connection, org_id: int, selected_agenda_id: Optional[int] = None) -> str:
     agendas = conn.execute(
         """
-        SELECT a.id, a.title, a.meeting_date, a.notes, u.name AS owner_name,
+        SELECT a.id, a.title, a.meeting_date, a.notes, a.owner_user_id, a.status, a.priority, a.lane, a.team_id, a.space_id, a.due_date, a.description,
+               u.name AS owner_name, t.name AS team_name, s.name AS space_name,
                (SELECT COUNT(*) FROM meeting_items i WHERE i.agenda_id = a.id) AS total_items,
                (SELECT COUNT(*) FROM meeting_items i WHERE i.agenda_id = a.id AND i.status != 'Done') AS open_items
         FROM meeting_agendas a
         LEFT JOIN users u ON u.id = a.owner_user_id
+        LEFT JOIN teams t ON t.id = a.team_id
+        LEFT JOIN spaces s ON s.id = a.space_id
         WHERE a.organization_id = ?
         ORDER BY a.meeting_date DESC, a.id DESC
-        LIMIT 60
+        LIMIT 120
         """,
         (org_id,),
     ).fetchall()
+    normalized_agendas: List[Dict[str, object]] = []
+    today = dt.date.today().isoformat()
+    for row in agendas:
+        status = str(row["status"] or "").strip()
+        if status not in AGENDA_STATUSES:
+            status = "Done" if int(row["open_items"] or 0) == 0 and int(row["total_items"] or 0) > 0 else "Active"
+            if str(row["meeting_date"] or "") > today and status != "Done":
+                status = "Planned"
+        normalized_agendas.append(
+            {
+                "id": int(row["id"]),
+                "title": str(row["title"] or "Untitled Meeting"),
+                "meeting_date": str(row["meeting_date"] or ""),
+                "notes": str(row["notes"] or ""),
+                "owner_user_id": row["owner_user_id"],
+                "status": status,
+                "priority": str(row["priority"] or "Medium"),
+                "lane": str(row["lane"] or LANES[0]),
+                "team_id": row["team_id"],
+                "space_id": row["space_id"],
+                "due_date": str(row["due_date"] or ""),
+                "description": str(row["description"] or ""),
+                "owner_name": str(row["owner_name"] or ""),
+                "team_name": str(row["team_name"] or ""),
+                "space_name": str(row["space_name"] or ""),
+                "total_items": int(row["total_items"] or 0),
+                "open_items": int(row["open_items"] or 0),
+            }
+        )
+    agendas = normalized_agendas  # type: ignore[assignment]
     agenda_ids = {int(a["id"]) for a in agendas}
     selected_id = int(selected_agenda_id) if selected_agenda_id and int(selected_agenda_id) in agenda_ids else None
     if selected_id is None and agendas:
@@ -5313,18 +5367,128 @@ def render_agenda_page(conn: sqlite3.Connection, org_id: int, selected_agenda_id
             ).fetchall()
         ]
     )
+    teams = get_teams_for_org(conn, org_id)
+    spaces = get_spaces_for_org(conn, org_id)
     team_opts = "".join(
         [
             f"<option value='{t['id']}'>{h(t['name'])}</option>"
-            for t in get_teams_for_org(conn, org_id)
+            for t in teams
         ]
     )
     space_opts = "".join(
         [
             f"<option value='{s['id']}'>{h(s['name'])}</option>"
-            for s in get_spaces_for_org(conn, org_id)
+            for s in spaces
         ]
     )
+
+    grouped_agendas: Dict[str, List[Dict[str, object]]] = {status: [] for status in AGENDA_STATUSES}
+    for agenda in agendas:
+        status = str(agenda["status"])
+        grouped_agendas[status if status in grouped_agendas else AGENDA_STATUSES[0]].append(agenda)
+
+    agenda_columns: List[str] = []
+    for status in AGENDA_STATUSES:
+        cards = grouped_agendas.get(status, [])
+        card_parts: List[str] = []
+        for a in cards:
+            agenda_link = h(with_space(f"/agenda?agenda_id={int(a['id'])}"))
+            status_opts = "".join(
+                [f"<option {'selected' if str(a['status']) == s else ''}>{h(s)}</option>" for s in AGENDA_STATUSES]
+            )
+            card_parts.append(
+                f"""
+                <article class='kanban-card project-card'>
+                  <div class='card-topline'>
+                    <h5 class='card-title-label'><a href='{agenda_link}'>{h(str(a["title"]))}</a></h5>
+                    <span class='pill'>{h(str(a["priority"]))}</span>
+                  </div>
+                  <p class='muted meta-line-1'>{h(str(a["meeting_date"]))} · {h(str(a["lane"]))}</p>
+                  <p class='muted meta-line-2'>Owner: {h(str(a["owner_name"] or "-"))} · Team: {h(str(a["team_name"] or "-"))}</p>
+                  <p class='muted meta-line-3'>Open Items: {h(str(a["open_items"]))}/{h(str(a["total_items"]))} · Space: {h(str(a["space_name"] or "-"))}</p>
+                  <form method='post' action='/agenda/update' class='inline quick-edit-row'>
+                    <input type='hidden' name='csrf_token' value='{{csrf}}' />
+                    <input type='hidden' name='agenda_id' value='{a["id"]}' />
+                    <select class='quick-status' name='status' aria-label='Agenda status'>
+                      {status_opts}
+                    </select>
+                    <input type='date' class='quick-field due-input' name='meeting_date' value='{h(str(a["meeting_date"]))}' />
+                    <button type='submit'>Save</button>
+                  </form>
+                </article>
+                """
+            )
+        card_html = "".join(card_parts) or "<p class='muted'>No agendas in this status.</p>"
+        agenda_columns.append(
+            f"<section class='kanban-col' data-status='{h(status)}'>{kanban_header(status, len(cards))}<div class='kanban-col-body'>{card_html}</div></section>"
+        )
+
+    agenda_row_parts: List[str] = []
+    for a in agendas:
+        agenda_link = h(with_space(f"/agenda?agenda_id={int(a['id'])}"))
+        status_opts = "".join(
+            [f"<option {'selected' if str(a['status']) == s else ''}>{h(s)}</option>" for s in AGENDA_STATUSES]
+        )
+        priority_opts = "".join(
+            [
+                f"<option {'selected' if str(a['priority']) == v else ''}>{h(v)}</option>"
+                for v in ["Low", "Medium", "High", "Critical"]
+            ]
+        )
+        owner_opts = "".join(
+            [
+                f"<option value='{u['id']}' {'selected' if str(a['owner_user_id'] or '') == str(u['id']) else ''}>{h(u['name'])}</option>"
+                for u in users
+            ]
+        )
+        team_select_opts = "".join(
+            [
+                f"<option value='{t['id']}' {'selected' if str(a['team_id'] or '') == str(t['id']) else ''}>{h(t['name'])}</option>"
+                for t in teams
+            ]
+        )
+        space_select_opts = "".join(
+            [
+                f"<option value='{s['id']}' {'selected' if str(a['space_id'] or '') == str(s['id']) else ''}>{h(s['name'])}</option>"
+                for s in spaces
+            ]
+        )
+        agenda_row_parts.append(
+            f"""
+            <tr>
+              <td><a href='{agenda_link}'>{h(str(a["title"]))}</a></td>
+              <td>{h(str(a["meeting_date"]))}</td>
+              <td>
+                <form method='post' action='/agenda/update' class='inline'>
+                  <input type='hidden' name='csrf_token' value='{{csrf}}' />
+                  <input type='hidden' name='agenda_id' value='{a["id"]}' />
+                  <select class='quick-status list-quick-status' name='status'>{status_opts}</select>
+              </td>
+              <td><select class='quick-field list-quick-field' name='priority'>{priority_opts}</select></td>
+              <td>
+                  <select class='quick-field list-quick-field' name='owner_user_id'>
+                    <option value=''>Unassigned</option>
+                    {owner_opts}
+                  </select>
+              </td>
+              <td>
+                  <select class='quick-field list-quick-field' name='team_id'>
+                    <option value=''>No team</option>
+                    {team_select_opts}
+                  </select>
+              </td>
+              <td>
+                  <select class='quick-field list-quick-field' name='space_id'>
+                    <option value=''>No space</option>
+                    {space_select_opts}
+                  </select>
+              </td>
+              <td>{h(str(a['open_items']))}/{h(str(a['total_items']))}</td>
+              <td><button type='submit'>Save</button></form></td>
+            </tr>
+            """
+        )
+    agenda_rows = "".join(agenda_row_parts) or "<tr><td colspan='9'>No meetings recorded yet.</td></tr>"
 
     item_rows = []
     for i in items:
@@ -5422,24 +5586,44 @@ def render_agenda_page(conn: sqlite3.Connection, org_id: int, selected_agenda_id
         ]
     ) or "<p class='muted'>No note sources linked yet.</p>"
 
-    meeting_rows = "".join(
-        [
-            f"""
-            <tr>
-              <td><a href='{h(with_space(f"/agenda?agenda_id={a['id']}"))}'>{h(a['meeting_date'])}</a></td>
-              <td>{h(a['title'])}</td>
-              <td>{h(a['owner_name'] or '-')}</td>
-              <td>{h(a['open_items'])}/{h(a['total_items'])}</td>
-            </tr>
-            """
-            for a in agendas
-        ]
-    ) or "<tr><td colspan='4'>No meetings recorded yet.</td></tr>"
+    selected_agenda_form = ""
+    if selected_agenda:
+        status_opts = "".join(
+            [f"<option {'selected' if str(selected_agenda['status']) == s else ''}>{h(s)}</option>" for s in AGENDA_STATUSES]
+        )
+        priority_opts = "".join(
+            [
+                f"<option {'selected' if str(selected_agenda['priority']) == v else ''}>{h(v)}</option>"
+                for v in ["Low", "Medium", "High", "Critical"]
+            ]
+        )
+        selected_agenda_form = f"""
+        <form method='post' action='/agenda/update' class='inline-form'>
+          <input type='hidden' name='csrf_token' value='{{{{csrf}}}}' />
+          <input type='hidden' name='agenda_id' value='{selected_agenda['id']}' />
+          <label>Status <select name='status'>{status_opts}</select></label>
+          <label>Priority <select name='priority'>{priority_opts}</select></label>
+          <label>Date <input type='date' name='meeting_date' value='{h(str(selected_agenda['meeting_date']))}' /></label>
+          <label>Due <input type='date' name='due_date' value='{h(str(selected_agenda['due_date'] or ''))}' /></label>
+          <button type='submit'>Save Agenda</button>
+        </form>
+        """
 
     return f"""
     <section class='card maker-hero'>
       <h2>Meeting Operations Hub</h2>
-      <p>Run meetings as a work board: agenda items, tasks, and projects in one queue with direct conversion and linking.</p>
+      <p>Meeting agendas now use the same board/list patterns as projects and tasks, with unified cards and direct conversion workflows.</p>
+    </section>
+    {board_mode_toggle("agenda")}
+    <section id='agenda-kanban' class='kanban-board' data-statuses='{"|".join(AGENDA_STATUSES)}' data-view-surface='agenda' data-view-mode='kanban'>
+      {''.join(agenda_columns)}
+    </section>
+    <section class='card board-list-surface' data-view-surface='agenda' data-view-mode='list' hidden>
+      <h3>Agenda List</h3>
+      <table>
+        <thead><tr><th>Agenda</th><th>Meeting Date</th><th>Status</th><th>Priority</th><th>Owner</th><th>Team</th><th>Space</th><th>Open/Total</th><th>Actions</th></tr></thead>
+        <tbody>{agenda_rows}</tbody>
+      </table>
     </section>
     <section class="two">
       <div class="card">
@@ -5448,21 +5632,35 @@ def render_agenda_page(conn: sqlite3.Connection, org_id: int, selected_agenda_id
           <input type="hidden" name="csrf_token" value="{{csrf}}" />
           <label>Meeting Name <input name="title" required value="Weekly Makerspace Tactical Meeting" /></label>
           <label>Date <input type="date" name="meeting_date" required value="{dt.date.today().isoformat()}" /></label>
+          <label>Status <select name='status'>{''.join([f"<option>{h(s)}</option>" for s in AGENDA_STATUSES])}</select></label>
+          <label>Priority <select name='priority'><option>Low</option><option selected>Medium</option><option>High</option><option>Critical</option></select></label>
+          <label>Lane <select name='lane'>{''.join([f"<option>{h(lane)}</option>" for lane in LANES])}</select></label>
+          <label>Owner <select name='owner_user_id'><option value=''>Unassigned</option>{user_opts}</select></label>
+          <label>Team <select name='team_id'><option value=''>No team</option>{team_opts}</select></label>
+          <label>Space <select name='space_id'><option value=''>No space</option>{space_opts}</select></label>
+          <label>Due Date <input type='date' name='due_date' /></label>
+          <label>Description <textarea name='description' placeholder='Agenda objective and context'></textarea></label>
           <label>Context / Notes <textarea name="notes">Use lane WIP review and decision log discipline.</textarea></label>
           <button type="submit">Create Meeting</button>
         </form>
       </div>
       <div class="card">
-        <h3>Meeting History</h3>
-        <table>
-          <thead><tr><th>Date</th><th>Meeting</th><th>Owner</th><th>Open/Total</th></tr></thead>
-          <tbody>{meeting_rows}</tbody>
-        </table>
+        <h3>Agenda Card Detail</h3>
+        <article class='kanban-card project-card'>
+          <div class='card-topline'>
+            <h5 class='card-title-label'>{h(str(selected_agenda['title']) if selected_agenda else 'No agenda selected')}</h5>
+            <span class='pill'>{h(str(selected_agenda['priority']) if selected_agenda else '-')}</span>
+          </div>
+          <p class='muted meta-line-1'>{h(str(selected_agenda['meeting_date']) if selected_agenda else '-')} · {h(str(selected_agenda['lane']) if selected_agenda else '-')}</p>
+          <p class='muted meta-line-2'>Owner: {h(str(selected_agenda['owner_name']) if selected_agenda else '-')} · Team: {h(str(selected_agenda['team_name']) if selected_agenda else '-')} · Space: {h(str(selected_agenda['space_name']) if selected_agenda else '-')}</p>
+          <p class='muted meta-line-3'>{h(str(selected_agenda['description']) if selected_agenda and selected_agenda['description'] else 'Select an agenda from the board/list to edit details and agenda items.')}</p>
+          {selected_agenda_form}
+        </article>
       </div>
     </section>
     <section class="two">
       <div class="card">
-        <h3>Active Meeting Agenda</h3>
+        <h3>Active Agenda Items</h3>
         <p class='muted'>Now editing: <strong>{h((selected_agenda['meeting_date'] + " - " + selected_agenda['title']) if selected_agenda else 'None selected')}</strong></p>
         <form method="post" action="/agenda/item/new" class="inline-form">
           <input type="hidden" name="csrf_token" value="{{csrf}}" />
@@ -10155,19 +10353,89 @@ def app(environ, start_response):
             if gate:
                 return gate.wsgi(start_response)
             form = req.form
+            status = str(form.get("status") or "Planned").strip()
+            if status not in AGENDA_STATUSES:
+                status = "Planned"
+            priority = str(form.get("priority") or "Medium").strip()
+            if priority not in {"Low", "Medium", "High", "Critical"}:
+                priority = "Medium"
+            lane = str(form.get("lane") or LANES[0]).strip()
+            if lane not in LANES:
+                lane = LANES[0]
             conn.execute(
-                "INSERT INTO meeting_agendas (organization_id, title, meeting_date, owner_user_id, notes, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+                """
+                INSERT INTO meeting_agendas
+                (organization_id, title, meeting_date, owner_user_id, status, priority, lane, team_id, space_id, due_date, description, notes, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
                 (
                     org_id,
                     form.get("title", "Weekly Meeting"),
                     parse_date(form.get("meeting_date", "")) or dt.date.today().isoformat(),
-                    user_id,
+                    normalize_org_user_id(conn, org_id, form.get("owner_user_id"), fallback=user_id),
+                    status,
+                    priority,
+                    lane,
+                    to_int(form.get("team_id")),
+                    to_int(form.get("space_id")),
+                    parse_date(form.get("due_date", "")),
+                    form.get("description", ""),
                     form.get("notes", ""),
+                    iso(),
                     iso(),
                 ),
             )
             conn.commit()
             return redirect(scoped("/agenda?msg=Agenda%20created")).wsgi(start_response)
+
+        if req.path == "/agenda/update" and req.method == "POST":
+            gate = require_role(ctx, "student")
+            if gate:
+                return gate.wsgi(start_response)
+            form = req.form
+            agenda_id = to_int(form.get("agenda_id"))
+            if agenda_id is None:
+                return redirect(scoped("/agenda?msg=Agenda%20not%20found")).wsgi(start_response)
+            current = conn.execute(
+                "SELECT * FROM meeting_agendas WHERE id = ? AND organization_id = ?",
+                (agenda_id, org_id),
+            ).fetchone()
+            if not current:
+                return redirect(scoped("/agenda?msg=Agenda%20not%20found")).wsgi(start_response)
+            status = str(form.get("status") or current["status"] or "Planned").strip()
+            if status not in AGENDA_STATUSES:
+                status = str(current["status"] or "Planned")
+            priority = str(form.get("priority") or current["priority"] or "Medium").strip()
+            if priority not in {"Low", "Medium", "High", "Critical"}:
+                priority = str(current["priority"] or "Medium")
+            lane = str(form.get("lane") or current["lane"] or LANES[0]).strip()
+            if lane not in LANES:
+                lane = str(current["lane"] or LANES[0])
+            conn.execute(
+                """
+                UPDATE meeting_agendas
+                SET title = ?, meeting_date = ?, owner_user_id = ?, status = ?, priority = ?, lane = ?, team_id = ?, space_id = ?, due_date = ?, description = ?, notes = ?, updated_at = ?
+                WHERE id = ? AND organization_id = ?
+                """,
+                (
+                    str(form.get("title") or current["title"] or "Untitled Meeting").strip() or str(current["title"] or "Untitled Meeting"),
+                    parse_date(form.get("meeting_date", "")) or current["meeting_date"],
+                    normalize_org_user_id(conn, org_id, form.get("owner_user_id"), fallback=to_int(current["owner_user_id"])),
+                    status,
+                    priority,
+                    lane,
+                    to_int(form.get("team_id"), to_int(current["team_id"])),
+                    to_int(form.get("space_id"), to_int(current["space_id"])),
+                    parse_date(form.get("due_date", "")) if "due_date" in form else current["due_date"],
+                    form.get("description", current["description"] or ""),
+                    form.get("notes", current["notes"] or ""),
+                    iso(),
+                    agenda_id,
+                    org_id,
+                ),
+            )
+            conn.commit()
+            return redirect(scoped(f"/agenda?agenda_id={agenda_id}&msg=Agenda%20updated")).wsgi(start_response)
 
         if req.path == "/agenda/item/new" and req.method == "POST":
             gate = require_role(ctx, "student")

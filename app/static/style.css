@@ -215,6 +215,7 @@ main {
   gap: 0.5rem;
   align-items: center;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .theme-switch {
@@ -278,23 +279,40 @@ body[data-theme="dark"] .theme-switch .theme-switch-knob {
 
 .account-menu {
   margin-left: auto;
+  position: relative;
   display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.26rem;
 }
 
-.logout-form {
+.account-identity {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+}
+
+.account-workspace-chip {
+  font-size: 0.8rem;
+  padding: 0.18rem 0.62rem;
+}
+
+.logout-tray {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  right: 0;
   opacity: 0;
-  max-width: 0;
-  overflow: hidden;
+  transform: translateY(-6px);
   pointer-events: none;
-  transition: opacity 0.16s ease, max-width 0.16s ease;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+  z-index: 10;
 }
 
-.account-menu:hover .logout-form,
-.account-menu:focus-within .logout-form {
+.account-menu:hover .logout-tray,
+.account-menu:focus-within .logout-tray {
   opacity: 1;
-  max-width: 120px;
+  transform: translateY(0);
   pointer-events: auto;
 }
 
@@ -617,6 +635,20 @@ button,
   text-decoration: none;
   cursor: pointer;
   display: inline-block;
+}
+
+.btn-blue-solid,
+button.btn-blue-solid {
+  background: #0b7bd9;
+  border-color: #0b7bd9;
+  color: #fff;
+}
+
+.btn-green-solid,
+button.btn-green-solid {
+  background: #00a882;
+  border-color: #00a882;
+  color: #fff;
 }
 
 .btn.ghost,

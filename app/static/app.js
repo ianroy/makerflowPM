@@ -101,6 +101,31 @@
     }
   }
 
+  function initSemanticButtonStyles() {
+    const path = window.location.pathname || "";
+    const inSettingsArea = path.startsWith("/settings") || path.startsWith("/admin");
+    const addNewPattern = /^(add|new|create)\b/;
+    document.querySelectorAll("button, a.btn").forEach((node) => {
+      if (
+        node.classList.contains("ghost") ||
+        node.classList.contains("danger-btn") ||
+        node.classList.contains("logout-btn") ||
+        node.classList.contains("theme-switch")
+      ) {
+        return;
+      }
+      node.classList.remove("btn-blue-solid", "btn-green-solid");
+      const text = String(node.textContent || "").trim().toLowerCase();
+      if (addNewPattern.test(text)) {
+        node.classList.add("btn-green-solid");
+        return;
+      }
+      if (inSettingsArea) {
+        node.classList.add("btn-blue-solid");
+      }
+    });
+  }
+
   function closeModal() {
     if (!modal || !modalForm) {
       return;
@@ -5678,4 +5703,5 @@
   initConsumableBoard();
   initPartnershipBoard();
   refreshSemanticTones(document);
+  initSemanticButtonStyles();
 })();
