@@ -22,6 +22,7 @@ import secrets
 import smtplib
 import sqlite3
 import threading
+import traceback
 from socketserver import ThreadingMixIn
 from urllib import error as urlerror
 from urllib import request as urlrequest
@@ -587,6 +588,7 @@ COMMENTABLE_ENTITY_TABLE: Dict[str, str] = {
 RATE_LIMIT: Dict[str, List[dt.datetime]] = {}
 BOOTSTRAPPED = False
 BOOTSTRAP_LOCK = threading.Lock()
+BOOTSTRAP_ERROR = ""
 
 
 def utcnow() -> dt.datetime:
@@ -1827,14 +1829,20 @@ def ensure_bootstrap() -> None:
     - WSGI apps may process concurrent requests; this lock prevents duplicate init work.
     - Bootstrapping is intentionally lazy to keep local setup friction low.
     """
-    global BOOTSTRAPPED
+    global BOOTSTRAPPED, BOOTSTRAP_ERROR
     if BOOTSTRAPPED:
         return
     with BOOTSTRAP_LOCK:
         if BOOTSTRAPPED:
             return
-        init_db()
-        BOOTSTRAPPED = True
+        try:
+            init_db()
+            BOOTSTRAPPED = True
+            BOOTSTRAP_ERROR = ""
+        except Exception as exc:
+            BOOTSTRAP_ERROR = str(exc)
+            traceback.print_exc()
+            raise
 
 
 def init_db() -> None:
@@ -2070,6 +2078,42 @@ def init_db() -> None:
             updated_at TEXT NOT NULL,
             FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
             FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE SET NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS spaces (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            organization_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            location TEXT,
+            description TEXT,
+            created_by INTEGER,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+            UNIQUE (organization_id, name)
+        );
+
+        CREATE TABLE IF NOT EXISTS teams (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            organization_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            focus_area TEXT,
+            lead_user_id INTEGER,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY (lead_user_id) REFERENCES users(id) ON DELETE SET NULL,
+            UNIQUE (organization_id, name)
+        );
+
+        CREATE TABLE IF NOT EXISTS team_members (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            team_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            role TEXT NOT NULL DEFAULT 'member',
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            UNIQUE (team_id, user_id)
         );
 
         CREATE TABLE IF NOT EXISTS consumables (
@@ -5609,17 +5653,24 @@ def report_metric_payloads(
     )
 
     # Calendar hours by category
-    category_rows = conn.execute(
-        """
+    category_sql = """
         SELECT COALESCE(NULLIF(TRIM(category), ''), 'Other') AS cat,
                SUM(MAX((julianday(end_at) - julianday(start_at)) * 24.0, 0.0)) AS hours
         FROM calendar_events
         WHERE organization_id = ?
         GROUP BY cat
         ORDER BY hours DESC
-        """,
-        (org_id,),
-    ).fetchall()
+    """
+    if DB_BACKEND == "postgres":
+        category_sql = """
+            SELECT COALESCE(NULLIF(TRIM(category), ''), 'Other') AS cat,
+                   SUM(GREATEST(EXTRACT(EPOCH FROM ((end_at)::timestamptz - (start_at)::timestamptz)) / 3600.0, 0.0)) AS hours
+            FROM calendar_events
+            WHERE organization_id = ?
+            GROUP BY cat
+            ORDER BY hours DESC
+        """
+    category_rows = conn.execute(category_sql, (org_id,)).fetchall()
     cat_labels = [str(r["cat"]) for r in category_rows]
     cat_values = [float(r["hours"] or 0.0) for r in category_rows]
     data["calendar_hours_by_category"] = report_payload(
@@ -5630,16 +5681,22 @@ def report_metric_payloads(
     )
 
     # Calendar hours by weekday
-    weekday_rows = conn.execute(
-        """
+    weekday_sql = """
         SELECT strftime('%w', start_at) AS weekday_num,
                SUM(MAX((julianday(end_at) - julianday(start_at)) * 24.0, 0.0)) AS hours
         FROM calendar_events
         WHERE organization_id = ?
         GROUP BY weekday_num
-        """,
-        (org_id,),
-    ).fetchall()
+    """
+    if DB_BACKEND == "postgres":
+        weekday_sql = """
+            SELECT CAST(EXTRACT(DOW FROM (start_at)::timestamptz) AS TEXT) AS weekday_num,
+                   SUM(GREATEST(EXTRACT(EPOCH FROM ((end_at)::timestamptz - (start_at)::timestamptz)) / 3600.0, 0.0)) AS hours
+            FROM calendar_events
+            WHERE organization_id = ?
+            GROUP BY weekday_num
+        """
+    weekday_rows = conn.execute(weekday_sql, (org_id,)).fetchall()
     weekday_map = {"1": "Mon", "2": "Tue", "3": "Wed", "4": "Thu", "5": "Fri", "6": "Sat", "0": "Sun"}
     weekday_hours = {weekday_map.get(str(r["weekday_num"]), str(r["weekday_num"])): float(r["hours"] or 0.0) for r in weekday_rows}
     weekday_labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -8724,8 +8781,12 @@ def app(environ, start_response):
             probe.execute("SELECT 1").fetchone()
             probe.close()
             return Response("ready", content_type="text/plain").wsgi(start_response)
-        except Exception:
-            return Response("not-ready", status="503 Service Unavailable", content_type="text/plain").wsgi(start_response)
+        except Exception as exc:
+            return Response(
+                f"not-ready: {h(str(exc))}",
+                status="503 Service Unavailable",
+                content_type="text/plain",
+            ).wsgi(start_response)
 
     try:
         ensure_bootstrap()

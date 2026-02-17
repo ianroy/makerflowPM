@@ -1,0 +1,43 @@
+name: makerflowpm
+region: nyc
+
+services:
+  - name: web
+    source_dir: /
+    github:
+      repo: ianroy/makerflowPM
+      branch: main
+      deploy_on_push: true
+    build_command: pip install -r requirements.txt
+    run_command: bash -lc "python3 scripts/bootstrap_db.py && gunicorn wsgi:application --bind 0.0.0.0:$PORT --workers 2 --threads 2 --timeout 120"
+    http_port: 8080
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    routes:
+      - path: /
+    health_check:
+      http_path: /readyz
+      initial_delay_seconds: 30
+      period_seconds: 10
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+    envs:
+      - key: MAKERSPACE_COOKIE_SECURE
+        scope: RUN_TIME
+        value: "1"
+      - key: MAKERSPACE_SECRET_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: replace-with-strong-secret
+      - key: MAKERSPACE_ADMIN_EMAIL
+        scope: RUN_TIME
+        value: admin@makerflow.local
+      - key: MAKERSPACE_ADMIN_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        value: ChangeMeMeow!2026
+      - key: MAKERSPACE_DATABASE_URL
+        scope: RUN_TIME
+        type: SECRET
+        value: postgresql://doadmin:replace-password@replace-host:25060/defaultdb?sslmode=require

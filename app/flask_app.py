@@ -71,7 +71,10 @@ def setup_request():
     # This prevents deployment health checks from failing before migrations can be diagnosed.
     if request.path in {"/healthz"}:
         return None
-    ensure_bootstrap()
+    try:
+        ensure_bootstrap()
+    except Exception as exc:
+        return (f"Database bootstrap failed: {exc}", 503)
 
 
 @flask_app.route('/', defaults={'path': ''}, methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH'])
