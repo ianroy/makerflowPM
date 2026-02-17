@@ -6,5 +6,6 @@ Werkzeug>=3.0.0
 # Recommended for production:
 gunicorn>=21.0.0; platform_system != "Windows"
 waitress>=2.1.0; platform_system == "Windows"
+psycopg[binary]>=3.1.18
 
 # Runtime: Python 3.9+

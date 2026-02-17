@@ -27,10 +27,17 @@ from urllib import error as urlerror
 from urllib import request as urlrequest
 from email.message import EmailMessage
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 from urllib.parse import parse_qs, quote, unquote, urlencode
 from wsgiref.simple_server import WSGIServer, make_server
 from zoneinfo import ZoneInfo
+
+try:
+    import psycopg
+    from psycopg.rows import dict_row
+except Exception:  # pragma: no cover - optional dependency path
+    psycopg = None
+    dict_row = None
 
 APP_NAME = "Project Management Platform for Lab Administration"
 APP_TAGLINE = "MakerFlow PM for makerspaces, research labs, and library services"
@@ -39,6 +46,8 @@ DATA_DIR = BASE_DIR / "data"
 STATIC_DIR = BASE_DIR / "app" / "static"
 WEBSITE_DIR = BASE_DIR / "MakerFlow Website"
 DB_PATH = Path(os.environ.get("MAKERSPACE_DB_PATH", str(DATA_DIR / "makerspace_ops.db")))
+DATABASE_URL = os.environ.get("MAKERSPACE_DATABASE_URL", os.environ.get("DATABASE_URL", "")).strip()
+DB_BACKEND = "postgres" if DATABASE_URL.startswith(("postgres://", "postgresql://")) else "sqlite"
 SECRET_KEY = os.environ.get("MAKERSPACE_SECRET_KEY", "change-this-secret-in-production")
 COOKIE_SECURE = os.environ.get("MAKERSPACE_COOKIE_SECURE", "0") == "1"
 SESSION_DAYS = int(os.environ.get("MAKERSPACE_SESSION_DAYS", "14"))
@@ -1332,7 +1341,178 @@ def stringify_view_cell(column: str, value: object) -> str:
     return str(value)
 
 
-def db_connect() -> sqlite3.Connection:
+class CompatRow(dict):
+    """Row mapping that also supports numeric index access like sqlite3.Row."""
+
+    def __init__(self, data: Dict[str, Any], order: List[str]):
+        super().__init__(data)
+        self._order = order
+
+    def __getitem__(self, key: object) -> Any:  # type: ignore[override]
+        if isinstance(key, int):
+            name = self._order[key]
+            return super().__getitem__(name)
+        return super().__getitem__(str(key))
+
+
+class CompatCursor:
+    """Cursor wrapper with sqlite-like row behavior for PostgreSQL."""
+
+    def __init__(self, cursor: Any, order: Optional[List[str]] = None, lastrowid: Optional[int] = None):
+        self._cursor = cursor
+        self._order = order or []
+        self.lastrowid = lastrowid
+
+    @property
+    def rowcount(self) -> int:
+        return int(getattr(self._cursor, "rowcount", -1))
+
+    def fetchone(self):
+        row = self._cursor.fetchone()
+        if row is None:
+            return None
+        if isinstance(row, dict):
+            return CompatRow(row, self._order)
+        if isinstance(row, tuple):
+            mapped = {self._order[idx]: row[idx] for idx in range(min(len(self._order), len(row)))}
+            return CompatRow(mapped, self._order)
+        return row
+
+    def fetchall(self):
+        rows = self._cursor.fetchall()
+        out = []
+        for row in rows:
+            if isinstance(row, dict):
+                out.append(CompatRow(row, self._order))
+            elif isinstance(row, tuple):
+                mapped = {self._order[idx]: row[idx] for idx in range(min(len(self._order), len(row)))}
+                out.append(CompatRow(mapped, self._order))
+            else:
+                out.append(row)
+        return out
+
+
+def _split_sql_script(script: str) -> List[str]:
+    chunks = []
+    buf: List[str] = []
+    in_single = False
+    in_double = False
+    for ch in script:
+        if ch == "'" and not in_double:
+            in_single = not in_single
+        elif ch == '"' and not in_single:
+            in_double = not in_double
+        if ch == ";" and not in_single and not in_double:
+            stmt = "".join(buf).strip()
+            if stmt:
+                chunks.append(stmt)
+            buf = []
+        else:
+            buf.append(ch)
+    tail = "".join(buf).strip()
+    if tail:
+        chunks.append(tail)
+    return chunks
+
+
+def _replace_qmark_params(sql: str) -> str:
+    out: List[str] = []
+    in_single = False
+    in_double = False
+    for ch in sql:
+        if ch == "'" and not in_double:
+            in_single = not in_single
+        elif ch == '"' and not in_single:
+            in_double = not in_double
+        if ch == "?" and not in_single and not in_double:
+            out.append("%s")
+        else:
+            out.append(ch)
+    return "".join(out)
+
+
+def _adapt_sql_for_postgres(sql: str) -> str:
+    text = sql.strip()
+    upper = text.upper()
+    # sqlite introspection compatibility used in schema/tooling paths.
+    pragma_match = re.match(r"PRAGMA\s+table_info\(([^)]+)\)", text, flags=re.IGNORECASE)
+    if pragma_match:
+        table = pragma_match.group(1).strip().strip('"')
+        return (
+            "SELECT column_name AS name, data_type AS type, "
+            "CASE WHEN is_nullable = 'NO' THEN 1 ELSE 0 END AS notnull, "
+            "column_default AS dflt_value, "
+            "CASE WHEN position('nextval' in COALESCE(column_default,'')) > 0 THEN 1 ELSE 0 END AS pk "
+            "FROM information_schema.columns "
+            "WHERE table_schema = current_schema() AND table_name = %s "
+            "ORDER BY ordinal_position"
+        )
+    if "LAST_INSERT_ROWID()" in upper:
+        return "SELECT LASTVAL() AS id"
+    # Basic SQLite DDL conversion for init_db() bootstrap.
+    text = re.sub(r"INTEGER\s+PRIMARY\s+KEY\s+AUTOINCREMENT", "BIGSERIAL PRIMARY KEY", text, flags=re.IGNORECASE)
+    text = re.sub(r"\bAUTOINCREMENT\b", "", text, flags=re.IGNORECASE)
+    # SQLite upsert shortcut compatibility.
+    text = re.sub(r"INSERT\s+OR\s+IGNORE\s+INTO", "INSERT INTO", text, flags=re.IGNORECASE)
+    if re.match(r"^INSERT\s+INTO\s+", text, flags=re.IGNORECASE) and " ON CONFLICT " not in text.upper():
+        text = f"{text} ON CONFLICT DO NOTHING"
+    return _replace_qmark_params(text)
+
+
+class PostgresCompatConnection:
+    """Small DB-API compatibility layer so existing sqlite-style calls still work."""
+
+    def __init__(self, conn: Any):
+        self._conn = conn
+
+    def execute(self, sql: str, params: Tuple[Any, ...] = ()):
+        pg_sql = _adapt_sql_for_postgres(sql)
+        use_params = params
+        if pg_sql.startswith("SELECT column_name AS name") and len(params) == 0:
+            pragma_match = re.match(r"PRAGMA\s+table_info\(([^)]+)\)", sql.strip(), flags=re.IGNORECASE)
+            if pragma_match:
+                use_params = (pragma_match.group(1).strip().strip('"'),)
+        cur = self._conn.cursor()
+        try:
+            cur.execute(pg_sql, use_params)
+        except Exception as exc:
+            # Preserve existing sqlite IntegrityError handlers in business logic.
+            if getattr(exc, "sqlstate", "").startswith("23"):
+                raise sqlite3.IntegrityError(str(exc))
+            raise
+        order = [d.name for d in (cur.description or [])]
+        last_id = None
+        if pg_sql.strip().upper().startswith("INSERT"):
+            try:
+                with self._conn.cursor() as c2:
+                    c2.execute("SELECT LASTVAL() AS id")
+                    row = c2.fetchone()
+                    if isinstance(row, dict):
+                        last_id = int(row.get("id")) if row.get("id") is not None else None
+                    elif isinstance(row, tuple) and row:
+                        last_id = int(row[0])
+            except Exception:
+                last_id = None
+        return CompatCursor(cur, order=order, lastrowid=last_id)
+
+    def executescript(self, script: str):
+        for stmt in _split_sql_script(script):
+            self.execute(stmt)
+
+    def commit(self):
+        self._conn.commit()
+
+    def close(self):
+        self._conn.close()
+
+
+def db_connect():
+    if DB_BACKEND == "postgres":
+        if psycopg is None:
+            raise RuntimeError("PostgreSQL backend requested but psycopg is not installed.")
+        raw = psycopg.connect(DATABASE_URL, row_factory=dict_row, autocommit=False)
+        return PostgresCompatConnection(raw)
+
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(DB_PATH), timeout=DB_BUSY_TIMEOUT_MS / 1000.0)
     conn.row_factory = sqlite3.Row
@@ -1363,7 +1543,7 @@ class ThreadedWSGIServer(ThreadingMixIn, WSGIServer):
     daemon_threads = True
 
 
-def ensure_column(conn: sqlite3.Connection, table: str, column: str, ddl: str) -> None:
+def ensure_column(conn, table: str, column: str, ddl: str) -> None:
     existing = set()
     for row in conn.execute(f"PRAGMA table_info({table})").fetchall():
         try:
@@ -1374,8 +1554,9 @@ def ensure_column(conn: sqlite3.Connection, table: str, column: str, ddl: str) -
         return
     try:
         conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {ddl}")
-    except sqlite3.OperationalError as exc:
-        if "duplicate column name" not in str(exc).lower():
+    except Exception as exc:
+        msg = str(exc).lower()
+        if "duplicate column name" not in msg and "already exists" not in msg:
             raise
 
 

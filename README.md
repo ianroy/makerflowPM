@@ -111,6 +111,7 @@ Set required environment variables:
 - `MAKERSPACE_COOKIE_SECURE=1`
 - `MAKERSPACE_ADMIN_EMAIL`
 - `MAKERSPACE_ADMIN_PASSWORD`
+- `MAKERSPACE_DATABASE_URL` (for managed PostgreSQL)
 
 Health-check failure checklist:
 
@@ -122,6 +123,20 @@ Health-check failure checklist:
 - Verify the app returns `200 OK` for `/healthz` without authentication.
 
 Note: SQLite on App Platform is ephemeral. For persistent production data, use Droplet + volume or migrate to a managed database.
+
+## DigitalOcean Managed PostgreSQL (Data + Sessions)
+
+1. Create a PostgreSQL database cluster in DigitalOcean (Managed Databases).
+2. In DO, allow trusted sources for your App Platform app.
+3. Copy the connection string and set:
+
+```bash
+MAKERSPACE_DATABASE_URL=postgresql://USER:PASSWORD@HOST:25060/defaultdb?sslmode=require
+```
+
+4. Redeploy the app.
+
+When `MAKERSPACE_DATABASE_URL` (or `DATABASE_URL`) is set, MakerFlow uses PostgreSQL for all app data including sessions.
 
 ## Test and Verification
 

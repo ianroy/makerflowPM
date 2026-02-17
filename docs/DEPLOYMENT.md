@@ -64,6 +64,35 @@ Notes:
 - Health check path is `/healthz`.
 - Replace secret placeholders before production use.
 
+## Managed PostgreSQL Cluster (Recommended for Multi-Instance)
+
+1. Create a DigitalOcean Managed PostgreSQL cluster.
+2. Allow inbound from your App Platform app ("Trusted Sources").
+3. Set `MAKERSPACE_DATABASE_URL` in app env vars, for example:
+
+```bash
+postgresql://doadmin:REPLACE_PASSWORD@REPLACE_HOST:25060/defaultdb?sslmode=require
+```
+
+4. Re-deploy the app:
+
+```bash
+doctl apps update <APP_ID> --spec .do/app.yaml
+```
+
+MakerFlow will automatically use PostgreSQL for all records (including sessions) when this variable is set.
+
+### Optional: migrate existing SQLite data
+
+If you already have production data in `data/makerspace_ops.db`, run:
+
+```bash
+MAKERSPACE_DATABASE_URL='postgresql://USER:PASSWORD@HOST:25060/defaultdb?sslmode=require' \
+python3 scripts/migrate_sqlite_to_postgres.py --source data/makerspace_ops.db
+```
+
+Use `--truncate` only if you intentionally want to clear destination tables first.
+
 ## What the Script Configures
 
 - App path: `/opt/makerflow-pm`
