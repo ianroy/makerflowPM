@@ -28,6 +28,7 @@
 - [Testing and verification](#testing-and-verification)
 - [Repository map](#repository-map)
 - [Roadmap](#roadmap)
+- [Federal accessibility compliance (ADA Title II + Section 504)](#federal-accessibility-compliance-ada-title-ii--section-504)
 - [Documentation index](#documentation-index)
 - [Contributing](#contributing)
 - [License](#license)
@@ -323,11 +324,26 @@ There is currently no `pytest` suite — testing is script-based. Introducing on
 
 ## Roadmap
 
-MakerFlow PM ships its roadmap as a resumable, agent-executable file: [`FEATUREROADMAP_workplan.md`](FEATUREROADMAP_workplan.md). It contains a recursive regeneration prompt (to seed new tasks), an execution prompt (to build the top-ready task), 22 seeded task cards across P0–P3, and a checkpoint log so any agent or human can pick the work up cold.
+MakerFlow PM ships its roadmap as a resumable, agent-executable file: [`FEATUREROADMAP_workplan.md`](FEATUREROADMAP_workplan.md). It contains a recursive regeneration prompt (to seed new tasks), an execution prompt (to build the top-ready task), 45 seeded task cards across P0–P3 (22 general + 23 accessibility), and a checkpoint log so any agent or human can pick the work up cold.
 
 <p align="center">
   <img src="docs/diagrams/08-roadmap-loop.svg" alt="MakerFlow PM — Roadmap loop" width="100%"/>
 </p>
+
+## Federal accessibility compliance (ADA Title II + Section 504)
+
+MakerFlow PM is built to meet **WCAG 2.1 Level AA**, the technical standard adopted by:
+
+- **28 CFR Part 35, Subpart H** — DOJ ADA Title II (state and local government). Compliance deadlines (post-2026 IFR extension): **April 26, 2027** for entities with population ≥ 50,000; **April 26, 2028** for smaller entities and special-district governments.
+- **45 CFR Part 84, Subpart I** — HHS Section 504 (federally-funded recipients). Compliance deadlines: **May 11, 2027** for recipients with ≥ 15 employees; **May 10, 2028** for smaller recipients.
+
+The diagram below maps regulatory requirements to the 23 accessibility task cards in [`FEATUREROADMAP_workplan.md`](FEATUREROADMAP_workplan.md#accessibility-compliance-program-ada-title-ii--section-504):
+
+<p align="center">
+  <img src="docs/diagrams/10-ada-504-compliance.svg" alt="MakerFlow PM — ADA Title II + Section 504 compliance map" width="100%"/>
+</p>
+
+See also [`docs/ACCESSIBILITY.md`](docs/ACCESSIBILITY.md) once it lands as part of `P0-a11y-policy-baseline`.
 
 ## Documentation index
 
@@ -341,7 +357,7 @@ MakerFlow PM ships its roadmap as a resumable, agent-executable file: [`FEATURER
 - [`docs/TESTING.md`](docs/TESTING.md) — verification matrix
 - [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) — how to propose changes
 - [`docs/LICENSE.md`](docs/LICENSE.md) — CC BY-SA 4.0 attribution + ShareAlike requirements
-- [`docs/diagrams/`](docs/diagrams/) — nine SVG diagrams onboarding a new developer (architecture, lifecycle, data model, RBAC, deployment, components, feature flow, roadmap loop, tech stack)
+- [`docs/diagrams/`](docs/diagrams/) — ten SVG diagrams onboarding a new developer (architecture, lifecycle, data model, RBAC, deployment, components, feature flow, roadmap loop, tech stack, ADA Title II + § 504 compliance map)
 - [`MakerFlow Website/wiki/`](MakerFlow%20Website/wiki/) — published wiki mirror
 
 ## Contributing
