@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1340 820" font-family="Avenir Next, Trebuchet MS, Segoe UI, sans-serif">
+  <defs>
+    <radialGradient id="bgRadial1" cx="6%" cy="4%" r="55%">
+      <stop offset="0%" stop-color="#1d3852"/>
+      <stop offset="80%" stop-color="#0e141f"/>
+    </radialGradient>
+    <radialGradient id="bgRadial2" cx="95%" cy="2%" r="40%">
+      <stop offset="0%" stop-color="#133146"/>
+      <stop offset="100%" stop-color="#0e141f" stop-opacity="0"/>
+    </radialGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#a7bed8"/>
+    </marker>
+    <marker id="loopArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#21d1aa"/>
+    </marker>
+  </defs>
+
+  <rect width="1340" height="820" fill="#0e141f"/>
+  <rect width="1340" height="820" fill="url(#bgRadial1)"/>
+  <rect width="1340" height="820" fill="url(#bgRadial2)"/>
+
+  <text x="64" y="60" font-size="13" font-weight="700" fill="#21d1aa" letter-spacing="2">FEATUREROADMAP_workplan.md</text>
+  <text x="64" y="92" font-size="26" font-weight="700" fill="#edf4ff">Recursive roadmap loop</text>
+  <text x="64" y="118" font-size="13" fill="#a7bed8">Resumable · pause-able · context-window-aware. Two prompts drive the loop. Tasks carry their own state.</text>
+  <line x1="64" y1="138" x2="1276" y2="138" stroke="#304962" stroke-width="1"/>
+
+  <!-- Top row -->
+  <g>
+    <!-- A -->
+    <rect x="68" y="164" width="380" height="200" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="66" y="158" width="380" height="200" rx="16" fill="#1a2636" stroke="#4db0ff" stroke-width="2"/>
+    <rect x="66" y="158" width="6" height="200" rx="3" fill="#4db0ff"/>
+    <circle cx="98" cy="190" r="18" fill="#1d2d40" stroke="#4db0ff" stroke-width="2"/>
+    <text x="98" y="196" font-size="16" font-weight="700" fill="#8fd5ff" text-anchor="middle">A</text>
+    <text x="126" y="196" font-size="16" font-weight="700" fill="#edf4ff">Regeneration prompt</text>
+    <g font-size="12" fill="#a7bed8">
+      <text x="92" y="226">• Scan repo + open issues + last N tasks</text>
+      <text x="92" y="246">• Emit new ranked task cards</text>
+      <text x="92" y="266">• Dedupe against existing IDs</text>
+      <text x="92" y="286">• Insert into Backlog (Pending)</text>
+      <text x="92" y="306">• Update Unblocks pointers</text>
+      <text x="92" y="326">• No execution — planning only</text>
+    </g>
+    <rect x="92" y="340" width="160" height="20" rx="10" fill="#1d2d40" stroke="#4f79a0"/>
+    <text x="172" y="354" font-size="10" font-weight="700" fill="#8fd5ff" text-anchor="middle">~5-15 min agent time</text>
+
+    <!-- B -->
+    <rect x="478" y="164" width="380" height="200" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="476" y="158" width="380" height="200" rx="16" fill="#1a2636" stroke="#ffbe55" stroke-width="2"/>
+    <rect x="476" y="158" width="6" height="200" rx="3" fill="#ffbe55"/>
+    <circle cx="508" cy="190" r="18" fill="#1d2d40" stroke="#ffbe55" stroke-width="2"/>
+    <text x="508" y="196" font-size="16" font-weight="700" fill="#ffbe55" text-anchor="middle">B</text>
+    <text x="536" y="196" font-size="16" font-weight="700" fill="#edf4ff">Human triage</text>
+    <g font-size="12" fill="#a7bed8">
+      <text x="502" y="226">• Edit Spec / DOD if needed</text>
+      <text x="502" y="246">• Adjust Priority / Complexity</text>
+      <text x="502" y="266">• Promote backlog → Ready</text>
+      <text x="502" y="286">• Drop / defer / merge duplicates</text>
+      <text x="502" y="306">• Confirm Dependencies</text>
+      <text x="502" y="326">• Approve Agent Persona</text>
+    </g>
+    <rect x="502" y="340" width="170" height="20" rx="10" fill="#1d2d40" stroke="#b88a30"/>
+    <text x="587" y="354" font-size="10" font-weight="700" fill="#ffbe55" text-anchor="middle">human-in-the-loop</text>
+
+    <!-- C -->
+    <rect x="888" y="164" width="390" height="200" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="886" y="158" width="390" height="200" rx="16" fill="#1a2636" stroke="#21d1aa" stroke-width="2"/>
+    <rect x="886" y="158" width="6" height="200" rx="3" fill="#21d1aa"/>
+    <circle cx="918" cy="190" r="18" fill="#1d2d40" stroke="#21d1aa" stroke-width="2"/>
+    <text x="918" y="196" font-size="16" font-weight="700" fill="#21d1aa" text-anchor="middle">C</text>
+    <text x="946" y="196" font-size="16" font-weight="700" fill="#edf4ff">Execution prompt</text>
+    <g font-size="12" fill="#a7bed8">
+      <text x="912" y="226">• Pick top-ready task</text>
+      <text x="912" y="246">• Read Spec + Files to modify</text>
+      <text x="912" y="266">• Plan → Implement → Verify</text>
+      <text x="912" y="286">• Record Agent Decisions verbosely</text>
+      <text x="912" y="306">• Tick Status checkbox when DOD met</text>
+      <text x="912" y="326">• Pause when context approaches limit</text>
+    </g>
+    <rect x="912" y="340" width="124" height="20" rx="10" fill="#1d2d40" stroke="#5a8a55"/>
+    <text x="974" y="354" font-size="10" font-weight="700" fill="#21d1aa" text-anchor="middle">resumable</text>
+  </g>
+
+  <!-- Top row arrows -->
+  <g stroke="#a7bed8" stroke-width="2" fill="none">
+    <line x1="448" y1="258" x2="476" y2="258" marker-end="url(#arrow)"/>
+    <line x1="858" y1="258" x2="886" y2="258" marker-end="url(#arrow)"/>
+  </g>
+
+  <!-- Bottom row -->
+  <g>
+    <!-- D -->
+    <rect x="68" y="404" width="380" height="200" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="66" y="398" width="380" height="200" rx="16" fill="#1a2636" stroke="#ff5e7e" stroke-width="2"/>
+    <rect x="66" y="398" width="6" height="200" rx="3" fill="#ff5e7e"/>
+    <circle cx="98" cy="430" r="18" fill="#1d2d40" stroke="#ff5e7e" stroke-width="2"/>
+    <text x="98" y="436" font-size="16" font-weight="700" fill="#ff5e7e" text-anchor="middle">D</text>
+    <text x="126" y="436" font-size="16" font-weight="700" fill="#edf4ff">Verification</text>
+    <g font-size="12" fill="#a7bed8">
+      <text x="92" y="466" font-family="Menlo, Consolas, monospace">scripts/smoke_test.py</text>
+      <text x="92" y="484" font-family="Menlo, Consolas, monospace">scripts/comprehensive_feature_security_test.py</text>
+      <text x="92" y="504">• UI check in browser</text>
+      <text x="92" y="524">• Update task notes with results</text>
+      <text x="92" y="544">• On failure → flip Status to in_progress</text>
+      <text x="92" y="564">• Spawn follow-up task if scope creep found</text>
+    </g>
+
+    <!-- E -->
+    <rect x="478" y="404" width="380" height="200" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="476" y="398" width="380" height="200" rx="16" fill="#1a2636" stroke="#a98cff" stroke-width="2"/>
+    <rect x="476" y="398" width="6" height="200" rx="3" fill="#a98cff"/>
+    <circle cx="508" cy="430" r="18" fill="#1d2d40" stroke="#a98cff" stroke-width="2"/>
+    <text x="508" y="436" font-size="16" font-weight="700" fill="#a98cff" text-anchor="middle">E</text>
+    <text x="536" y="436" font-size="16" font-weight="700" fill="#edf4ff">Propagation</text>
+    <g font-size="12" fill="#a7bed8">
+      <text x="502" y="466">• Walk Unblocks of completed task</text>
+      <text x="502" y="486">• Move newly-eligible Backlog → Ready</text>
+      <text x="502" y="506">• Decrement Dependencies counters</text>
+      <text x="502" y="526">• Append outcome to checkpoint log</text>
+      <text x="502" y="546">• Commit + push if checkpoint enabled</text>
+      <text x="502" y="566">• Mark pause-safe state</text>
+    </g>
+
+    <!-- F -->
+    <rect x="888" y="404" width="390" height="200" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="886" y="398" width="390" height="200" rx="16" fill="#1a2636" stroke="#4db0ff" stroke-width="2"/>
+    <rect x="886" y="398" width="6" height="200" rx="3" fill="#4db0ff"/>
+    <circle cx="918" cy="430" r="18" fill="#1d2d40" stroke="#4db0ff" stroke-width="2"/>
+    <text x="918" y="436" font-size="16" font-weight="700" fill="#8fd5ff" text-anchor="middle">F</text>
+    <text x="946" y="436" font-size="16" font-weight="700" fill="#edf4ff">Loop or stop</text>
+    <g font-size="12" fill="#a7bed8">
+      <text x="912" y="466">• If ready-queue empty → re-run A</text>
+      <text x="912" y="486">• If context &gt; 70% → stop &amp; checkpoint</text>
+      <text x="912" y="506">• If P0 work landed → ask human</text>
+      <text x="912" y="526">• Else continue next ready task (C)</text>
+      <text x="912" y="546">• All state lives in the markdown file</text>
+      <text x="912" y="566">• Restart anywhere by re-reading it</text>
+    </g>
+  </g>
+
+  <!-- Bottom row arrows (forward) -->
+  <g stroke="#a7bed8" stroke-width="2" fill="none">
+    <line x1="448" y1="498" x2="476" y2="498" marker-end="url(#arrow)"/>
+    <line x1="858" y1="498" x2="886" y2="498" marker-end="url(#arrow)"/>
+  </g>
+
+  <!-- C → D arrow (down) -->
+  <line x1="1081" y1="364" x2="1081" y2="398" stroke="#a7bed8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- F → A loop (dashed) -->
+  <path d="M 1081 604 Q 1310 604 1310 380 Q 1310 140 90 140 Q 30 140 30 200 Q 30 250 64 256" stroke="#21d1aa" stroke-width="1.8" stroke-dasharray="6,5" fill="none" marker-end="url(#loopArrow)" opacity="0.85"/>
+  <text x="1300" y="380" font-size="11" font-weight="700" fill="#21d1aa" text-anchor="end">recurse via section A</text>
+
+  <!-- Task schema panel -->
+  <g>
+    <rect x="68" y="624" width="1210" height="172" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="66" y="618" width="1210" height="172" rx="16" fill="#1a2636" stroke="#304962"/>
+    <text x="92" y="650" font-size="11" font-weight="700" letter-spacing="1.6" fill="#a7bed8">TASK CARD SCHEMA</text>
+    <text x="92" y="672" font-size="13" fill="#edf4ff">Every entry in the roadmap carries the same fields:</text>
+
+    <g font-size="11" fill="#a7bed8">
+      <rect x="92" y="686" width="100" height="22" rx="11" fill="#1d2d40" stroke="#a7bed8"/>
+      <text x="142" y="700" font-size="10" font-weight="700" fill="#edf4ff" text-anchor="middle">Status</text>
+      <text x="200" y="701" fill="#a7bed8">[ ] backlog · [ ] ready · [ ] in_progress · [ ] blocked · [x] done · [~] deferred</text>
+
+      <rect x="92" y="714" width="100" height="22" rx="11" fill="#1d2d40" stroke="#4f79a0"/>
+      <text x="142" y="728" font-size="10" font-weight="700" fill="#8fd5ff" text-anchor="middle">Agent Persona</text>
+      <text x="200" y="729" fill="#a7bed8">backend-monolith · frontend-progressive · ops-deploy · data-migrations · security-reviewer · docs-curator · qa-automation · integrations</text>
+
+      <rect x="92" y="742" width="100" height="22" rx="11" fill="#1d2d40" stroke="#b88a30"/>
+      <text x="142" y="756" font-size="10" font-weight="700" fill="#ffbe55" text-anchor="middle">Priority · Complexity</text>
+      <text x="200" y="757" fill="#a7bed8">P0–P3 · XS / S / M / L / XL · Dependencies (must be done) · Unblocks (this clears)</text>
+
+      <rect x="92" y="770" width="100" height="22" rx="11" fill="#1d2d40" stroke="#a14454"/>
+      <text x="142" y="784" font-size="10" font-weight="700" fill="#ff5e7e" text-anchor="middle">Spec · DOD</text>
+      <text x="200" y="785" fill="#a7bed8">Files to modify (explicit paths) · Spec (human-editable) · Definition of Done checklist · Agent Decisions (append-only, verbose)</text>
+    </g>
+  </g>
+</svg>

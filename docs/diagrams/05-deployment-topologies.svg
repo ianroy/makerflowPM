@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1340 860" font-family="Avenir Next, Trebuchet MS, Segoe UI, sans-serif">
+  <defs>
+    <radialGradient id="bgRadial1" cx="6%" cy="4%" r="55%">
+      <stop offset="0%" stop-color="#1d3852"/>
+      <stop offset="80%" stop-color="#0e141f"/>
+    </radialGradient>
+    <radialGradient id="bgRadial2" cx="95%" cy="2%" r="40%">
+      <stop offset="0%" stop-color="#133146"/>
+      <stop offset="100%" stop-color="#0e141f" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1340" height="860" fill="#0e141f"/>
+  <rect width="1340" height="860" fill="url(#bgRadial1)"/>
+  <rect width="1340" height="860" fill="url(#bgRadial2)"/>
+
+  <text x="64" y="60" font-size="13" font-weight="700" fill="#21d1aa" letter-spacing="2">MAKERFLOW PM</text>
+  <text x="64" y="92" font-size="26" font-weight="700" fill="#edf4ff">Deployment topologies</text>
+  <text x="64" y="118" font-size="13" fill="#a7bed8">Three target environments. Choose by traffic, persistence, and ops appetite.</text>
+  <line x1="64" y1="138" x2="1276" y2="138" stroke="#304962" stroke-width="1"/>
+
+  <!-- A. Local -->
+  <g>
+    <rect x="68" y="166" width="400" height="640" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="66" y="160" width="400" height="640" rx="16" fill="#1a2636" stroke="#304962"/>
+    <rect x="66" y="160" width="6" height="640" rx="3" fill="#21d1aa"/>
+    <text x="92" y="194" font-size="11" font-weight="700" letter-spacing="1.6" fill="#21d1aa">OPTION A · LOCAL DEV</text>
+    <text x="92" y="222" font-size="20" font-weight="700" fill="#edf4ff">Developer machine</text>
+    <text x="92" y="244" font-size="12" fill="#a7bed8">SQLite · single process · zero TLS</text>
+
+    <g>
+      <rect x="92" y="270" width="350" height="68" rx="14" fill="#162332" stroke="#304962"/>
+      <text x="110" y="296" font-size="14" font-weight="700" fill="#edf4ff">macOS / Linux / WSL</text>
+      <text x="110" y="318" font-size="12" fill="#a7bed8">Python 3.11.9 · pip install -r requirements.txt</text>
+    </g>
+    <g>
+      <rect x="92" y="354" width="350" height="68" rx="14" fill="#162332" stroke="#304962"/>
+      <text x="110" y="380" font-size="14" font-weight="700" fill="#edf4ff" font-family="Menlo, Consolas, monospace">python3 app/server.py</text>
+      <text x="110" y="402" font-size="12" fill="#a7bed8">or ./run_flask.sh for gunicorn shell</text>
+    </g>
+    <g>
+      <rect x="92" y="438" width="350" height="68" rx="14" fill="#162332" stroke="#304962"/>
+      <text x="110" y="464" font-size="14" font-weight="700" fill="#edf4ff" font-family="Menlo, Consolas, monospace">data/makerspace_ops.db</text>
+      <text x="110" y="486" font-size="12" fill="#a7bed8">SQLite WAL · auto-bootstrap on first run</text>
+    </g>
+    <g>
+      <rect x="92" y="522" width="350" height="68" rx="14" fill="#162332" stroke="#304962"/>
+      <text x="110" y="548" font-size="14" font-weight="700" fill="#edf4ff">127.0.0.1:8080</text>
+      <text x="110" y="570" font-size="12" fill="#a7bed8">admin@makerflow.local · ChangeMeMeow!2026</text>
+    </g>
+
+    <text x="92" y="618" font-size="11" font-weight="700" letter-spacing="1.6" fill="#a7bed8">VERIFICATION</text>
+    <g font-size="12" fill="#a7bed8" font-family="Menlo, Consolas, monospace">
+      <text x="92" y="642">scripts/smoke_test.py</text>
+      <text x="92" y="662">scripts/usability_test.py</text>
+      <text x="92" y="682">scripts/accessibility_audit.py</text>
+      <text x="92" y="702">scripts/comprehensive_feature_security_test.py</text>
+      <text x="92" y="722">scripts/pre_release_audit.sh</text>
+      <text x="92" y="742">scripts/load_sample_data.py</text>
+    </g>
+    <rect x="92" y="762" width="92" height="22" rx="11" fill="#1d2d40" stroke="#5a8a55"/>
+    <text x="138" y="777" font-size="10" font-weight="700" fill="#21d1aa" text-anchor="middle">no TLS</text>
+    <rect x="194" y="762" width="106" height="22" rx="11" fill="#1d2d40" stroke="#5a8a55"/>
+    <text x="247" y="777" font-size="10" font-weight="700" fill="#21d1aa" text-anchor="middle">no auth proxy</text>
+  </g>
+
+  <!-- B. Droplet -->
+  <g>
+    <rect x="488" y="166" width="400" height="640" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="486" y="160" width="400" height="640" rx="16" fill="#1a2636" stroke="#304962"/>
+    <rect x="486" y="160" width="6" height="640" rx="3" fill="#4db0ff"/>
+    <text x="512" y="194" font-size="11" font-weight="700" letter-spacing="1.6" fill="#8fd5ff">OPTION B · DO DROPLET</text>
+    <text x="512" y="222" font-size="20" font-weight="700" fill="#edf4ff">Single VM</text>
+    <text x="512" y="244" font-size="12" fill="#a7bed8">nginx + systemd + certbot · recommended small prod</text>
+
+    <g>
+      <rect x="512" y="270" width="350" height="68" rx="14" fill="#162332" stroke="#304962"/>
+      <text x="530" y="296" font-size="14" font-weight="700" fill="#edf4ff">Ubuntu 24.04 LTS</text>
+      <text x="530" y="318" font-size="12" fill="#a7bed8">2 vCPU · 2-4 GB RAM · 50 GB SSD · UFW</text>
+    </g>
+    <g>
+      <rect x="512" y="354" width="350" height="68" rx="14" fill="#162332" stroke="#304962"/>
+      <text x="530" y="380" font-size="14" font-weight="700" fill="#edf4ff">nginx + certbot</text>
+      <text x="530" y="402" font-size="12" fill="#a7bed8">Reverse proxy :443 · Let&apos;s Encrypt auto-renew</text>
+    </g>
+    <g>
+      <rect x="512" y="438" width="350" height="68" rx="14" fill="#162332" stroke="#304962"/>
+      <text x="530" y="464" font-size="14" font-weight="700" fill="#edf4ff" font-family="Menlo, Consolas, monospace">systemd: makerflow.service</text>
+      <text x="530" y="486" font-size="12" fill="#a7bed8">gunicorn wsgi:application · /opt/makerflow-pm</text>
+    </g>
+    <g>
+      <rect x="512" y="522" width="350" height="68" rx="14" fill="#162332" stroke="#304962"/>
+      <text x="530" y="548" font-size="14" font-weight="700" fill="#edf4ff">SQLite or PostgreSQL</text>
+      <text x="530" y="570" font-size="12" fill="#a7bed8">Nightly backup cron · /healthz · /readyz</text>
+    </g>
+
+    <text x="512" y="618" font-size="11" font-weight="700" letter-spacing="1.6" fill="#a7bed8">DEPLOY COMMAND</text>
+    <g font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">
+      <text x="512" y="642">./scripts/deploy_production.sh \</text>
+      <text x="512" y="660">  --ssh ubuntu@YOUR_DROPLET_IP \</text>
+      <text x="512" y="678">  --domain makerflow.org \</text>
+      <text x="512" y="696">  --admin-email admin@your.edu \</text>
+      <text x="512" y="714">  --admin-password &apos;CHANGE_ME&apos;</text>
+    </g>
+    <text x="512" y="740" font-size="11" fill="#a7bed8">Flags: --letsencrypt-email · --no-certbot</text>
+    <text x="512" y="758" font-size="11" fill="#a7bed8">       --no-ufw · --no-swap · --swap-gb 2</text>
+    <rect x="512" y="772" width="92" height="22" rx="11" fill="#1d2d40" stroke="#79a7d5"/>
+    <text x="558" y="787" font-size="10" font-weight="700" fill="#8fd5ff" text-anchor="middle">TLS</text>
+    <rect x="614" y="772" width="106" height="22" rx="11" fill="#1d2d40" stroke="#79a7d5"/>
+    <text x="667" y="787" font-size="10" font-weight="700" fill="#8fd5ff" text-anchor="middle">single node</text>
+  </g>
+
+  <!-- C. App Platform -->
+  <g>
+    <rect x="908" y="166" width="370" height="640" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="906" y="160" width="370" height="640" rx="16" fill="#1a2636" stroke="#304962"/>
+    <rect x="906" y="160" width="6" height="640" rx="3" fill="#ffbe55"/>
+    <text x="932" y="194" font-size="11" font-weight="700" letter-spacing="1.6" fill="#ffbe55">OPTION C · APP PLATFORM</text>
+    <text x="932" y="222" font-size="20" font-weight="700" fill="#edf4ff">Managed runtime</text>
+    <text x="932" y="244" font-size="12" fill="#a7bed8">CI on push · durable managed Postgres</text>
+
+    <g>
+      <rect x="932" y="270" width="328" height="68" rx="14" fill="#162332" stroke="#304962"/>
+      <text x="950" y="296" font-size="14" font-weight="700" fill="#edf4ff" font-family="Menlo, Consolas, monospace">.do/app.yaml</text>
+      <text x="950" y="318" font-size="12" fill="#a7bed8">basic-xxs · deploy_on_push: main</text>
+    </g>
+    <g>
+      <rect x="932" y="354" width="328" height="80" rx="14" fill="#162332" stroke="#304962"/>
+      <text x="950" y="380" font-size="14" font-weight="700" fill="#edf4ff">Build &amp; Run</text>
+      <text x="950" y="400" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">pip install -r requirements.txt</text>
+      <text x="950" y="418" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">bootstrap_db.py &amp;&amp; gunicorn wsgi:app</text>
+    </g>
+    <g>
+      <rect x="932" y="450" width="328" height="68" rx="14" fill="#162332" stroke="#304962"/>
+      <text x="950" y="476" font-size="14" font-weight="700" fill="#edf4ff">Health checks</text>
+      <text x="950" y="498" font-size="12" fill="#a7bed8">/readyz · 30s initial · 10s period · 3 fails</text>
+    </g>
+    <g>
+      <rect x="932" y="534" width="328" height="68" rx="14" fill="#162332" stroke="#304962"/>
+      <text x="950" y="560" font-size="14" font-weight="700" fill="#edf4ff">Managed PostgreSQL</text>
+      <text x="950" y="582" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">MAKERSPACE_DATABASE_URL (secret)</text>
+    </g>
+
+    <text x="932" y="630" font-size="11" font-weight="700" letter-spacing="1.6" fill="#ff5e7e">CAVEATS</text>
+    <g font-size="12" fill="#a7bed8">
+      <text x="932" y="654">• SQLite is ephemeral — use managed PG</text>
+      <text x="932" y="674">• MAKERSPACE_COOKIE_SECURE=1</text>
+      <text x="932" y="694">• Rotate MAKERSPACE_SECRET_KEY (64+ chars)</text>
+      <text x="932" y="714">• Scale via instance_count or _size_slug</text>
+      <text x="932" y="734">• Logs via doctl apps logs &lt;APP_ID&gt;</text>
+      <text x="932" y="754">• Spaces / CDN optional for static assets</text>
+    </g>
+    <rect x="932" y="772" width="92" height="22" rx="11" fill="#1d2d40" stroke="#b88a30"/>
+    <text x="978" y="787" font-size="10" font-weight="700" fill="#ffbe55" text-anchor="middle">CI/CD</text>
+    <rect x="1034" y="772" width="106" height="22" rx="11" fill="#1d2d40" stroke="#b88a30"/>
+    <text x="1087" y="787" font-size="10" font-weight="700" fill="#ffbe55" text-anchor="middle">managed DB</text>
+  </g>
+
+  <text x="64" y="842" font-size="11" fill="#a7bed8">Migration paths: A → B (rsync data/ + run deploy_production.sh) · B → C (migrate_sqlite_to_postgres.py + redeploy).</text>
+</svg>

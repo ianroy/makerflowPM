@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1340 900" font-family="Avenir Next, Trebuchet MS, Segoe UI, sans-serif">
+  <defs>
+    <radialGradient id="bgRadial1" cx="6%" cy="4%" r="55%">
+      <stop offset="0%" stop-color="#1d3852"/>
+      <stop offset="80%" stop-color="#0e141f"/>
+    </radialGradient>
+    <radialGradient id="bgRadial2" cx="95%" cy="2%" r="40%">
+      <stop offset="0%" stop-color="#133146"/>
+      <stop offset="100%" stop-color="#0e141f" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="brandGrad" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#4db0ff"/>
+      <stop offset="100%" stop-color="#21d1aa"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1340" height="900" fill="#0e141f"/>
+  <rect width="1340" height="900" fill="url(#bgRadial1)"/>
+  <rect width="1340" height="900" fill="url(#bgRadial2)"/>
+
+  <text x="64" y="60" font-size="13" font-weight="700" fill="#21d1aa" letter-spacing="2">MAKERFLOW PM</text>
+  <text x="64" y="92" font-size="26" font-weight="700" fill="#edf4ff">Tech stack</text>
+  <text x="64" y="118" font-size="13" fill="#a7bed8">Stdlib-first. Minimal dependencies. Built so a 2-person ops team can run it on a $6 Droplet.</text>
+  <line x1="64" y1="138" x2="1276" y2="138" stroke="#304962" stroke-width="1"/>
+
+  <!-- Hero row -->
+  <g>
+    <rect x="68" y="166" width="1210" height="80" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="66" y="160" width="1210" height="80" rx="16" fill="#1a2636" stroke="#4db0ff" stroke-width="2"/>
+    <rect x="66" y="160" width="6" height="80" rx="3" fill="url(#brandGrad)"/>
+    <text x="92" y="194" font-size="11" font-weight="700" letter-spacing="1.6" fill="#a7bed8">PRIMARY RUNTIME</text>
+    <text x="92" y="222" font-size="22" font-weight="700" fill="#edf4ff">Python</text>
+    <rect x="190" y="200" width="98" height="28" rx="14" fill="#1d2d40" stroke="#4f79a0"/>
+    <text x="239" y="219" font-size="13" font-weight="700" fill="#8fd5ff" text-anchor="middle">3.11.9</text>
+    <text x="316" y="222" font-size="13" fill="#a7bed8">declared in</text>
+    <text x="406" y="222" font-size="13" font-family="Menlo, Consolas, monospace" fill="#edf4ff">runtime.txt</text>
+
+    <text x="700" y="194" font-size="11" font-weight="700" letter-spacing="1.6" fill="#a7bed8">LICENSE</text>
+    <rect x="700" y="206" width="186" height="28" rx="14" fill="#1d2d40" stroke="#a98cff"/>
+    <text x="793" y="225" font-size="13" font-weight="700" fill="#c5b3ff" text-anchor="middle">CC BY-SA 4.0</text>
+
+    <text x="912" y="194" font-size="11" font-weight="700" letter-spacing="1.6" fill="#a7bed8">SOURCE OF TRUTH</text>
+    <rect x="912" y="206" width="186" height="28" rx="14" fill="#1d2d40" stroke="#5a8a55"/>
+    <text x="1005" y="225" font-size="13" font-weight="700" fill="#21d1aa" text-anchor="middle">GitHub · main branch</text>
+  </g>
+
+  <!-- LEFT COLUMN: Application layers -->
+  <g>
+    <rect x="68" y="270" width="396" height="280" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="66" y="264" width="396" height="280" rx="16" fill="#1a2636" stroke="#304962"/>
+    <rect x="66" y="264" width="6" height="280" rx="3" fill="#4db0ff"/>
+    <text x="92" y="296" font-size="11" font-weight="700" letter-spacing="1.6" fill="#8fd5ff">APPLICATION</text>
+
+    <text x="92" y="322" font-size="13" font-weight="700" fill="#edf4ff">WSGI server</text>
+    <rect x="92" y="332" width="120" height="26" rx="13" fill="#1d2d40" stroke="#4f79a0"/>
+    <text x="152" y="350" font-size="12" font-weight="700" fill="#edf4ff" text-anchor="middle">Gunicorn</text>
+    <rect x="218" y="332" width="76" height="26" rx="13" fill="#1d2d40" stroke="#4f79a0"/>
+    <text x="256" y="350" font-size="11" font-weight="700" fill="#8fd5ff" text-anchor="middle">≥ 21.0</text>
+    <text x="300" y="350" font-size="12" fill="#a7bed8">production</text>
+
+    <rect x="92" y="368" width="120" height="26" rx="13" fill="#1d2d40" stroke="#4f79a0"/>
+    <text x="152" y="386" font-size="12" font-weight="700" fill="#edf4ff" text-anchor="middle">Waitress</text>
+    <rect x="218" y="368" width="76" height="26" rx="13" fill="#1d2d40" stroke="#4f79a0"/>
+    <text x="256" y="386" font-size="11" font-weight="700" fill="#8fd5ff" text-anchor="middle">≥ 2.1</text>
+    <text x="300" y="386" font-size="12" fill="#a7bed8">windows</text>
+
+    <text x="92" y="416" font-size="13" font-weight="700" fill="#edf4ff">Framework shell</text>
+    <rect x="92" y="426" width="120" height="26" rx="13" fill="#1d2d40" stroke="#4f79a0"/>
+    <text x="152" y="444" font-size="12" font-weight="700" fill="#edf4ff" text-anchor="middle">Flask</text>
+    <rect x="218" y="426" width="76" height="26" rx="13" fill="#1d2d40" stroke="#4f79a0"/>
+    <text x="256" y="444" font-size="11" font-weight="700" fill="#8fd5ff" text-anchor="middle">≥ 3.0</text>
+    <rect x="92" y="460" width="120" height="26" rx="13" fill="#1d2d40" stroke="#4f79a0"/>
+    <text x="152" y="478" font-size="12" font-weight="700" fill="#edf4ff" text-anchor="middle">Werkzeug</text>
+    <rect x="218" y="460" width="76" height="26" rx="13" fill="#1d2d40" stroke="#4f79a0"/>
+    <text x="256" y="478" font-size="11" font-weight="700" fill="#8fd5ff" text-anchor="middle">≥ 3.0</text>
+    <text x="300" y="478" font-size="11" fill="#a7bed8">WSGI bridge only</text>
+
+    <text x="92" y="510" font-size="13" font-weight="700" fill="#edf4ff">Core dispatcher</text>
+    <rect x="92" y="520" width="220" height="26" rx="13" fill="#1d2d40" stroke="#5a8a55"/>
+    <text x="202" y="538" font-size="12" font-weight="700" fill="#21d1aa" text-anchor="middle">stdlib WSGI · hand-rolled</text>
+    <text x="316" y="538" font-size="11" fill="#a7bed8">app/server.py</text>
+  </g>
+
+  <!-- MIDDLE COLUMN: Data -->
+  <g>
+    <rect x="484" y="270" width="396" height="280" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="482" y="264" width="396" height="280" rx="16" fill="#1a2636" stroke="#304962"/>
+    <rect x="482" y="264" width="6" height="280" rx="3" fill="#21d1aa"/>
+    <text x="508" y="296" font-size="11" font-weight="700" letter-spacing="1.6" fill="#21d1aa">DATA</text>
+
+    <text x="508" y="322" font-size="13" font-weight="700" fill="#edf4ff">Default backend</text>
+    <rect x="508" y="332" width="120" height="26" rx="13" fill="#1d2d40" stroke="#5a8a55"/>
+    <text x="568" y="350" font-size="12" font-weight="700" fill="#edf4ff" text-anchor="middle">SQLite</text>
+    <rect x="634" y="332" width="92" height="26" rx="13" fill="#1d2d40" stroke="#5a8a55"/>
+    <text x="680" y="350" font-size="11" font-weight="700" fill="#21d1aa" text-anchor="middle">stdlib · WAL</text>
+    <text x="508" y="376" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">data/makerspace_ops.db</text>
+
+    <text x="508" y="408" font-size="13" font-weight="700" fill="#edf4ff">Production backend</text>
+    <rect x="508" y="418" width="120" height="26" rx="13" fill="#1d2d40" stroke="#5a8a55"/>
+    <text x="568" y="436" font-size="12" font-weight="700" fill="#edf4ff" text-anchor="middle">PostgreSQL</text>
+    <rect x="634" y="418" width="92" height="26" rx="13" fill="#1d2d40" stroke="#5a8a55"/>
+    <text x="680" y="436" font-size="11" font-weight="700" fill="#21d1aa" text-anchor="middle">DO Managed</text>
+    <rect x="508" y="450" width="120" height="26" rx="13" fill="#1d2d40" stroke="#4f79a0"/>
+    <text x="568" y="468" font-size="12" font-weight="700" fill="#edf4ff" text-anchor="middle">psycopg</text>
+    <rect x="634" y="450" width="92" height="26" rx="13" fill="#1d2d40" stroke="#4f79a0"/>
+    <text x="680" y="468" font-size="11" font-weight="700" fill="#8fd5ff" text-anchor="middle">≥ 3.1.18 binary</text>
+
+    <text x="508" y="498" font-size="13" font-weight="700" fill="#edf4ff">Document imports</text>
+    <rect x="508" y="508" width="120" height="26" rx="13" fill="#1d2d40" stroke="#4f79a0"/>
+    <text x="568" y="526" font-size="12" font-weight="700" fill="#edf4ff" text-anchor="middle">pypdf</text>
+    <rect x="634" y="508" width="92" height="26" rx="13" fill="#1d2d40" stroke="#4f79a0"/>
+    <text x="680" y="526" font-size="11" font-weight="700" fill="#8fd5ff" text-anchor="middle">≥ 4.3.1</text>
+  </g>
+
+  <!-- RIGHT COLUMN: Frontend -->
+  <g>
+    <rect x="900" y="270" width="378" height="280" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="898" y="264" width="378" height="280" rx="16" fill="#1a2636" stroke="#304962"/>
+    <rect x="898" y="264" width="6" height="280" rx="3" fill="#ffbe55"/>
+    <text x="924" y="296" font-size="11" font-weight="700" letter-spacing="1.6" fill="#ffbe55">FRONTEND</text>
+
+    <text x="924" y="322" font-size="13" font-weight="700" fill="#edf4ff">Render</text>
+    <rect x="924" y="332" width="200" height="26" rx="13" fill="#1d2d40" stroke="#b88a30"/>
+    <text x="1024" y="350" font-size="12" font-weight="700" fill="#ffbe55" text-anchor="middle">server-rendered HTML</text>
+    <text x="924" y="376" font-size="11" fill="#a7bed8">f-string composition · no template engine</text>
+
+    <text x="924" y="408" font-size="13" font-weight="700" fill="#edf4ff">JavaScript</text>
+    <rect x="924" y="418" width="170" height="26" rx="13" fill="#1d2d40" stroke="#b88a30"/>
+    <text x="1009" y="436" font-size="12" font-weight="700" fill="#ffbe55" text-anchor="middle">vanilla · ES2020+</text>
+    <rect x="1100" y="418" width="80" height="26" rx="13" fill="#1d2d40" stroke="#4f79a0"/>
+    <text x="1140" y="436" font-size="11" font-weight="700" fill="#8fd5ff" text-anchor="middle">~6.5k LOC</text>
+
+    <text x="924" y="468" font-size="13" font-weight="700" fill="#edf4ff">Styling</text>
+    <rect x="924" y="478" width="170" height="26" rx="13" fill="#1d2d40" stroke="#b88a30"/>
+    <text x="1009" y="496" font-size="12" font-weight="700" fill="#ffbe55" text-anchor="middle">hand-rolled CSS</text>
+    <rect x="1100" y="478" width="80" height="26" rx="13" fill="#1d2d40" stroke="#4f79a0"/>
+    <text x="1140" y="496" font-size="11" font-weight="700" fill="#8fd5ff" text-anchor="middle">~2.7k LOC</text>
+
+    <text x="924" y="528" font-size="13" font-weight="700" fill="#edf4ff">Build</text>
+    <rect x="924" y="536" width="90" height="22" rx="11" fill="#1d2d40" stroke="#5a8a55"/>
+    <text x="969" y="551" font-size="11" font-weight="700" fill="#21d1aa" text-anchor="middle">no build step</text>
+    <rect x="1022" y="536" width="80" height="22" rx="11" fill="#1d2d40" stroke="#5a8a55"/>
+    <text x="1062" y="551" font-size="11" font-weight="700" fill="#21d1aa" text-anchor="middle">no bundler</text>
+  </g>
+
+  <!-- LEFT BOTTOM: Edge & Delivery -->
+  <g>
+    <rect x="68" y="572" width="396" height="220" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="66" y="566" width="396" height="220" rx="16" fill="#1a2636" stroke="#304962"/>
+    <rect x="66" y="566" width="6" height="220" rx="3" fill="#ff5e7e"/>
+    <text x="92" y="598" font-size="11" font-weight="700" letter-spacing="1.6" fill="#ff5e7e">EDGE &amp; DELIVERY</text>
+
+    <text x="92" y="624" font-size="13" font-weight="700" fill="#edf4ff">Droplet path</text>
+    <rect x="92" y="634" width="100" height="26" rx="13" fill="#1d2d40" stroke="#a14454"/>
+    <text x="142" y="652" font-size="12" font-weight="700" fill="#ff5e7e" text-anchor="middle">nginx</text>
+    <rect x="198" y="634" width="100" height="26" rx="13" fill="#1d2d40" stroke="#a14454"/>
+    <text x="248" y="652" font-size="12" font-weight="700" fill="#ff5e7e" text-anchor="middle">certbot</text>
+    <rect x="304" y="634" width="100" height="26" rx="13" fill="#1d2d40" stroke="#a14454"/>
+    <text x="354" y="652" font-size="12" font-weight="700" fill="#ff5e7e" text-anchor="middle">systemd</text>
+    <text x="92" y="678" font-size="11" fill="#a7bed8">Ubuntu 24.04 LTS · UFW · daily backup cron</text>
+
+    <text x="92" y="706" font-size="13" font-weight="700" fill="#edf4ff">Managed path</text>
+    <rect x="92" y="716" width="160" height="26" rx="13" fill="#1d2d40" stroke="#a14454"/>
+    <text x="172" y="734" font-size="12" font-weight="700" fill="#ff5e7e" text-anchor="middle">DO App Platform</text>
+    <rect x="258" y="716" width="120" height="26" rx="13" fill="#1d2d40" stroke="#a14454"/>
+    <text x="318" y="734" font-size="12" font-weight="700" fill="#ff5e7e" text-anchor="middle">DO Managed PG</text>
+    <text x="92" y="758" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">.do/app.yaml · deploy_on_push</text>
+  </g>
+
+  <!-- MIDDLE BOTTOM: Source & CI -->
+  <g>
+    <rect x="484" y="572" width="396" height="220" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="482" y="566" width="396" height="220" rx="16" fill="#1a2636" stroke="#304962"/>
+    <rect x="482" y="566" width="6" height="220" rx="3" fill="#a7bed8"/>
+    <text x="508" y="598" font-size="11" font-weight="700" letter-spacing="1.6" fill="#a7bed8">SOURCE &amp; CI</text>
+
+    <text x="508" y="624" font-size="13" font-weight="700" fill="#edf4ff">Version control</text>
+    <rect x="508" y="634" width="80" height="26" rx="13" fill="#1d2d40" stroke="#4f79a0"/>
+    <text x="548" y="652" font-size="12" font-weight="700" fill="#edf4ff" text-anchor="middle">Git</text>
+    <rect x="594" y="634" width="100" height="26" rx="13" fill="#1d2d40" stroke="#4f79a0"/>
+    <text x="644" y="652" font-size="12" font-weight="700" fill="#edf4ff" text-anchor="middle">GitHub</text>
+    <rect x="700" y="634" width="140" height="26" rx="13" fill="#1d2d40" stroke="#4f79a0"/>
+    <text x="770" y="652" font-size="12" font-weight="700" fill="#edf4ff" text-anchor="middle">GitHub Desktop</text>
+
+    <text x="508" y="688" font-size="13" font-weight="700" fill="#edf4ff">CI / release</text>
+    <rect x="508" y="698" width="160" height="26" rx="13" fill="#1d2d40" stroke="#b88a30"/>
+    <text x="588" y="716" font-size="12" font-weight="700" fill="#ffbe55" text-anchor="middle">deploy_on_push (DO)</text>
+    <rect x="674" y="698" width="166" height="26" rx="13" fill="#1d2d40" stroke="#b88a30"/>
+    <text x="757" y="716" font-size="12" font-weight="700" fill="#ffbe55" text-anchor="middle">GitHub Actions · roadmap</text>
+
+    <text x="508" y="752" font-size="11" fill="#a7bed8">Verification scripts (no pytest yet — roadmap P1):</text>
+    <text x="508" y="770" font-size="11" font-family="Menlo, Consolas, monospace" fill="#a7bed8">smoke · usability · accessibility · security</text>
+  </g>
+
+  <!-- RIGHT BOTTOM: AI tooling -->
+  <g>
+    <rect x="900" y="572" width="378" height="220" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="898" y="566" width="378" height="220" rx="16" fill="#1a2636" stroke="#304962"/>
+    <rect x="898" y="566" width="6" height="220" rx="3" fill="#21d1aa"/>
+    <text x="924" y="598" font-size="11" font-weight="700" letter-spacing="1.6" fill="#21d1aa">AI-ASSISTED BUILD</text>
+
+    <text x="924" y="624" font-size="13" font-weight="700" fill="#edf4ff">Implementation workflow</text>
+    <rect x="924" y="634" width="200" height="26" rx="13" fill="#1d2d40" stroke="#5a8a55"/>
+    <text x="1024" y="652" font-size="12" font-weight="700" fill="#21d1aa" text-anchor="middle">OpenAI Codex</text>
+    <rect x="1130" y="634" width="100" height="26" rx="13" fill="#1d2d40" stroke="#5a8a55"/>
+    <text x="1180" y="652" font-size="11" font-weight="700" fill="#21d1aa" text-anchor="middle">GPT-5.3 family</text>
+    <text x="924" y="678" font-size="11" fill="#a7bed8">Implementation · debugging · tests · doc refinement</text>
+
+    <text x="924" y="708" font-size="13" font-weight="700" fill="#edf4ff">Roadmap orchestration</text>
+    <rect x="924" y="718" width="290" height="26" rx="13" fill="#1d2d40" stroke="#5a8a55"/>
+    <text x="1069" y="736" font-size="12" font-weight="700" fill="#21d1aa" text-anchor="middle">FEATUREROADMAP_workplan.md (agent loop)</text>
+    <text x="924" y="762" font-size="11" fill="#a7bed8">Regeneration + execution prompts · resumable · context-aware</text>
+  </g>
+
+  <!-- Footer: principles -->
+  <g>
+    <rect x="68" y="814" width="1210" height="66" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="66" y="808" width="1210" height="66" rx="16" fill="#1a2636" stroke="#304962"/>
+    <text x="92" y="838" font-size="11" font-weight="700" letter-spacing="1.6" fill="#a7bed8">DESIGN PRINCIPLES</text>
+    <text x="92" y="862" font-size="12" fill="#a7bed8">stdlib-first · zero frontend build · dual SQLite/Postgres · org-scoped tenancy · soft-delete-first · audit-everything · self-hostable on a $6 VM</text>
+  </g>
+</svg>
