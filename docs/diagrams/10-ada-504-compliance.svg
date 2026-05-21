@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1340" font-family="Avenir Next, Trebuchet MS, Segoe UI, sans-serif">
+  <defs>
+    <radialGradient id="bgRadial1" cx="6%" cy="3%" r="55%">
+      <stop offset="0%" stop-color="#1d3852"/>
+      <stop offset="80%" stop-color="#0e141f"/>
+    </radialGradient>
+    <radialGradient id="bgRadial2" cx="94%" cy="2%" r="40%">
+      <stop offset="0%" stop-color="#133146"/>
+      <stop offset="100%" stop-color="#0e141f" stop-opacity="0"/>
+    </radialGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#a7bed8"/>
+    </marker>
+    <marker id="arrowTeal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#21d1aa"/>
+    </marker>
+  </defs>
+
+  <rect width="1400" height="1340" fill="#0e141f"/>
+  <rect width="1400" height="1340" fill="url(#bgRadial1)"/>
+  <rect width="1400" height="1340" fill="url(#bgRadial2)"/>
+
+  <!-- Header -->
+  <text x="64" y="58" font-size="13" font-weight="700" fill="#21d1aa" letter-spacing="2">MAKERFLOW PM</text>
+  <text x="64" y="92" font-size="26" font-weight="700" fill="#edf4ff">Federal accessibility compliance — what&apos;s required, and how MakerFlow meets it</text>
+  <text x="64" y="118" font-size="13" fill="#a7bed8">ADA Title II (DOJ) + Section 504 (HHS) · WCAG 2.1 Level AA · 23 roadmap task cards mapped to obligations</text>
+  <line x1="64" y1="138" x2="1336" y2="138" stroke="#304962" stroke-width="1"/>
+
+  <!-- ========== ROW 1: WHO MUST COMPLY ========== -->
+  <text x="64" y="174" font-size="11" font-weight="700" letter-spacing="1.6" fill="#a7bed8">1 · WHO MUST COMPLY</text>
+
+  <!-- ADA Title II card -->
+  <g>
+    <rect x="68" y="192" width="616" height="246" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="66" y="186" width="616" height="246" rx="16" fill="#1a2636" stroke="#4db0ff" stroke-width="2"/>
+    <rect x="66" y="186" width="6" height="246" rx="3" fill="#4db0ff"/>
+    <text x="92" y="218" font-size="11" font-weight="700" letter-spacing="1.6" fill="#8fd5ff">ADA TITLE II · DOJ</text>
+    <text x="92" y="248" font-size="20" font-weight="700" fill="#edf4ff">State &amp; local government</text>
+    <text x="92" y="270" font-size="12" fill="#a7bed8">Public universities · school districts · libraries · transit · special districts</text>
+
+    <text x="92" y="304" font-size="12" font-weight="700" fill="#edf4ff">Authority</text>
+    <rect x="92" y="312" width="220" height="22" rx="11" fill="#1d2d40" stroke="#4f79a0"/>
+    <text x="202" y="327" font-size="11" font-weight="700" fill="#8fd5ff" text-anchor="middle">28 CFR Part 35 Subpart H</text>
+    <rect x="318" y="312" width="180" height="22" rx="11" fill="#1d2d40" stroke="#4f79a0"/>
+    <text x="408" y="327" font-size="11" font-weight="700" fill="#8fd5ff" text-anchor="middle">89 FR 31320 (Apr 24 2024)</text>
+
+    <text x="92" y="362" font-size="12" font-weight="700" fill="#edf4ff">Compliance deadlines (post-2026 IFR extension)</text>
+    <rect x="92" y="370" width="280" height="26" rx="13" fill="#1d2d40" stroke="#b88a30"/>
+    <text x="232" y="388" font-size="12" font-weight="700" fill="#ffbe55" text-anchor="middle">Population ≥ 50,000 · Apr 26 2027</text>
+    <rect x="380" y="370" width="290" height="26" rx="13" fill="#1d2d40" stroke="#b88a30"/>
+    <text x="525" y="388" font-size="12" font-weight="700" fill="#ffbe55" text-anchor="middle">&lt; 50k · special districts · Apr 26 2028</text>
+
+    <text x="92" y="422" font-size="12" fill="#a7bed8">Adds operational duties: ADA Coordinator (§35.107) · grievance procedure · effective communication (§35.160)</text>
+  </g>
+
+  <!-- Section 504 card -->
+  <g>
+    <rect x="718" y="192" width="618" height="246" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="716" y="186" width="618" height="246" rx="16" fill="#1a2636" stroke="#a98cff" stroke-width="2"/>
+    <rect x="716" y="186" width="6" height="246" rx="3" fill="#a98cff"/>
+    <text x="742" y="218" font-size="11" font-weight="700" letter-spacing="1.6" fill="#c5b3ff">SECTION 504 · HHS</text>
+    <text x="742" y="248" font-size="20" font-weight="700" fill="#edf4ff">Federally-funded recipients</text>
+    <text x="742" y="270" font-size="12" font-weight="700" fill="#a7bed8">HHS grant recipients · academic medical centers · student health · Medicaid providers</text>
+
+    <text x="742" y="304" font-size="12" font-weight="700" fill="#edf4ff">Authority</text>
+    <rect x="742" y="312" width="220" height="22" rx="11" fill="#1d2d40" stroke="#7d65cf"/>
+    <text x="852" y="327" font-size="11" font-weight="700" fill="#c5b3ff" text-anchor="middle">45 CFR Part 84 Subpart I</text>
+    <rect x="968" y="312" width="180" height="22" rx="11" fill="#1d2d40" stroke="#7d65cf"/>
+    <text x="1058" y="327" font-size="11" font-weight="700" fill="#c5b3ff" text-anchor="middle">89 FR 40066 (May 9 2024)</text>
+
+    <text x="742" y="362" font-size="12" font-weight="700" fill="#edf4ff">Compliance deadlines (post-2026 IFR extension)</text>
+    <rect x="742" y="370" width="280" height="26" rx="13" fill="#1d2d40" stroke="#b88a30"/>
+    <text x="882" y="388" font-size="12" font-weight="700" fill="#ffbe55" text-anchor="middle">≥ 15 employees · May 11 2027</text>
+    <rect x="1030" y="370" width="280" height="26" rx="13" fill="#1d2d40" stroke="#b88a30"/>
+    <text x="1170" y="388" font-size="12" font-weight="700" fill="#ffbe55" text-anchor="middle">&lt; 15 employees · May 10 2028</text>
+
+    <text x="742" y="422" font-size="12" fill="#a7bed8">ED Section 504 (34 CFR Part 104): parallel WCAG rule not yet finalized — OCR treats 2.1 AA as de facto bar</text>
+  </g>
+
+  <!-- Convergence arrow -->
+  <line x1="700" y1="455" x2="700" y2="490" stroke="#21d1aa" stroke-width="2" marker-end="url(#arrowTeal)"/>
+  <text x="700" y="478" font-size="11" font-weight="700" fill="#21d1aa" text-anchor="middle">both adopt</text>
+
+  <!-- ========== ROW 2: WCAG 2.1 LEVEL AA ========== -->
+  <text x="64" y="510" font-size="11" font-weight="700" letter-spacing="1.6" fill="#a7bed8">2 · COMMON TECHNICAL STANDARD</text>
+
+  <g>
+    <rect x="68" y="528" width="1268" height="290" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="66" y="522" width="1268" height="290" rx="16" fill="#1a2636" stroke="#21d1aa" stroke-width="2"/>
+    <rect x="66" y="522" width="6" height="290" rx="3" fill="#21d1aa"/>
+
+    <text x="92" y="555" font-size="22" font-weight="700" fill="#edf4ff">WCAG 2.1 Level AA</text>
+    <rect x="288" y="538" width="166" height="22" rx="11" fill="#1d2d40" stroke="#5a8a55"/>
+    <text x="371" y="552" font-size="11" font-weight="700" fill="#21d1aa" text-anchor="middle">W3C · June 2018</text>
+    <rect x="466" y="538" width="190" height="22" rx="11" fill="#1d2d40" stroke="#5a8a55"/>
+    <text x="561" y="552" font-size="11" font-weight="700" fill="#21d1aa" text-anchor="middle">§ 35.200 · § 84.84</text>
+    <text x="668" y="552" font-size="12" fill="#a7bed8">— success criteria most relevant to MakerFlow shown below</text>
+
+    <!-- 4 POUR columns -->
+    <!-- Perceivable -->
+    <g>
+      <rect x="94" y="582" width="298" height="216" rx="12" fill="#162332" stroke="#304962"/>
+      <rect x="94" y="582" width="6" height="216" rx="3" fill="#4db0ff"/>
+      <text x="118" y="608" font-size="13" font-weight="700" fill="#8fd5ff">Perceivable</text>
+      <g font-size="11" fill="#a7bed8">
+        <rect x="118" y="622" width="58" height="18" rx="9" fill="#1d2d40" stroke="#4f79a0"/>
+        <text x="147" y="635" font-size="10" font-weight="700" fill="#8fd5ff" text-anchor="middle">1.1.1</text>
+        <text x="184" y="635" fill="#a7bed8">Non-text alt</text>
+
+        <rect x="118" y="646" width="58" height="18" rx="9" fill="#1d2d40" stroke="#4f79a0"/>
+        <text x="147" y="659" font-size="10" font-weight="700" fill="#8fd5ff" text-anchor="middle">1.3.1</text>
+        <text x="184" y="659" fill="#a7bed8">Info &amp; relationships</text>
+
+        <rect x="118" y="670" width="58" height="18" rx="9" fill="#1d2d40" stroke="#4f79a0"/>
+        <text x="147" y="683" font-size="10" font-weight="700" fill="#8fd5ff" text-anchor="middle">1.4.1</text>
+        <text x="184" y="683" fill="#a7bed8">Use of color</text>
+
+        <rect x="118" y="694" width="58" height="18" rx="9" fill="#1d2d40" stroke="#4f79a0"/>
+        <text x="147" y="707" font-size="10" font-weight="700" fill="#8fd5ff" text-anchor="middle">1.4.3</text>
+        <text x="184" y="707" fill="#a7bed8">Contrast (min)</text>
+
+        <rect x="118" y="718" width="58" height="18" rx="9" fill="#1d2d40" stroke="#4f79a0"/>
+        <text x="147" y="731" font-size="10" font-weight="700" fill="#8fd5ff" text-anchor="middle">1.4.10</text>
+        <text x="184" y="731" fill="#a7bed8">Reflow at 320 px</text>
+
+        <rect x="118" y="742" width="58" height="18" rx="9" fill="#1d2d40" stroke="#4f79a0"/>
+        <text x="147" y="755" font-size="10" font-weight="700" fill="#8fd5ff" text-anchor="middle">1.4.11</text>
+        <text x="184" y="755" fill="#a7bed8">Non-text contrast</text>
+
+        <rect x="118" y="766" width="58" height="18" rx="9" fill="#1d2d40" stroke="#4f79a0"/>
+        <text x="147" y="779" font-size="10" font-weight="700" fill="#8fd5ff" text-anchor="middle">1.4.13</text>
+        <text x="184" y="779" fill="#a7bed8">Hover/focus content</text>
+      </g>
+    </g>
+
+    <!-- Operable -->
+    <g>
+      <rect x="408" y="582" width="298" height="216" rx="12" fill="#162332" stroke="#304962"/>
+      <rect x="408" y="582" width="6" height="216" rx="3" fill="#ffbe55"/>
+      <text x="432" y="608" font-size="13" font-weight="700" fill="#ffbe55">Operable</text>
+      <g font-size="11" fill="#a7bed8">
+        <rect x="432" y="622" width="58" height="18" rx="9" fill="#1d2d40" stroke="#b88a30"/>
+        <text x="461" y="635" font-size="10" font-weight="700" fill="#ffbe55" text-anchor="middle">2.1.1</text>
+        <text x="498" y="635" fill="#a7bed8">Keyboard</text>
+
+        <rect x="432" y="646" width="58" height="18" rx="9" fill="#1d2d40" stroke="#b88a30"/>
+        <text x="461" y="659" font-size="10" font-weight="700" fill="#ffbe55" text-anchor="middle">2.1.2</text>
+        <text x="498" y="659" fill="#a7bed8">No keyboard trap</text>
+
+        <rect x="432" y="670" width="58" height="18" rx="9" fill="#1d2d40" stroke="#b88a30"/>
+        <text x="461" y="683" font-size="10" font-weight="700" fill="#ffbe55" text-anchor="middle">2.2.1</text>
+        <text x="498" y="683" fill="#a7bed8">Timing adjustable</text>
+
+        <rect x="432" y="694" width="58" height="18" rx="9" fill="#1d2d40" stroke="#b88a30"/>
+        <text x="461" y="707" font-size="10" font-weight="700" fill="#ffbe55" text-anchor="middle">2.4.1</text>
+        <text x="498" y="707" fill="#a7bed8">Bypass blocks</text>
+
+        <rect x="432" y="718" width="58" height="18" rx="9" fill="#1d2d40" stroke="#b88a30"/>
+        <text x="461" y="731" font-size="10" font-weight="700" fill="#ffbe55" text-anchor="middle">2.4.2</text>
+        <text x="498" y="731" fill="#a7bed8">Page titled</text>
+
+        <rect x="432" y="742" width="58" height="18" rx="9" fill="#1d2d40" stroke="#b88a30"/>
+        <text x="461" y="755" font-size="10" font-weight="700" fill="#ffbe55" text-anchor="middle">2.4.7</text>
+        <text x="498" y="755" fill="#a7bed8">Focus visible</text>
+
+        <rect x="432" y="766" width="58" height="18" rx="9" fill="#1d2d40" stroke="#b88a30"/>
+        <text x="461" y="779" font-size="10" font-weight="700" fill="#ffbe55" text-anchor="middle">2.5.1</text>
+        <text x="498" y="779" fill="#a7bed8">Pointer gestures</text>
+      </g>
+    </g>
+
+    <!-- Understandable -->
+    <g>
+      <rect x="722" y="582" width="298" height="216" rx="12" fill="#162332" stroke="#304962"/>
+      <rect x="722" y="582" width="6" height="216" rx="3" fill="#a98cff"/>
+      <text x="746" y="608" font-size="13" font-weight="700" fill="#c5b3ff">Understandable</text>
+      <g font-size="11" fill="#a7bed8">
+        <rect x="746" y="622" width="58" height="18" rx="9" fill="#1d2d40" stroke="#7d65cf"/>
+        <text x="775" y="635" font-size="10" font-weight="700" fill="#c5b3ff" text-anchor="middle">3.1.1</text>
+        <text x="812" y="635" fill="#a7bed8">Language of page</text>
+
+        <rect x="746" y="646" width="58" height="18" rx="9" fill="#1d2d40" stroke="#7d65cf"/>
+        <text x="775" y="659" font-size="10" font-weight="700" fill="#c5b3ff" text-anchor="middle">3.2.3</text>
+        <text x="812" y="659" fill="#a7bed8">Consistent navigation</text>
+
+        <rect x="746" y="670" width="58" height="18" rx="9" fill="#1d2d40" stroke="#7d65cf"/>
+        <text x="775" y="683" font-size="10" font-weight="700" fill="#c5b3ff" text-anchor="middle">3.3.1</text>
+        <text x="812" y="683" fill="#a7bed8">Error identification</text>
+
+        <rect x="746" y="694" width="58" height="18" rx="9" fill="#1d2d40" stroke="#7d65cf"/>
+        <text x="775" y="707" font-size="10" font-weight="700" fill="#c5b3ff" text-anchor="middle">3.3.2</text>
+        <text x="812" y="707" fill="#a7bed8">Labels / instructions</text>
+
+        <rect x="746" y="718" width="58" height="18" rx="9" fill="#1d2d40" stroke="#7d65cf"/>
+        <text x="775" y="731" font-size="10" font-weight="700" fill="#c5b3ff" text-anchor="middle">3.3.3</text>
+        <text x="812" y="731" fill="#a7bed8">Error suggestion</text>
+
+        <rect x="746" y="742" width="58" height="18" rx="9" fill="#1d2d40" stroke="#7d65cf"/>
+        <text x="775" y="755" font-size="10" font-weight="700" fill="#c5b3ff" text-anchor="middle">3.3.4</text>
+        <text x="812" y="755" fill="#a7bed8">Error prevention</text>
+
+        <rect x="746" y="766" width="58" height="18" rx="9" fill="#1d2d40" stroke="#7d65cf"/>
+        <text x="775" y="779" font-size="10" font-weight="700" fill="#c5b3ff" text-anchor="middle">1.3.5</text>
+        <text x="812" y="779" fill="#a7bed8">Identify input purpose</text>
+      </g>
+    </g>
+
+    <!-- Robust -->
+    <g>
+      <rect x="1036" y="582" width="276" height="216" rx="12" fill="#162332" stroke="#304962"/>
+      <rect x="1036" y="582" width="6" height="216" rx="3" fill="#21d1aa"/>
+      <text x="1060" y="608" font-size="13" font-weight="700" fill="#21d1aa">Robust</text>
+      <g font-size="11" fill="#a7bed8">
+        <rect x="1060" y="622" width="58" height="18" rx="9" fill="#1d2d40" stroke="#5a8a55"/>
+        <text x="1089" y="635" font-size="10" font-weight="700" fill="#21d1aa" text-anchor="middle">4.1.2</text>
+        <text x="1126" y="635" fill="#a7bed8">Name · role · value</text>
+
+        <rect x="1060" y="646" width="58" height="18" rx="9" fill="#1d2d40" stroke="#5a8a55"/>
+        <text x="1089" y="659" font-size="10" font-weight="700" fill="#21d1aa" text-anchor="middle">4.1.3</text>
+        <text x="1126" y="659" fill="#a7bed8">Status messages</text>
+      </g>
+      <text x="1060" y="700" font-size="11" font-weight="700" fill="#edf4ff">Backstop layer</text>
+      <text x="1060" y="720" font-size="11" fill="#a7bed8">AT compatibility — ARIA correctness</text>
+      <text x="1060" y="738" font-size="11" fill="#a7bed8">on every custom widget MakerFlow</text>
+      <text x="1060" y="756" font-size="11" fill="#a7bed8">renders (kanban, modal, lookups,</text>
+      <text x="1060" y="774" font-size="11" fill="#a7bed8">activity log).</text>
+    </g>
+  </g>
+
+  <!-- ========== ROW 3: OPERATIONAL OBLIGATIONS + EXCEPTIONS ========== -->
+  <text x="64" y="840" font-size="11" font-weight="700" letter-spacing="1.6" fill="#a7bed8">3 · OPERATIONAL OBLIGATIONS &amp; EXCEPTIONS</text>
+
+  <!-- Operational obligations -->
+  <g>
+    <rect x="68" y="858" width="780" height="200" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="66" y="852" width="780" height="200" rx="16" fill="#1a2636" stroke="#ffbe55" stroke-width="2"/>
+    <rect x="66" y="852" width="6" height="200" rx="3" fill="#ffbe55"/>
+    <text x="92" y="884" font-size="14" font-weight="700" fill="#edf4ff">Operational obligations (Title II adds these beyond WCAG)</text>
+
+    <g font-size="11">
+      <rect x="92" y="900" width="220" height="22" rx="11" fill="#1d2d40" stroke="#b88a30"/>
+      <text x="202" y="914" font-weight="700" fill="#ffbe55" text-anchor="middle">§ 35.105 · self-evaluation</text>
+      <rect x="318" y="900" width="220" height="22" rx="11" fill="#1d2d40" stroke="#b88a30"/>
+      <text x="428" y="914" font-weight="700" fill="#ffbe55" text-anchor="middle">§ 35.106 · public notice</text>
+      <rect x="544" y="900" width="280" height="22" rx="11" fill="#1d2d40" stroke="#b88a30"/>
+      <text x="684" y="914" font-weight="700" fill="#ffbe55" text-anchor="middle">§ 35.107 · ADA coordinator + grievance</text>
+
+      <rect x="92" y="930" width="280" height="22" rx="11" fill="#1d2d40" stroke="#b88a30"/>
+      <text x="232" y="944" font-weight="700" fill="#ffbe55" text-anchor="middle">§ 35.160 · effective communication</text>
+      <rect x="378" y="930" width="260" height="22" rx="11" fill="#1d2d40" stroke="#b88a30"/>
+      <text x="508" y="944" font-weight="700" fill="#ffbe55" text-anchor="middle">Alternative-format requests</text>
+      <rect x="644" y="930" width="180" height="22" rx="11" fill="#1d2d40" stroke="#b88a30"/>
+      <text x="734" y="944" font-weight="700" fill="#ffbe55" text-anchor="middle">Training</text>
+
+      <rect x="92" y="960" width="280" height="22" rx="11" fill="#1d2d40" stroke="#b88a30"/>
+      <text x="232" y="974" font-weight="700" fill="#ffbe55" text-anchor="middle">Procurement / VPAT 2.4 ACR</text>
+      <rect x="378" y="960" width="280" height="22" rx="11" fill="#1d2d40" stroke="#b88a30"/>
+      <text x="518" y="974" font-weight="700" fill="#ffbe55" text-anchor="middle">Conforming alternate versions</text>
+    </g>
+
+    <text x="92" y="1010" font-size="11" fill="#a7bed8">Equivalent provisions live in 45 CFR Part 84 Subpart C / Subpart I for Section 504 recipients.</text>
+    <text x="92" y="1028" font-size="11" fill="#a7bed8">For universities: most public R1 institutions are dual-covered (Title II + § 504) — they meet both deadlines and both program sets.</text>
+  </g>
+
+  <!-- Exceptions card -->
+  <g>
+    <rect x="868" y="858" width="468" height="200" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="866" y="852" width="468" height="200" rx="16" fill="#1a2636" stroke="#ff5e7e" stroke-width="2"/>
+    <rect x="866" y="852" width="6" height="200" rx="3" fill="#ff5e7e"/>
+    <text x="892" y="884" font-size="14" font-weight="700" fill="#edf4ff">Exceptions (§ 35.201 · § 84.85)</text>
+    <g font-size="11" fill="#a7bed8">
+      <text x="892" y="908">• Archived web content</text>
+      <text x="892" y="926">• Preexisting conventional electronic documents</text>
+      <text x="892" y="944">• Third-party content (not posted by/for the entity)</text>
+      <text x="892" y="962">• Password-protected, individualized documents</text>
+      <text x="892" y="980">• Preexisting social media posts</text>
+    </g>
+    <line x1="892" y1="996" x2="1310" y2="996" stroke="#304962"/>
+    <text x="892" y="1018" font-size="11" fill="#ff5e7e" font-weight="700">Caveat — § 35.160 effective-communication duty</text>
+    <text x="892" y="1036" font-size="11" fill="#a7bed8">still requires alt-format provision on request.</text>
+  </g>
+
+  <!-- ========== ROW 4: MAKERFLOW PROGRAM MAP ========== -->
+  <text x="64" y="1082" font-size="11" font-weight="700" letter-spacing="1.6" fill="#a7bed8">4 · HOW MAKERFLOW ADDRESSES IT — 23 ROADMAP TASKS</text>
+
+  <g>
+    <rect x="68" y="1098" width="1268" height="216" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="66" y="1092" width="1268" height="216" rx="16" fill="#1a2636" stroke="#21d1aa" stroke-width="2"/>
+    <rect x="66" y="1092" width="6" height="216" rx="3" fill="#21d1aa"/>
+
+    <!-- 4 sub-columns -->
+    <!-- Foundations -->
+    <g>
+      <text x="96" y="1124" font-size="12" font-weight="700" fill="#21d1aa">Foundations (P0)</text>
+      <text x="96" y="1142" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">P0-a11y-policy-baseline</text>
+      <text x="96" y="1160" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">P0-a11y-statement-page</text>
+      <text x="96" y="1182" font-size="10" fill="#506079">Establishes WCAG 2.1 AA as</text>
+      <text x="96" y="1196" font-size="10" fill="#506079">the project standard and</text>
+      <text x="96" y="1210" font-size="10" fill="#506079">publishes the /accessibility</text>
+      <text x="96" y="1224" font-size="10" fill="#506079">conformance disclosure with</text>
+      <text x="96" y="1238" font-size="10" fill="#506079">coordinator contact and</text>
+      <text x="96" y="1252" font-size="10" fill="#506079">alt-format request channel.</text>
+    </g>
+
+    <!-- Technical conformance -->
+    <g>
+      <text x="370" y="1124" font-size="12" font-weight="700" fill="#8fd5ff">Technical conformance (P1)</text>
+      <text x="370" y="1142" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">P1-a11y-axe-ci</text>
+      <text x="370" y="1158" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">P1-a11y-keyboard-kanban</text>
+      <text x="370" y="1174" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">P1-a11y-modal-focus</text>
+      <text x="370" y="1190" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">P1-a11y-non-color-status</text>
+      <text x="370" y="1206" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">P1-a11y-aria-live</text>
+      <text x="370" y="1222" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">P1-a11y-forms-labels-errors</text>
+      <text x="370" y="1238" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">P1-a11y-landmarks-headings</text>
+      <text x="370" y="1254" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">P1-a11y-focus-visible</text>
+      <text x="370" y="1270" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">P1-a11y-page-titles</text>
+      <text x="370" y="1286" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">P1-a11y-contrast-audit</text>
+      <text x="370" y="1300" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">P1-a11y-session-timeout</text>
+    </g>
+
+    <!-- Hardening + scope -->
+    <g>
+      <text x="690" y="1124" font-size="12" font-weight="700" fill="#ffbe55">Hardening (P2)</text>
+      <text x="690" y="1142" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">P1-a11y-skip-link-and-lang</text>
+      <text x="690" y="1158" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">P2-a11y-reflow-zoom</text>
+      <text x="690" y="1174" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">P2-a11y-reduced-motion</text>
+      <text x="690" y="1190" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">P2-a11y-pdf-attachments</text>
+      <text x="690" y="1206" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">P2-a11y-print-css</text>
+      <text x="690" y="1226" font-size="10" fill="#506079">Covers reflow at 320 px,</text>
+      <text x="690" y="1240" font-size="10" fill="#506079">prefers-reduced-motion,</text>
+      <text x="690" y="1254" font-size="10" fill="#506079">tagged-PDF policy for the</text>
+      <text x="690" y="1268" font-size="10" fill="#506079">attachment surface, and</text>
+      <text x="690" y="1282" font-size="10" fill="#506079">a print/exported-PDF pass.</text>
+    </g>
+
+    <!-- Operational + governance -->
+    <g>
+      <text x="980" y="1124" font-size="12" font-weight="700" fill="#c5b3ff">Governance &amp; artifacts (P2/P3)</text>
+      <text x="980" y="1142" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">P2-a11y-screen-reader-pass</text>
+      <text x="980" y="1158" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">P2-a11y-vpat-acr</text>
+      <text x="980" y="1174" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">P2-a11y-alt-format-workflow</text>
+      <text x="980" y="1190" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">P3-a11y-coordinator-config</text>
+      <text x="980" y="1206" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">P3-a11y-wcag22-uplift</text>
+      <text x="980" y="1226" font-size="10" fill="#506079">Manual NVDA + VoiceOver +</text>
+      <text x="980" y="1240" font-size="10" fill="#506079">TalkBack pass, published</text>
+      <text x="980" y="1254" font-size="10" fill="#506079">VPAT 2.4 ACR, per-org ADA</text>
+      <text x="980" y="1268" font-size="10" fill="#506079">coordinator settings, and</text>
+      <text x="980" y="1282" font-size="10" fill="#506079">readiness for WCAG 2.2 AA.</text>
+    </g>
+  </g>
+
+  <!-- Footer note -->
+  <text x="64" y="1330" font-size="11" fill="#a7bed8">Citations: 28 CFR § 35.200 · § 35.107 · § 35.160 · § 35.201 · 45 CFR § 84.84 · § 84.85 · W3C WCAG 2.1 AA · ITI VPAT 2.4 INT · 34 CFR Part 104 (ED · status pending).</text>
+</svg>

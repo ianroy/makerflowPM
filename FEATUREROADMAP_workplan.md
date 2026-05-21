@@ -93,6 +93,10 @@ CONSTRAINTS:
 - Do NOT propose tasks that violate the project's design principles documented
   in `docs/DECISIONS.md` (e.g., do not propose ripping out the WSGI core for
   an SPA rewrite).
+- Any task that touches the UI MUST be evaluated against WCAG 2.1 Level AA
+  (the standard adopted by 28 CFR Part 35 Subpart H and 45 CFR Part 84
+  Subpart I). If a proposed task would regress accessibility, propose its
+  a11y mitigation alongside it.
 - If you cannot find anything worth proposing, write a section 7 entry that
   says so explicitly. Do not invent busy-work.
 
@@ -167,6 +171,12 @@ CONSTRAINTS:
 - NEVER touch tasks other than the one you're working on, except to flip
   Status on downstream tasks per step 9.
 - NEVER skip the Decisions write-up. It is the project's audit trail.
+- For ANY task that adds, moves, or changes a UI element: explicitly verify
+  WCAG 2.1 Level AA conformance for the affected surface before flipping
+  Status to done. At minimum run `python3 scripts/accessibility_audit.py`
+  (or its successor — see the `P1-a11y-axe-ci` card) and record the result
+  in Decisions. If the project's accessibility CI gate is in place, it must
+  pass. Regressing accessibility is a Definition-of-Done failure.
 - If a task's Spec is ambiguous or contradicts the code, set Status to
   `[ ] blocked`, write the conflict in Decisions, and stop.
 
@@ -297,6 +307,36 @@ This index is **human-maintained-by-default** but the regeneration and execution
 | [P3-webhooks](#p3-webhooks--outbound-webhooks-for-mutations) | Outbound webhooks for mutations | `[ ] backlog` | P3 | M | P2-api-key-auth | — |
 | [P3-public-api-docs](#p3-public-api-docs--publish-openapi-on-the-website) | Publish OpenAPI on the website | `[ ] backlog` | P3 | S | P1-api-openapi-spec | — |
 | [P3-design-tokens](#p3-design-tokens--codify-design-tokens-and-darklight-themes) | Codify design tokens and dark/light themes | `[ ] backlog` | P3 | M | — | — |
+
+### Accessibility — ADA Title II + Section 504 compliance program
+
+A dedicated track. See [§6 — Accessibility compliance program](#accessibility-compliance-program-ada-title-ii--section-504) for regulatory context.
+
+| ID | Title | Status | Priority | Complexity | Dependencies | Unblocks |
+|---|---|---|---|---|---|---|
+| [P0-a11y-policy-baseline](#p0-a11y-policy-baseline--adopt-wcag-21-aa-as-the-project-baseline) | Adopt WCAG 2.1 AA as the project baseline | `[ ] ready` | P0 | S | P0-roadmap-bootstrap | almost every a11y task below |
+| [P0-a11y-statement-page](#p0-a11y-statement-page--publish-an-accessibility-conformance-statement) | Publish `/accessibility` conformance statement | `[ ] backlog` | P0 | M | P0-a11y-policy-baseline | P2-a11y-alt-format-workflow, P3-a11y-coordinator-config |
+| [P1-a11y-axe-ci](#p1-a11y-axe-ci--axe-core-violation-gate-in-ci) | axe-core violation gate in CI | `[ ] backlog` | P1 | S | P0-a11y-policy-baseline, P1-ci-smoke-and-security | every other a11y P1 |
+| [P1-a11y-keyboard-kanban](#p1-a11y-keyboard-kanban--keyboard-alternative-to-drag-and-drop-on-tasks) | Keyboard alternative to drag-and-drop on `/tasks` | `[ ] backlog` | P1 | L | P0-a11y-policy-baseline | P2-a11y-screen-reader-pass |
+| [P1-a11y-modal-focus](#p1-a11y-modal-focus--card-editor-modal-focus-trap-and-dialog-semantics) | Card-editor modal: focus trap + dialog semantics | `[ ] backlog` | P1 | M | P0-a11y-policy-baseline | P2-a11y-screen-reader-pass |
+| [P1-a11y-non-color-status](#p1-a11y-non-color-status--non-color-cues-for-every-status-indicator) | Non-color cues for every status indicator | `[ ] backlog` | P1 | M | P0-a11y-policy-baseline | — |
+| [P1-a11y-aria-live](#p1-a11y-aria-live--live-regions-for-activity-toasts-errors-and-drag-results) | Live regions for activity, toasts, errors | `[ ] backlog` | P1 | M | P0-a11y-policy-baseline | P1-a11y-keyboard-kanban |
+| [P1-a11y-forms-labels-errors](#p1-a11y-forms-labels-errors--programmatic-labels-error-identification-autocomplete) | Programmatic labels, error identification, autocomplete | `[ ] backlog` | P1 | M | P0-a11y-policy-baseline | — |
+| [P1-a11y-landmarks-headings](#p1-a11y-landmarks-headings--landmarks-and-heading-hierarchy-audit) | Landmarks + heading hierarchy audit | `[ ] backlog` | P1 | M | P0-a11y-policy-baseline | — |
+| [P1-a11y-focus-visible](#p1-a11y-focus-visible--standardize-focus-visible-ring-with-31-contrast) | Standardize `:focus-visible` ring with 3:1 contrast | `[ ] backlog` | P1 | S | P0-a11y-policy-baseline | — |
+| [P1-a11y-page-titles](#p1-a11y-page-titles--descriptive-page-title-per-route) | Descriptive `<title>` per route | `[ ] backlog` | P1 | S | P0-a11y-policy-baseline | — |
+| [P1-a11y-contrast-audit](#p1-a11y-contrast-audit--contrast-pass-on-dark--light-themes) | Contrast pass on dark + light themes | `[ ] backlog` | P1 | S | P0-a11y-policy-baseline | — |
+| [P1-a11y-session-timeout](#p1-a11y-session-timeout--warn--extend-before-session-expiry) | Warn + extend before session expiry | `[ ] backlog` | P1 | M | P0-a11y-policy-baseline | — |
+| [P1-a11y-skip-link-and-lang](#p1-a11y-skip-link-and-lang--verify-skip-link-and-set-html-lang) | Verify skip-link, set `<html lang>` | `[ ] backlog` | P1 | XS | P0-a11y-policy-baseline | — |
+| [P2-a11y-reflow-zoom](#p2-a11y-reflow-zoom--200-zoom--320-px-reflow-pass) | 200% zoom + 320 px reflow pass | `[ ] backlog` | P2 | M | P0-a11y-policy-baseline | — |
+| [P2-a11y-reduced-motion](#p2-a11y-reduced-motion--respect-prefers-reduced-motion) | Respect `prefers-reduced-motion` | `[ ] backlog` | P2 | XS | P0-a11y-policy-baseline | — |
+| [P2-a11y-screen-reader-pass](#p2-a11y-screen-reader-pass--manual-nvda--voiceover--talkback-audit) | Manual NVDA + VoiceOver + TalkBack audit | `[ ] backlog` | P2 | M | P1-a11y-keyboard-kanban, P1-a11y-modal-focus, P1-a11y-aria-live | P2-a11y-vpat-acr |
+| [P2-a11y-vpat-acr](#p2-a11y-vpat-acr--publish-vpat-24-accessibility-conformance-report) | Publish VPAT 2.4 ACR | `[ ] backlog` | P2 | M | P2-a11y-screen-reader-pass | — |
+| [P2-a11y-alt-format-workflow](#p2-a11y-alt-format-workflow--alternative-format-request-workflow) | Alternative-format request workflow | `[ ] backlog` | P2 | M | P0-a11y-statement-page | — |
+| [P2-a11y-pdf-attachments](#p2-a11y-pdf-attachments--tagged-pdf-policy-and-alt-text-on-attachments) | Tagged-PDF policy + alt text on attachments | `[ ] backlog` | P2 | M | P0-a11y-policy-baseline | — |
+| [P2-a11y-print-css](#p2-a11y-print-css--print-stylesheet-and-exported-pdf-pass) | Print stylesheet + exported-PDF pass | `[ ] backlog` | P2 | S | P0-a11y-policy-baseline | — |
+| [P3-a11y-wcag22-uplift](#p3-a11y-wcag22-uplift--plan-for-wcag-22-aa-uplift) | Plan for WCAG 2.2 AA uplift | `[ ] backlog` | P3 | M | P2-a11y-vpat-acr | — |
+| [P3-a11y-coordinator-config](#p3-a11y-coordinator-config--per-org-ada-coordinator--grievance-procedure) | Per-org ADA coordinator + grievance procedure | `[ ] backlog` | P3 | S | P0-a11y-statement-page | — |
 
 ---
 
@@ -1028,13 +1068,795 @@ _(empty)_
 
 ---
 
+## Accessibility compliance program (ADA Title II + Section 504)
+
+<p align="center">
+  <img src="docs/diagrams/10-ada-504-compliance.svg" alt="MakerFlow PM — ADA Title II + Section 504 compliance map" width="100%"/>
+</p>
+
+### Regulatory context
+
+MakerFlow PM is deployed at public universities and other state/local-government instrumentalities. Those entities (and any federally-funded recipients running MakerFlow) carry federal digital-accessibility obligations. The roadmap below brings the product to **WCAG 2.1 Level AA** so adopters can meet those obligations without forking. Citations are to primary sources; verify against the eCFR before quoting in customer collateral.
+
+**Binding regulations**
+
+- **28 CFR Part 35, Subpart H — Web and Mobile Accessibility** (DOJ Title II final rule, 89 FR 31320, published April 24, 2024; effective June 24, 2024). Adopts **WCAG 2.1 Level AA** (§ 35.200) for web content and mobile apps that public entities provide or make available, directly or through third parties.
+- **45 CFR Part 84, Subpart I — Web, Mobile, and Kiosk Accessibility** (HHS Section 504 final rule, 89 FR 40066, published May 9, 2024; effective July 8, 2024). Adopts WCAG 2.1 Level AA (§ 84.84) for recipients of HHS federal financial assistance.
+- **34 CFR Part 104** (Department of Education Section 504). ED has not (as of this writing) finalized a parallel WCAG technical standard rule; OCR enforcement nonetheless treats WCAG 2.1 AA as the de facto bar. Verify before publication.
+
+**Compliance dates** (after the April/May 2026 DOJ + HHS Interim Final Rules that each extended the original deadlines by one year)
+
+| Regime | Entity size | Deadline |
+|---|---|---|
+| 28 CFR 35.200 (Title II) | Public entities, population ≥ 50,000 | **April 26, 2027** |
+| 28 CFR 35.200 (Title II) | Public entities, population < 50,000 · special-district governments (any size) | **April 26, 2028** |
+| 45 CFR 84.84 (Section 504, HHS) | Recipients with ≥ 15 employees | **May 11, 2027** |
+| 45 CFR 84.84 (Section 504, HHS) | Recipients with < 15 employees | **May 10, 2028** |
+
+**Scope of "content"** — HTML, electronic documents (PDF, Word, PowerPoint, spreadsheets), images, audio, video, and the chrome of the application itself. **Exceptions** in 28 CFR 35.201 and 45 CFR 84.85 cover archived content, preexisting conventional electronic documents not used in active programs, third-party content not posted on behalf of the entity, individualized password-protected documents, and preexisting social-media posts — but the underlying **effective-communication** duty (28 CFR 35.160) still requires alternative-format provision on request.
+
+**Operational obligations beyond the technical standard**
+
+- 28 CFR 35.105 — self-evaluation of services, policies, and practices (now extends to digital assets).
+- 28 CFR 35.106 — public notice of ADA rights.
+- 28 CFR 35.107 — designated ADA Coordinator + published grievance procedure (entities with ≥ 50 employees).
+- 28 CFR 35.160 — effective communication, including alternative-format provision.
+- DOJ compliance guidance recommends training for content authors, developers, designers, and procurement staff.
+- Procurement: standard practice is to require a vendor **Accessibility Conformance Report (ACR / VPAT 2.4)** in RFPs.
+
+**Why this matters for MakerFlow specifically** — kanban drag-and-drop, color-coded statuses, the card-editor modal, the activity log, dynamic form errors, and the dark/light theme contrast are the highest-risk surfaces. The tasks below address each by name.
+
+### P0-a11y-policy-baseline — Adopt WCAG 2.1 AA as the project baseline
+
+- **Status:** [ ] ready
+- **Agent Persona:** docs-curator
+- **Priority:** P0
+- **Complexity:** S
+- **Dependencies:** P0-roadmap-bootstrap
+- **Unblocks:** P0-a11y-statement-page, P1-a11y-axe-ci, P1-a11y-keyboard-kanban, P1-a11y-modal-focus, P1-a11y-non-color-status, P1-a11y-aria-live, P1-a11y-forms-labels-errors, P1-a11y-landmarks-headings, P1-a11y-focus-visible, P1-a11y-page-titles, P1-a11y-contrast-audit, P1-a11y-session-timeout, P1-a11y-skip-link-and-lang, P2-a11y-reflow-zoom, P2-a11y-reduced-motion, P2-a11y-pdf-attachments, P2-a11y-print-css
+- **Files to modify:**
+  - `docs/ACCESSIBILITY.md` (new)
+  - `docs/DECISIONS.md`
+  - `docs/CONTRIBUTING.md`
+  - `README.md` (cross-link)
+  - `ProductSpec.md` (cross-link from §12 Design system and §17 Testing)
+
+**Spec (human-editable):**
+Codify **WCAG 2.1 Level AA** as MakerFlow's technical accessibility standard, document the deployment-side regulatory matrix (28 CFR Part 35 Subpart H · 45 CFR Part 84 Subpart I), and bind contributor expectations.
+
+- [ ] `docs/ACCESSIBILITY.md` exists with: policy statement, applicable regulations, scope (what is covered + what is out of scope), compliance-date matrix, conformance testing approach (axe + manual AT pass), exceptions and how MakerFlow handles them, and links to the canonical WCAG 2.1 AA criteria
+- [ ] `docs/DECISIONS.md` gains an ADR titled "Accessibility baseline" noting the choice of WCAG 2.1 AA and the rejection of "AA-aware but not conforming" alternatives
+- [ ] `docs/CONTRIBUTING.md` adds a checklist item: every PR touching UI must declare its a11y impact
+- [ ] `README.md` and `ProductSpec.md` link to `docs/ACCESSIBILITY.md`
+- [ ] The execute prompt in §2 already requires a11y verification on UI tasks — verify wording is consistent
+
+**Notes:**
+This is governance. No code changes. It is a prerequisite for every other a11y card because their Definition-of-Done references the baseline.
+
+**Agent Decisions (append-only, verbose):**
+_(empty)_
+
+---
+
+### P0-a11y-statement-page — Publish an accessibility conformance statement
+
+- **Status:** [ ] backlog
+- **Agent Persona:** backend-monolith + docs-curator
+- **Priority:** P0
+- **Complexity:** M
+- **Dependencies:** P0-a11y-policy-baseline
+- **Unblocks:** P2-a11y-alt-format-workflow, P3-a11y-coordinator-config
+- **Files to modify:**
+  - `app/server.py` (new public route `/accessibility`, no auth required; new `render_accessibility_page`)
+  - `app/static/style.css`
+  - `docs/ACCESSIBILITY.md` (canonical source content; the page renders from this)
+  - `MakerFlow Website/wiki/accessibility.html` (mirror via `sync_website_content.py`)
+
+**Spec (human-editable):**
+Add a public-facing accessibility statement at `/accessibility` so deploying entities can publish (and customize) their conformance disclosure. Page must remain reachable without authentication so it satisfies 28 CFR 35.106 public-notice expectations and standard procurement requirements.
+
+Content (industry-consensus structure):
+
+1. Conformance commitment ("MakerFlow conforms to WCAG 2.1 Level AA")
+2. Date of statement + date of last review
+3. Known accessibility limitations, with planned remediation timeline (pulled from roadmap completed/pending status)
+4. Contact channel for accessibility complaints and **alternative-format requests** (per-org configurable — pulled from `accessibility_settings` table set up by `P3-a11y-coordinator-config`)
+5. ADA Coordinator name and contact (for public entities, see 28 CFR 35.107)
+6. Link to the grievance procedure
+7. Compatibility statement (browsers + assistive technologies tested)
+8. Technical specifications (technologies relied upon)
+9. Assessment approach (self-evaluation, third-party audit, user testing)
+10. Date of next planned review
+
+Definition of Done:
+- [ ] `GET /accessibility` returns the rendered page without requiring auth
+- [ ] Page is linked from the footer of every authenticated page and from the login screen
+- [ ] Content is sourced from `docs/ACCESSIBILITY.md` (single source of truth); `sync_website_content.py` mirrors it to the wiki
+- [ ] Page lists the WCAG 2.1 AA conformance target and the current known limitations
+- [ ] Page is itself WCAG 2.1 AA conformant (passes `scripts/accessibility_audit.py`)
+- [ ] An `accessibility_settings` table holds the per-org coordinator name, email, and grievance procedure URL (consumed by `P3-a11y-coordinator-config`; for v1 it can be hard-coded to defaults if the table doesn't exist)
+
+**Notes:**
+The page itself is a regulatory artifact; treat changes to it as governance changes (PR review by a docs-curator persona).
+
+**Agent Decisions (append-only, verbose):**
+_(empty)_
+
+---
+
+### P1-a11y-axe-ci — axe-core violation gate in CI
+
+- **Status:** [ ] backlog
+- **Agent Persona:** qa-automation
+- **Priority:** P1
+- **Complexity:** S
+- **Dependencies:** P0-a11y-policy-baseline, P1-ci-smoke-and-security
+- **Unblocks:** every other a11y P1 (regression prevention)
+- **Files to modify:**
+  - `.github/workflows/ci.yml`
+  - `scripts/accessibility_audit.py` (extend to include axe-core run, or add a sibling script)
+  - `docs/TESTING.md`
+  - `docs/ACCESSIBILITY.md`
+
+**Spec (human-editable):**
+Run [axe-core](https://github.com/dequelabs/axe-core) (via the `axe-core-cli` or Playwright + `@axe-core/playwright`) against the canonical pages on every PR. Fail the build on **new** violations; allow a baseline file to grandfather existing violations so the gate can be turned on before all violations are fixed.
+
+Definition of Done:
+- [ ] CI job named `a11y` runs on `pull_request` to `main`
+- [ ] Tests boot the app with sample data, log in as each role, and visit: `/login`, `/dashboard`, `/projects`, `/tasks`, `/agenda`, `/assets`, `/consumables`, `/settings`, `/admin/users`, `/accessibility`
+- [ ] axe runs against each page; results uploaded as a CI artifact
+- [ ] A baseline file (`tests/a11y/baseline.json`) records currently-known violations; CI passes if and only if no new violations appear vs the baseline
+- [ ] Updating the baseline requires an explicit PR comment label (`a11y-baseline-bump`) — prevents silent regressions
+- [ ] `docs/TESTING.md` documents how to run locally and how to update the baseline
+- [ ] `docs/ACCESSIBILITY.md` lists the current baseline violation count + a graph of trend over time
+
+**Notes:**
+The baseline pattern is essential — flipping the gate on without a baseline blocks all PRs. Plan to drive baseline → zero over Q3.
+
+**Agent Decisions (append-only, verbose):**
+_(empty)_
+
+---
+
+### P1-a11y-keyboard-kanban — Keyboard alternative to drag-and-drop on `/tasks`
+
+- **Status:** [ ] backlog
+- **Agent Persona:** frontend-progressive
+- **Priority:** P1
+- **Complexity:** L
+- **Dependencies:** P0-a11y-policy-baseline
+- **Unblocks:** P2-a11y-screen-reader-pass
+- **Files to modify:**
+  - `app/static/app.js` (kanban handlers)
+  - `app/static/style.css` (focus styles for grabbed/dropped states)
+  - `app/server.py` (`render_tasks_page`; ensure each card and column has a unique programmatic identity)
+
+**Spec (human-editable):**
+Today the kanban board on `/tasks` relies on pointer drag-and-drop, which violates WCAG **2.1.1 Keyboard**, **2.5.1 Pointer Gestures**, and **2.5.2 Pointer Cancellation**. Add a parallel keyboard-and-screen-reader-accessible mechanism. The W3C ARIA Authoring Practices Guide (APG) describes appropriate patterns — prefer "select then move" (Enter to pick up, Arrow keys to move, Enter to drop, Esc to cancel) over the legacy `aria-grabbed` pattern (deprecated).
+
+Definition of Done:
+- [ ] Every kanban card is keyboard-focusable, has `role="button"` (or is a real `<button>`), and exposes its title + status + column position in its accessible name
+- [ ] Pressing `Enter` or `Space` on a focused card "picks it up"; visible focus indicator changes to indicate grabbed state; `aria-live="polite"` announces "Picked up `<title>`. Use arrow keys to move."
+- [ ] Arrow keys move the grabbed card between columns; `aria-live` announces destination column on each move
+- [ ] `Enter`/`Space` drops the card (commits the status change); `Esc` cancels and restores original column
+- [ ] Pointer drag-and-drop still works as before for sighted mouse/touch users
+- [ ] Touch interactions support single-pointer alternative to drag (long-press → menu → "Move to…")
+- [ ] No `aria-grabbed` (deprecated)
+- [ ] `scripts/accessibility_audit.py` + axe gate pass on `/tasks`
+- [ ] Manual NVDA pass: a screen-reader user can move every card to every column without using a mouse
+
+**Notes:**
+This is the highest-risk a11y blocker in MakerFlow. Plan time for manual AT testing — the implementation is the easy part.
+
+**Agent Decisions (append-only, verbose):**
+_(empty)_
+
+---
+
+### P1-a11y-modal-focus — Card-editor modal: focus trap and dialog semantics
+
+- **Status:** [ ] backlog
+- **Agent Persona:** frontend-progressive
+- **Priority:** P1
+- **Complexity:** M
+- **Dependencies:** P0-a11y-policy-baseline
+- **Unblocks:** P2-a11y-screen-reader-pass
+- **Files to modify:**
+  - `app/static/app.js` (modal lifecycle: open/close/keyboard)
+  - `app/static/style.css` (focus ring inside modal)
+  - `app/server.py` (render the modal shell with the correct ARIA attributes)
+
+**Spec (human-editable):**
+The card-editor modal violates WCAG **4.1.2 Name, Role, Value**, **2.1.2 No Keyboard Trap** (focus can wander behind the modal), and **2.4.3 Focus Order** (focus does not return to the launching element on close).
+
+Definition of Done:
+- [ ] Modal root has `role="dialog"`, `aria-modal="true"`, `aria-labelledby="<id of heading>"`, and `aria-describedby` if there's introductory text
+- [ ] First focusable element receives focus when the modal opens
+- [ ] Tab cycles inside the modal (focus trap); Shift+Tab cycles backward; focus cannot leave the modal until it closes
+- [ ] `Esc` closes the modal and returns focus to the element that opened it
+- [ ] Closing by Save / Cancel button also returns focus to the launching element
+- [ ] Background content has `aria-hidden="true"` while the modal is open
+- [ ] No `inert` attribute is required, but if added, it must be polyfilled for older browsers
+- [ ] Axe + manual NVDA pass on opening, editing, saving, and canceling a task in the modal
+
+**Notes:**
+The "return focus" requirement is what catches teams. Save the launching element ID when opening; restore explicitly on close.
+
+**Agent Decisions (append-only, verbose):**
+_(empty)_
+
+---
+
+### P1-a11y-non-color-status — Non-color cues for every status indicator
+
+- **Status:** [ ] backlog
+- **Agent Persona:** frontend-progressive
+- **Priority:** P1
+- **Complexity:** M
+- **Dependencies:** P0-a11y-policy-baseline
+- **Unblocks:** —
+- **Files to modify:**
+  - `app/static/style.css`
+  - `app/static/app.js` (lookup helpers that build status badges)
+  - `app/server.py` (`render_*` functions that emit status pills)
+
+**Spec (human-editable):**
+Status is communicated by color across MakerFlow — task status pills, project lanes, agenda item state, intake-request scoring, equipment maintenance status, consumable reorder warnings. WCAG **1.4.1 Use of Color** and **1.3.3 Sensory Characteristics** require non-color signal.
+
+Definition of Done:
+- [ ] Every status pill includes a text label (already true in most cases — verify) AND an icon or shape token that varies by status (e.g., ○ Open, ◐ In Progress, ● Done, ✕ Blocked, ⌫ Deferred)
+- [ ] Color is supplementary, not primary
+- [ ] Same status carries the same icon/shape everywhere (consistent identification — WCAG 3.2.4)
+- [ ] In dark and light themes, the icons remain visible without depending on color contrast alone (per 1.4.11)
+- [ ] The design system documentation in `ProductSpec.md` §12 gets a new sub-section "Status semantics" enumerating the icon ↔ status mapping
+- [ ] Axe gate passes; manual review confirms a user with the chrome "Force colors" / Windows high-contrast mode still understands status
+
+**Notes:**
+Pick a small, consistent icon set. Lucide or Heroicons inline-SVG approach fits the no-build philosophy.
+
+**Agent Decisions (append-only, verbose):**
+_(empty)_
+
+---
+
+### P1-a11y-aria-live — Live regions for activity, toasts, errors, and drag results
+
+- **Status:** [ ] backlog
+- **Agent Persona:** frontend-progressive
+- **Priority:** P1
+- **Complexity:** M
+- **Dependencies:** P0-a11y-policy-baseline
+- **Unblocks:** P1-a11y-keyboard-kanban
+- **Files to modify:**
+  - `app/static/app.js` (announce helper + integration points)
+  - `app/server.py` (render skeleton live-region containers in the layout)
+  - `app/static/style.css` (screen-reader-only utility class `.sr-only`)
+
+**Spec (human-editable):**
+WCAG **4.1.3 Status Messages** requires that status updates be programmatically determinable without focus change. MakerFlow's activity log, save toasts, inline form validation, and drag-result outcomes all currently render visually only.
+
+Definition of Done:
+- [ ] A reusable `announce(message, {assertive: false})` helper exists in `app.js`. It writes into a hidden `<div role="status" aria-live="polite">` (or `role="alert" aria-live="assertive"` when `assertive: true`) appended to `<body>` once on load
+- [ ] Activity log refresh on the dashboard announces new entries (polite, debounced)
+- [ ] Save toasts (project saved, task saved, etc.) announce on success (polite)
+- [ ] Inline form validation errors announce on submit attempt (assertive); also referenced via `aria-describedby` from the offending input
+- [ ] Kanban drag-and-keyboard-move results announce destination column (polite) — coordination with `P1-a11y-keyboard-kanban`
+- [ ] CSRF-mismatch and 503 error pages announce their state on load
+- [ ] Axe + manual NVDA + VoiceOver pass: a screen-reader user notices state changes without leaving the focused control
+
+**Notes:**
+Keep the live-region root in the DOM at all times; toggling its existence (`removeChild` / `appendChild`) defeats AT detection. Just update its `textContent`.
+
+**Agent Decisions (append-only, verbose):**
+_(empty)_
+
+---
+
+### P1-a11y-forms-labels-errors — Programmatic labels, error identification, autocomplete
+
+- **Status:** [ ] backlog
+- **Agent Persona:** backend-monolith + frontend-progressive
+- **Priority:** P1
+- **Complexity:** M
+- **Dependencies:** P0-a11y-policy-baseline
+- **Unblocks:** —
+- **Files to modify:**
+  - `app/server.py` (form-rendering helpers across `render_*` functions)
+  - `app/static/app.js` (validation hooks)
+  - `app/static/style.css`
+
+**Spec (human-editable):**
+Audit every form in MakerFlow for WCAG **3.3.1 Error Identification**, **3.3.2 Labels or Instructions**, **3.3.3 Error Suggestion**, **1.3.5 Identify Input Purpose**, and **3.3.4 Error Prevention** (for destructive actions).
+
+Definition of Done:
+- [ ] Every form control has a programmatically associated label (either `<label for="...">` or `aria-labelledby`)
+- [ ] Required fields use `aria-required="true"` and visible asterisk + explanation
+- [ ] Common inputs use HTML `autocomplete` tokens (email, current-password, new-password, given-name, family-name, organization, tel, etc.)
+- [ ] Validation errors:
+  - render adjacent to the offending input
+  - set `aria-invalid="true"` on the input
+  - link via `aria-describedby` to the error message
+  - announce assertively via the live region (depends on `P1-a11y-aria-live`)
+  - include a suggested fix where applicable (date format, file size/type, allowed character set)
+- [ ] Destructive forms (delete project, purge item, forget user, bulk delete) require explicit confirmation (review/revoke per WCAG 3.3.4)
+- [ ] Login form and password reset form support copy-paste of password managers
+- [ ] Axe + manual NVDA pass on every form
+
+**Notes:**
+Coordinate with `P1-a11y-aria-live` (validation needs the announce helper) and any future 2FA work.
+
+**Agent Decisions (append-only, verbose):**
+_(empty)_
+
+---
+
+### P1-a11y-landmarks-headings — Landmarks and heading hierarchy audit
+
+- **Status:** [ ] backlog
+- **Agent Persona:** backend-monolith
+- **Priority:** P1
+- **Complexity:** M
+- **Dependencies:** P0-a11y-policy-baseline
+- **Unblocks:** —
+- **Files to modify:**
+  - `app/server.py` (layout + every `render_*` function)
+
+**Spec (human-editable):**
+Audit and fix landmark roles and heading hierarchy across all rendered pages. WCAG **1.3.1 Info and Relationships** and **2.4.6 Headings and Labels**.
+
+Definition of Done:
+- [ ] Every page emits `<header>`, `<nav>`, `<main>`, `<aside>`, and `<footer>` landmarks (or ARIA equivalents); each `<nav>` has a discriminating `aria-label`
+- [ ] Each page has exactly one `<h1>` and a logical, non-skipping heading sequence
+- [ ] Section headings are programmatic, not visual-weight-only
+- [ ] Repeated regions (filter sidebar, activity panel) get accessible names so AT users can jump between them
+- [ ] Axe gate passes on every canonical page; manual VoiceOver rotor verifies landmark navigability
+
+**Notes:**
+This is a sweep, not a redesign. The CSS layout doesn't need to change — only the elements that produce it.
+
+**Agent Decisions (append-only, verbose):**
+_(empty)_
+
+---
+
+### P1-a11y-focus-visible — Standardize `:focus-visible` ring with 3:1 contrast
+
+- **Status:** [ ] backlog
+- **Agent Persona:** frontend-progressive
+- **Priority:** P1
+- **Complexity:** S
+- **Dependencies:** P0-a11y-policy-baseline
+- **Unblocks:** —
+- **Files to modify:**
+  - `app/static/style.css`
+
+**Spec (human-editable):**
+WCAG **2.4.7 Focus Visible** and **1.4.11 Non-text Contrast**. Every focusable element needs a visible focus ring that hits 3:1 contrast against its background in both themes.
+
+Definition of Done:
+- [ ] No CSS rule strips outline without supplying a replacement (`grep -n "outline:[[:space:]]*none" app/static/style.css` returns only rules that follow with `box-shadow` or `outline` replacement)
+- [ ] Focus ring uses the `--focus` token (`#ffbe55` dark / `#ff8f00` light) by default and meets 3:1 contrast against `--card`, `--bg`, and `--card-soft`
+- [ ] Buttons, links, inputs, custom widgets (kanban cards, status chips, theme switch, sidebar nav, modal close, theme switch knob) all show focus
+- [ ] `:focus-visible` is used (not `:focus`) so mouse clicks don't show the ring, but keyboard focus does
+- [ ] Axe gate passes; manual keyboard tab-around demo recorded for the changelog
+
+**Notes:**
+Coordinate with `P3-design-tokens` if it lands first — they share the token system.
+
+**Agent Decisions (append-only, verbose):**
+_(empty)_
+
+---
+
+### P1-a11y-page-titles — Descriptive `<title>` per route
+
+- **Status:** [ ] backlog
+- **Agent Persona:** backend-monolith
+- **Priority:** P1
+- **Complexity:** S
+- **Dependencies:** P0-a11y-policy-baseline
+- **Unblocks:** —
+- **Files to modify:**
+  - `app/server.py` (layout shell + every `render_*` function)
+
+**Spec (human-editable):**
+WCAG **2.4.2 Page Titled**. Every rendered route must set a descriptive `<title>` including the active organization and the page subject.
+
+Definition of Done:
+- [ ] Title format: `<page> · <org name> · MakerFlow` (e.g., `Tasks · Brandeis MakerLab · MakerFlow`)
+- [ ] Auth screens (`/login`, `/forgot-password`) omit the org name
+- [ ] After a modal save that changes context (e.g., switching active project), update the title client-side via the `announce` helper companion — or accept that no client title update happens for modals
+- [ ] No two routes share identical titles
+- [ ] Axe gate passes; manual screen-reader pass verifies title is announced on page load
+
+**Notes:**
+Small but high-value. Pair with `P1-a11y-landmarks-headings` for a single sweep PR.
+
+**Agent Decisions (append-only, verbose):**
+_(empty)_
+
+---
+
+### P1-a11y-contrast-audit — Contrast pass on dark + light themes
+
+- **Status:** [ ] backlog
+- **Agent Persona:** frontend-progressive
+- **Priority:** P1
+- **Complexity:** S
+- **Dependencies:** P0-a11y-policy-baseline
+- **Unblocks:** —
+- **Files to modify:**
+  - `app/static/style.css`
+  - `docs/ACCESSIBILITY.md` (contrast matrix appendix)
+
+**Spec (human-editable):**
+Run automated contrast checks against the canonical token palette in both themes. WCAG **1.4.3 Contrast (Minimum)** = 4.5:1 for normal text, 3:1 for large text. WCAG **1.4.11 Non-text Contrast** = 3:1 for UI components and meaningful graphics.
+
+Definition of Done:
+- [ ] A contrast matrix in `docs/ACCESSIBILITY.md` documents the ratio for every token combination actually used (text on card, muted text on card, brand link on card, focus ring on card, etc.) in both themes
+- [ ] Any failing combination is either fixed (token adjustment) or documented as a known limitation with a remediation date
+- [ ] The theme switch itself meets 3:1 against its background
+- [ ] Status pills meet 3:1 for their borders against the card surface
+- [ ] axe + the `scripts/accessibility_audit.py` contrast check pass
+
+**Notes:**
+The dark theme is the riskier of the two — soft tokens like `--muted` may fail on `--card-soft`. Allow token tweaks if needed.
+
+**Agent Decisions (append-only, verbose):**
+_(empty)_
+
+---
+
+### P1-a11y-session-timeout — Warn + extend before session expiry
+
+- **Status:** [ ] backlog
+- **Agent Persona:** backend-monolith + frontend-progressive
+- **Priority:** P1
+- **Complexity:** M
+- **Dependencies:** P0-a11y-policy-baseline
+- **Unblocks:** —
+- **Files to modify:**
+  - `app/server.py` (`/api/session/extend` endpoint; expiry hint in JSON responses)
+  - `app/static/app.js` (countdown + extend dialog)
+  - `app/static/style.css`
+
+**Spec (human-editable):**
+WCAG **2.2.1 Timing Adjustable**. Currently sessions expire without warning, which can lose work and is a usability barrier — especially for AT users who take longer to complete forms.
+
+Definition of Done:
+- [ ] 60 seconds before session expiry, a modal warns the user and offers "Extend session" + "Log out now"
+- [ ] "Extend" calls `POST /api/session/extend` (CSRF-protected) which issues a refreshed session token without losing form state
+- [ ] If the user does not respond and the session expires, any in-progress form data is saved to `sessionStorage` and restored after re-login
+- [ ] The warning modal is itself accessible (focus trap, `role="dialog"`, announced via live region)
+- [ ] Session expiry can be turned off by user preference for accommodations-eligible users (per 2.2.1's "user can adjust" provision); persist the preference in `user_preferences.session_timeout_seconds`
+- [ ] Axe gate + manual NVDA pass
+
+**Notes:**
+Coordinate the session-extend endpoint with future 2FA (`P1-2fa-totp`) — the refreshed token must not bypass the 2FA gate.
+
+**Agent Decisions (append-only, verbose):**
+_(empty)_
+
+---
+
+### P1-a11y-skip-link-and-lang — Verify skip-link and set `<html lang>`
+
+- **Status:** [ ] backlog
+- **Agent Persona:** backend-monolith
+- **Priority:** P1
+- **Complexity:** XS
+- **Dependencies:** P0-a11y-policy-baseline
+- **Unblocks:** —
+- **Files to modify:**
+  - `app/server.py` (page shell)
+
+**Spec (human-editable):**
+Two quick wins:
+
+- WCAG **2.4.1 Bypass Blocks**: a skip-link exists in CSS (`.skip-link`) but verify it's actually rendered on every page, focuses the main content region, and isn't hidden from AT.
+- WCAG **3.1.1 Language of Page** + **3.1.2 Language of Parts**: emit `<html lang="en">` on every page; allow per-page override and per-element `lang=""` for foreign-language content (used by future i18n).
+
+Definition of Done:
+- [ ] `<html lang="en">` is present on every rendered page; configurable via a new env var `MAKERSPACE_DEFAULT_LANG` (default `en`)
+- [ ] `<a class="skip-link" href="#main">Skip to main content</a>` is the first focusable element on every page; `<main id="main">` exists
+- [ ] Skip-link is visible when focused and meets 3:1 contrast
+- [ ] Axe gate passes
+
+**Notes:**
+Sub-30-minute task. Bundle into the landmarks PR.
+
+**Agent Decisions (append-only, verbose):**
+_(empty)_
+
+---
+
+### P2-a11y-reflow-zoom — 200% zoom + 320 px reflow pass
+
+- **Status:** [ ] backlog
+- **Agent Persona:** frontend-progressive
+- **Priority:** P2
+- **Complexity:** M
+- **Dependencies:** P0-a11y-policy-baseline
+- **Unblocks:** —
+- **Files to modify:**
+  - `app/static/style.css`
+  - `app/static/app.js` (any layout that's JS-driven)
+
+**Spec (human-editable):**
+WCAG **1.4.4 Resize Text** (200% zoom without loss) and **1.4.10 Reflow** (320 CSS px width without two-dimensional scrolling, except for content that intrinsically needs 2D — e.g., a kanban grid).
+
+Definition of Done:
+- [ ] Every canonical page is usable at browser zoom 200%
+- [ ] Below 600 px viewport, the kanban collapses to a single-column "stacked" view; users can switch between columns via a select
+- [ ] Modals fill the viewport on small screens (already partially true)
+- [ ] Tables (admin/users, reports) become scrollable on narrow viewports rather than overflowing
+- [ ] Sidebar collapses to a hamburger drawer below 768 px
+- [ ] Axe + manual mobile-Safari + mobile-Chrome verification
+
+**Notes:**
+Coordinate with `P3-mobile-layout-pass` — they overlap. Possibly merge.
+
+**Agent Decisions (append-only, verbose):**
+_(empty)_
+
+---
+
+### P2-a11y-reduced-motion — Respect `prefers-reduced-motion`
+
+- **Status:** [ ] backlog
+- **Agent Persona:** frontend-progressive
+- **Priority:** P2
+- **Complexity:** XS
+- **Dependencies:** P0-a11y-policy-baseline
+- **Unblocks:** —
+- **Files to modify:**
+  - `app/static/style.css`
+  - `app/static/app.js`
+
+**Spec (human-editable):**
+WCAG **2.3.3 Animation from Interactions** (AAA, not required) and general usability for vestibular-disorder users. Respect `@media (prefers-reduced-motion: reduce)`.
+
+Definition of Done:
+- [ ] Theme-switch knob transition is removed when reduced-motion is set
+- [ ] Kanban drag-and-drop transitions reduced to instant
+- [ ] Modal open/close transitions reduced to instant
+- [ ] No motion-only signal carries information (e.g., a card "wiggle" must also signal via a status change)
+- [ ] Axe gate passes
+
+**Notes:**
+Single CSS block + a couple of JS guards. Pair with `P3-design-tokens`.
+
+**Agent Decisions (append-only, verbose):**
+_(empty)_
+
+---
+
+### P2-a11y-screen-reader-pass — Manual NVDA + VoiceOver + TalkBack audit
+
+- **Status:** [ ] backlog
+- **Agent Persona:** qa-automation
+- **Priority:** P2
+- **Complexity:** M
+- **Dependencies:** P1-a11y-keyboard-kanban, P1-a11y-modal-focus, P1-a11y-aria-live, P1-a11y-forms-labels-errors, P1-a11y-landmarks-headings
+- **Unblocks:** P2-a11y-vpat-acr
+- **Files to modify:**
+  - `analysis_outputs/a11y-screen-reader-report-YYYY-MM-DD.md` (new)
+  - `docs/ACCESSIBILITY.md` (cross-link to the latest report)
+
+**Spec (human-editable):**
+Manual assistive-technology pass. Automated tools catch ~30-40% of WCAG issues; the rest must be observed.
+
+Definition of Done:
+- [ ] NVDA + Firefox on Windows: canonical flows tested — login, dashboard read, create project, create task, drag task across columns via keyboard, save modal, comment, log out
+- [ ] VoiceOver + Safari on macOS: same canonical flows
+- [ ] VoiceOver + Safari on iOS: read-only canonical flows + edit a task
+- [ ] TalkBack + Chrome on Android: read-only canonical flows + edit a task
+- [ ] Findings recorded in a dated report under `analysis_outputs/`
+- [ ] Each finding becomes a discrete task card (suffix `-followup`) added to §6 via the regen prompt
+- [ ] `docs/ACCESSIBILITY.md` updated with the report date and a summary
+
+**Notes:**
+Schedule a focused day for this. NVDA is free; VoiceOver is built-in. Allocate budget for an external accessibility consultant if budget exists — fresh eyes catch what regulars miss.
+
+**Agent Decisions (append-only, verbose):**
+_(empty)_
+
+---
+
+### P2-a11y-vpat-acr — Publish VPAT 2.4 Accessibility Conformance Report
+
+- **Status:** [ ] backlog
+- **Agent Persona:** docs-curator + security-reviewer
+- **Priority:** P2
+- **Complexity:** M
+- **Dependencies:** P2-a11y-screen-reader-pass
+- **Unblocks:** —
+- **Files to modify:**
+  - `docs/accessibility/vpat-2.4-int.md` (new, derived from the ITI template)
+  - `docs/accessibility/vpat-2.4-int.html` (rendered)
+  - `MakerFlow Website/wiki/accessibility-conformance.html`
+  - `README.md` (link in the Tech stack table)
+
+**Spec (human-editable):**
+Author and publish a **VPAT 2.4 INT** Accessibility Conformance Report (ACR) documenting conformance to WCAG 2.1 Level AA. Procurement teams at adopting institutions need this as a standard part of vendor evaluation.
+
+Definition of Done:
+- [ ] Use the ITI VPAT 2.4 INT template (https://www.itic.org/policy/accessibility/vpat)
+- [ ] Complete the WCAG 2.1 AA section criterion-by-criterion (Supports / Partially Supports / Does Not Support / Not Applicable / Not Evaluated, with remarks)
+- [ ] Cite the screen-reader-pass report as the assessment source
+- [ ] Date the ACR; commit to refreshing it every release cycle
+- [ ] Publish at `/accessibility-conformance` (linked from `/accessibility`) and mirrored to the wiki
+
+**Notes:**
+The ACR is a public commitment. Be honest about "Partially Supports" — the goal is procurement transparency, not marketing.
+
+**Agent Decisions (append-only, verbose):**
+_(empty)_
+
+---
+
+### P2-a11y-alt-format-workflow — Alternative-format request workflow
+
+- **Status:** [ ] backlog
+- **Agent Persona:** backend-monolith
+- **Priority:** P2
+- **Complexity:** M
+- **Dependencies:** P0-a11y-statement-page
+- **Unblocks:** —
+- **Files to modify:**
+  - `app/server.py` (new table `alt_format_requests`; routes `POST /accessibility/request-alt-format`, `GET /admin/a11y/requests`)
+  - `app/static/app.js`
+  - `docs/ACCESSIBILITY.md`
+
+**Spec (human-editable):**
+28 CFR 35.160 (effective communication) and 45 CFR 84.85's exception scheme both require public entities to provide content in an alternative format on request, even when the original is exempt from the technical standard. MakerFlow needs a workflow.
+
+Definition of Done:
+- [ ] `/accessibility` page includes a "Request an alternative format" form (public; works without auth)
+- [ ] Submission requires: requester name, contact email/phone, the URL or attachment in question, the format requested (audio, large-print PDF, braille, structured HTML, etc.), and a free-text note
+- [ ] A new table `alt_format_requests(id, organization_id, requester_name, requester_contact, target_url_or_attachment_id, format_requested, note, status, created_at, fulfilled_at, fulfilled_by_user_id)` is added
+- [ ] `/admin/a11y/requests` page lists open requests for the active org (workspace_admin+) with status workflow (received → in progress → fulfilled / referred / declined)
+- [ ] On submission, email the org's accessibility coordinator (from `accessibility_settings` set up by `P3-a11y-coordinator-config`)
+- [ ] Submission and admin views are themselves WCAG 2.1 AA conformant
+- [ ] Audit log entry on each state change
+
+**Notes:**
+This is a regulatory artifact. Treat it like an incident-tracking workflow — every state change must be auditable.
+
+**Agent Decisions (append-only, verbose):**
+_(empty)_
+
+---
+
+### P2-a11y-pdf-attachments — Tagged-PDF policy and alt text on attachments
+
+- **Status:** [ ] backlog
+- **Agent Persona:** backend-monolith
+- **Priority:** P2
+- **Complexity:** M
+- **Dependencies:** P0-a11y-policy-baseline
+- **Unblocks:** —
+- **Files to modify:**
+  - `app/server.py` (attachment upload route — meeting_item_files; future attachments table from `P2-attachments-objectstore`)
+  - `app/static/app.js` (upload UX)
+  - `docs/ACCESSIBILITY.md`
+
+**Spec (human-editable):**
+PDFs uploaded by a public entity to MakerFlow are "web content" under 28 CFR 35.200, so they must be tagged (PDF/UA) or accompanied by an accessible alternative. Implement guardrails.
+
+Definition of Done:
+- [ ] Attachment upload UI accepts an `alt_text` field per file (required for images, optional for documents)
+- [ ] On PDF upload, a lightweight server-side check inspects whether the PDF has structure tags (`pypdf` exposes the catalog `/MarkInfo` / `/StructTreeRoot`); if not, surface a warning to the uploader: "This PDF doesn't appear to be tagged. Consider uploading a tagged version or attaching an accessible alternative."
+- [ ] Warning is not blocking (per the regulatory exception structure)
+- [ ] Per-org setting can flip the warning to a hard block for high-stakes content
+- [ ] `docs/ACCESSIBILITY.md` documents the policy and links to OCR guidance on PDF accessibility
+- [ ] Manual review confirms uploaded image attachments display their alt text in screen readers
+
+**Notes:**
+Don't try to re-tag PDFs server-side; that's a quagmire. Just detect, warn, and accept supplementary alternatives.
+
+**Agent Decisions (append-only, verbose):**
+_(empty)_
+
+---
+
+### P2-a11y-print-css — Print stylesheet and exported-PDF pass
+
+- **Status:** [ ] backlog
+- **Agent Persona:** frontend-progressive
+- **Priority:** P2
+- **Complexity:** S
+- **Dependencies:** P0-a11y-policy-baseline
+- **Unblocks:** —
+- **Files to modify:**
+  - `app/static/style.css`
+
+**Spec (human-editable):**
+Print and "Save as PDF" output from the browser is often the artifact that ends up in compliance reviews. The current print stylesheet exists but hasn't been audited.
+
+Definition of Done:
+- [ ] Print stylesheet outputs reports, agendas, and the deleted-queue audit list in a linear, single-column layout
+- [ ] Status pills retain their non-color cues when printed in grayscale
+- [ ] Headings and form labels survive the print transform
+- [ ] If the platform later adds server-side PDF generation, route it through the print stylesheet
+- [ ] Manual print-preview pass on Chrome + Safari + Firefox
+
+**Notes:**
+Print is the lowest-priority surface, but trivial to fix.
+
+**Agent Decisions (append-only, verbose):**
+_(empty)_
+
+---
+
+### P3-a11y-wcag22-uplift — Plan for WCAG 2.2 AA uplift
+
+- **Status:** [ ] backlog
+- **Agent Persona:** docs-curator + frontend-progressive
+- **Priority:** P3
+- **Complexity:** M
+- **Dependencies:** P2-a11y-vpat-acr
+- **Unblocks:** —
+- **Files to modify:**
+  - `docs/ACCESSIBILITY.md`
+  - `app/static/style.css`
+  - `app/static/app.js`
+
+**Spec (human-editable):**
+WCAG 2.2 (W3C Recommendation, October 2023) is not yet the binding standard under 28 CFR 35.200 or 45 CFR 84.84, but DOJ and HHS have signaled they will likely uplift in a future rulemaking. Net-new WCAG 2.2 AA criteria worth tracking now: **2.4.11 Focus Not Obscured (Minimum)**, **2.4.12 Focus Not Obscured (Enhanced)** (AAA), **2.4.13 Focus Appearance** (AAA), **2.5.7 Dragging Movements**, **2.5.8 Target Size (Minimum)**, **3.2.6 Consistent Help**, **3.3.7 Redundant Entry**, **3.3.8 Accessible Authentication (Minimum)**, **3.3.9 Accessible Authentication (Enhanced)** (AAA).
+
+Definition of Done:
+- [ ] `docs/ACCESSIBILITY.md` gains a "WCAG 2.2 readiness" appendix mapping each net-new criterion to MakerFlow's current state
+- [ ] Where conformance gaps exist, file `-followup` task cards in §6 to address them
+- [ ] `P2-a11y-vpat-acr` ACR template gains a 2.2 column (Not Evaluated where not assessed, populated as readiness work lands)
+
+**Notes:**
+This is a tracking task, not an implementation task. Don't claim 2.2 conformance in the ACR until the screen-reader pass has retested.
+
+**Agent Decisions (append-only, verbose):**
+_(empty)_
+
+---
+
+### P3-a11y-coordinator-config — Per-org ADA coordinator + grievance procedure
+
+- **Status:** [ ] backlog
+- **Agent Persona:** backend-monolith
+- **Priority:** P3
+- **Complexity:** S
+- **Dependencies:** P0-a11y-statement-page
+- **Unblocks:** —
+- **Files to modify:**
+  - `app/server.py` (`accessibility_settings` table; `/settings/accessibility` route; pull-through to `/accessibility`)
+  - `app/static/app.js`
+  - `docs/ACCESSIBILITY.md`
+
+**Spec (human-editable):**
+28 CFR 35.107 requires public entities with 50+ employees to designate an ADA Coordinator and publish a grievance procedure. MakerFlow should let each deploying organization configure these so the `/accessibility` page displays correct, locally-binding contact details.
+
+Definition of Done:
+- [ ] New table `accessibility_settings(organization_id PRIMARY KEY, coordinator_name, coordinator_email, coordinator_phone, grievance_url, last_reviewed_at, known_limitations_md)`
+- [ ] `/settings/accessibility` (workspace_admin+) edits the row
+- [ ] `/accessibility` reads from this row for the active org (falling back to a sensible "Contact your administrator" placeholder if unset)
+- [ ] Audit-logged on change
+- [ ] Axe + manual screen-reader pass
+
+**Notes:**
+Last in the dependency chain — depends on `/accessibility` existing and the org switching mechanic being stable.
+
+**Agent Decisions (append-only, verbose):**
+_(empty)_
+
+---
+
 ## 7. Checkpoint log
 
 Append-only. One line per completed-or-deferred task, in execution order. The execution prompt writes here automatically.
 
 - `2026-05-21` — `P0-onboarding-docs` — Shipped README, ProductSpec, 8 SVG diagrams. Seeded the doc system.
 - `2026-05-21` — `P0-roadmap-bootstrap` — Created this roadmap with regen + execute prompts, schema, 22 seeded task cards across P0/P1/P2/P3, and checkpoint log.
+- `2026-05-21` — `ada-504-program-seed` — Added ADA Title II (28 CFR Part 35 Subpart H) + Section 504 (45 CFR Part 84 Subpart I) accessibility compliance program. Regulatory context block + 23 seeded WCAG 2.1 AA task cards (2 P0 · 12 P1 · 7 P2 · 2 P3). Updated regen + execute prompts to require a11y conformance on UI work.
 
 ---
 
-_Last updated: 2026-05-21. Next regeneration recommended after the first 3 tasks complete or whenever a major audit lands._
+_Last updated: 2026-05-21. Next regeneration recommended after the first 3 tasks complete or whenever a major audit lands. Active compliance deadlines for adopters: ADA Title II § 35.200 (Apr 26 2027 / Apr 26 2028); HHS § 504 § 84.84 (May 11 2027 / May 10 2028)._
