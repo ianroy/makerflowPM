@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 800" font-family="Avenir Next, Trebuchet MS, Segoe UI, sans-serif">
+  <defs>
+    <radialGradient id="bgRadial1" cx="6%" cy="4%" r="55%">
+      <stop offset="0%" stop-color="#1d3852"/>
+      <stop offset="80%" stop-color="#0e141f"/>
+    </radialGradient>
+    <radialGradient id="bgRadial2" cx="95%" cy="2%" r="40%">
+      <stop offset="0%" stop-color="#133146"/>
+      <stop offset="100%" stop-color="#0e141f" stop-opacity="0"/>
+    </radialGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#a7bed8"/>
+    </marker>
+    <marker id="arrowFocus" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#ffbe55"/>
+    </marker>
+  </defs>
+
+  <rect width="1280" height="800" fill="#0e141f"/>
+  <rect width="1280" height="800" fill="url(#bgRadial1)"/>
+  <rect width="1280" height="800" fill="url(#bgRadial2)"/>
+
+  <text x="64" y="60" font-size="13" font-weight="700" fill="#21d1aa" letter-spacing="2">MAKERFLOW PM</text>
+  <text x="64" y="92" font-size="26" font-weight="700" fill="#edf4ff">Request lifecycle</text>
+  <text x="64" y="118" font-size="13" fill="#a7bed8">From browser submit to response. Amber blocks are gates that short-circuit with 401 · 403 · 400.</text>
+  <line x1="64" y1="138" x2="1216" y2="138" stroke="#304962" stroke-width="1"/>
+
+  <!-- 12 step blocks - 3 rows of 4 -->
+  <g font-family="Avenir Next, Trebuchet MS, Segoe UI, sans-serif">
+    <!-- Row 1 -->
+    <g>
+      <rect x="68" y="166" width="270" height="120" rx="16" fill="#0b1019" opacity="0.45"/>
+      <rect x="66" y="160" width="270" height="120" rx="16" fill="#1a2636" stroke="#304962"/>
+      <circle cx="92" cy="186" r="14" fill="#1d2d40" stroke="#4db0ff"/>
+      <text x="92" y="190" font-size="12" font-weight="700" fill="#8fd5ff" text-anchor="middle">1</text>
+      <text x="116" y="190" font-size="14" font-weight="700" fill="#edf4ff">Browser request</text>
+      <text x="84" y="218" font-size="12" fill="#a7bed8">GET/POST to nginx / DO LB</text>
+      <text x="84" y="236" font-size="12" fill="#a7bed8">cookie: session_id</text>
+      <text x="84" y="254" font-size="12" fill="#a7bed8">CSRF token on mutations</text>
+    </g>
+    <g>
+      <rect x="358" y="166" width="270" height="120" rx="16" fill="#0b1019" opacity="0.45"/>
+      <rect x="356" y="160" width="270" height="120" rx="16" fill="#1a2636" stroke="#304962"/>
+      <circle cx="382" cy="186" r="14" fill="#1d2d40" stroke="#4db0ff"/>
+      <text x="382" y="190" font-size="12" font-weight="700" fill="#8fd5ff" text-anchor="middle">2</text>
+      <text x="406" y="190" font-size="14" font-weight="700" fill="#edf4ff">Gunicorn → WSGI</text>
+      <text x="374" y="218" font-size="12" fill="#a7bed8">wsgi.application</text>
+      <text x="374" y="236" font-size="12" fill="#a7bed8">flask_app catch-all</text>
+      <text x="374" y="254" font-size="12" fill="#a7bed8">delegates to server.app()</text>
+    </g>
+    <g>
+      <rect x="648" y="166" width="270" height="120" rx="16" fill="#0b1019" opacity="0.45"/>
+      <rect x="646" y="160" width="270" height="120" rx="16" fill="#1a2636" stroke="#304962"/>
+      <circle cx="672" cy="186" r="14" fill="#1d2d40" stroke="#4db0ff"/>
+      <text x="672" y="190" font-size="12" font-weight="700" fill="#8fd5ff" text-anchor="middle">3</text>
+      <text x="696" y="190" font-size="14" font-weight="700" fill="#edf4ff">ensure_bootstrap()</text>
+      <text x="664" y="218" font-size="12" fill="#a7bed8">Schema check + migrations</text>
+      <text x="664" y="236" font-size="12" fill="#a7bed8">503 if DB unreachable</text>
+      <text x="664" y="254" font-size="12" fill="#a7bed8">skipped for /healthz</text>
+    </g>
+    <g>
+      <rect x="938" y="166" width="280" height="120" rx="16" fill="#0b1019" opacity="0.45"/>
+      <rect x="936" y="160" width="280" height="120" rx="16" fill="#1a2636" stroke="#304962"/>
+      <circle cx="962" cy="186" r="14" fill="#1d2d40" stroke="#4db0ff"/>
+      <text x="962" y="190" font-size="12" font-weight="700" fill="#8fd5ff" text-anchor="middle">4</text>
+      <text x="986" y="190" font-size="14" font-weight="700" fill="#edf4ff">Request &amp; session</text>
+      <text x="954" y="218" font-size="12" fill="#a7bed8">Parse WSGI env</text>
+      <text x="954" y="236" font-size="12" fill="#a7bed8">session_id → users.id</text>
+      <text x="954" y="254" font-size="12" fill="#a7bed8">resolve active organization</text>
+    </g>
+
+    <!-- Row 2 — gates use focus amber accent -->
+    <g>
+      <rect x="938" y="316" width="280" height="120" rx="16" fill="#0b1019" opacity="0.45"/>
+      <rect x="936" y="310" width="280" height="120" rx="16" fill="#1a2636" stroke="#ffbe55" stroke-width="2"/>
+      <rect x="936" y="310" width="6" height="120" rx="3" fill="#ffbe55"/>
+      <circle cx="962" cy="336" r="14" fill="#1d2d40" stroke="#ffbe55"/>
+      <text x="962" y="340" font-size="12" font-weight="700" fill="#ffbe55" text-anchor="middle">5</text>
+      <text x="986" y="340" font-size="14" font-weight="700" fill="#edf4ff">Auth gate</text>
+      <rect x="984" y="346" width="48" height="18" rx="9" fill="#3a2818" stroke="#ffbe55"/>
+      <text x="1008" y="359" font-size="10" font-weight="700" fill="#ffbe55" text-anchor="middle">GATE</text>
+      <text x="954" y="380" font-size="12" fill="#a7bed8">Unauthed → 302 /login</text>
+      <text x="954" y="398" font-size="12" fill="#a7bed8">Login rate-limit per IP</text>
+      <text x="954" y="416" font-size="12" fill="#a7bed8">CSRF on mutating routes</text>
+    </g>
+    <g>
+      <rect x="648" y="316" width="270" height="120" rx="16" fill="#0b1019" opacity="0.45"/>
+      <rect x="646" y="310" width="270" height="120" rx="16" fill="#1a2636" stroke="#ffbe55" stroke-width="2"/>
+      <rect x="646" y="310" width="6" height="120" rx="3" fill="#ffbe55"/>
+      <circle cx="672" cy="336" r="14" fill="#1d2d40" stroke="#ffbe55"/>
+      <text x="672" y="340" font-size="12" font-weight="700" fill="#ffbe55" text-anchor="middle">6</text>
+      <text x="696" y="340" font-size="14" font-weight="700" fill="#edf4ff">RBAC gate</text>
+      <rect x="694" y="346" width="48" height="18" rx="9" fill="#3a2818" stroke="#ffbe55"/>
+      <text x="718" y="359" font-size="10" font-weight="700" fill="#ffbe55" text-anchor="middle">GATE</text>
+      <text x="664" y="380" font-size="12" fill="#a7bed8">role_allows(role, action)</text>
+      <text x="664" y="398" font-size="12" fill="#a7bed8">workspace_admin scoped</text>
+      <text x="664" y="416" font-size="12" fill="#a7bed8">to one organization</text>
+    </g>
+    <g>
+      <rect x="358" y="316" width="270" height="120" rx="16" fill="#0b1019" opacity="0.45"/>
+      <rect x="356" y="310" width="270" height="120" rx="16" fill="#1a2636" stroke="#304962"/>
+      <circle cx="382" cy="336" r="14" fill="#1d2d40" stroke="#4db0ff"/>
+      <text x="382" y="340" font-size="12" font-weight="700" fill="#8fd5ff" text-anchor="middle">7</text>
+      <text x="406" y="340" font-size="14" font-weight="700" fill="#edf4ff">Route dispatch</text>
+      <text x="374" y="368" font-size="12" fill="#a7bed8">Explicit if-path matching</text>
+      <text x="374" y="386" font-size="12" fill="#a7bed8">~103 branches in</text>
+      <text x="374" y="404" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">app/server.py</text>
+    </g>
+    <g>
+      <rect x="68" y="316" width="270" height="120" rx="16" fill="#0b1019" opacity="0.45"/>
+      <rect x="66" y="310" width="270" height="120" rx="16" fill="#1a2636" stroke="#304962"/>
+      <circle cx="92" cy="336" r="14" fill="#1d2d40" stroke="#4db0ff"/>
+      <text x="92" y="340" font-size="12" font-weight="700" fill="#8fd5ff" text-anchor="middle">8</text>
+      <text x="116" y="340" font-size="14" font-weight="700" fill="#edf4ff">Org-scoped SQL</text>
+      <text x="84" y="368" font-size="12" fill="#a7bed8">db_connect() per request</text>
+      <text x="84" y="386" font-size="12" fill="#a7bed8">Parameterized queries</text>
+      <text x="84" y="404" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">WHERE organization_id=?</text>
+    </g>
+
+    <!-- Row 3 -->
+    <g>
+      <rect x="68" y="466" width="270" height="120" rx="16" fill="#0b1019" opacity="0.45"/>
+      <rect x="66" y="460" width="270" height="120" rx="16" fill="#1a2636" stroke="#304962"/>
+      <circle cx="92" cy="486" r="14" fill="#1d2d40" stroke="#21d1aa"/>
+      <text x="92" y="490" font-size="12" font-weight="700" fill="#21d1aa" text-anchor="middle">9</text>
+      <text x="116" y="490" font-size="14" font-weight="700" fill="#edf4ff">Audit + side fx</text>
+      <text x="84" y="518" font-size="12" fill="#a7bed8">audit_log insert</text>
+      <text x="84" y="536" font-size="12" fill="#a7bed8">item_comments / watchers</text>
+      <text x="84" y="554" font-size="12" fill="#a7bed8">calendar sync (opt)</text>
+    </g>
+    <g>
+      <rect x="358" y="466" width="270" height="120" rx="16" fill="#0b1019" opacity="0.45"/>
+      <rect x="356" y="460" width="270" height="120" rx="16" fill="#1a2636" stroke="#304962"/>
+      <circle cx="382" cy="486" r="14" fill="#1d2d40" stroke="#21d1aa"/>
+      <text x="382" y="490" font-size="11" font-weight="700" fill="#21d1aa" text-anchor="middle">10</text>
+      <text x="406" y="490" font-size="14" font-weight="700" fill="#edf4ff">Render</text>
+      <text x="374" y="518" font-size="12" fill="#a7bed8">render_*() builds HTML</text>
+      <text x="374" y="536" font-size="12" fill="#a7bed8">f-string composition</text>
+      <text x="374" y="554" font-size="12" fill="#a7bed8">or JSON for /api/*</text>
+    </g>
+    <g>
+      <rect x="648" y="466" width="270" height="120" rx="16" fill="#0b1019" opacity="0.45"/>
+      <rect x="646" y="460" width="270" height="120" rx="16" fill="#1a2636" stroke="#21d1aa" stroke-width="2"/>
+      <rect x="646" y="460" width="6" height="120" rx="3" fill="#21d1aa"/>
+      <circle cx="672" cy="486" r="14" fill="#1d2d40" stroke="#21d1aa"/>
+      <text x="672" y="490" font-size="11" font-weight="700" fill="#21d1aa" text-anchor="middle">11</text>
+      <text x="696" y="490" font-size="14" font-weight="700" fill="#edf4ff">Response build</text>
+      <text x="664" y="518" font-size="12" fill="#a7bed8">CSP · HSTS · XFO · XCTO</text>
+      <text x="664" y="536" font-size="12" fill="#a7bed8">Set-Cookie if changed</text>
+      <text x="664" y="554" font-size="12" fill="#a7bed8">status + headers + body</text>
+    </g>
+    <g>
+      <rect x="938" y="466" width="280" height="120" rx="16" fill="#0b1019" opacity="0.45"/>
+      <rect x="936" y="460" width="280" height="120" rx="16" fill="#1a2636" stroke="#21d1aa" stroke-width="2"/>
+      <rect x="936" y="460" width="6" height="120" rx="3" fill="#21d1aa"/>
+      <circle cx="962" cy="486" r="14" fill="#1d2d40" stroke="#21d1aa"/>
+      <text x="962" y="490" font-size="11" font-weight="700" fill="#21d1aa" text-anchor="middle">12</text>
+      <text x="986" y="490" font-size="14" font-weight="700" fill="#edf4ff">Browser update</text>
+      <text x="954" y="518" font-size="12" fill="#a7bed8">Server-rendered HTML</text>
+      <text x="954" y="536" font-size="12" fill="#a7bed8">JS hydrates components</text>
+      <text x="954" y="554" font-size="12" fill="#a7bed8">activity log refresh</text>
+    </g>
+  </g>
+
+  <!-- arrows row 1 -->
+  <g stroke="#a7bed8" stroke-width="1.6" fill="none">
+    <line x1="336" y1="220" x2="356" y2="220" marker-end="url(#arrow)"/>
+    <line x1="626" y1="220" x2="646" y2="220" marker-end="url(#arrow)"/>
+    <line x1="916" y1="220" x2="936" y2="220" marker-end="url(#arrow)"/>
+    <!-- row1 -> row2 -->
+    <line x1="1078" y1="280" x2="1078" y2="310" marker-end="url(#arrowFocus)" stroke="#ffbe55"/>
+    <!-- row2 reverse -->
+    <line x1="936" y1="370" x2="916" y2="370" marker-end="url(#arrowFocus)" stroke="#ffbe55"/>
+    <line x1="646" y1="370" x2="628" y2="370" marker-end="url(#arrow)"/>
+    <line x1="356" y1="370" x2="338" y2="370" marker-end="url(#arrow)"/>
+    <!-- row2 -> row3 -->
+    <line x1="200" y1="430" x2="200" y2="460" marker-end="url(#arrow)"/>
+    <!-- row3 forward -->
+    <line x1="338" y1="520" x2="356" y2="520" marker-end="url(#arrow)"/>
+    <line x1="628" y1="520" x2="646" y2="520" marker-end="url(#arrow)"/>
+    <line x1="918" y1="520" x2="936" y2="520" marker-end="url(#arrow)"/>
+  </g>
+
+  <!-- Invariants panel -->
+  <g>
+    <rect x="68" y="618" width="1150" height="148" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="66" y="612" width="1150" height="148" rx="16" fill="#1a2636" stroke="#304962"/>
+    <text x="86" y="640" font-size="11" font-weight="700" letter-spacing="1.6" fill="#a7bed8">KEY INVARIANTS</text>
+    <g font-size="12" fill="#a7bed8">
+      <text x="86" y="664">• All mutating routes require a CSRF token tied to the active session.</text>
+      <text x="86" y="684">• Every authenticated query is scoped by organization_id; cross-org reads are rejected.</text>
+      <text x="86" y="704">• Soft-delete (deleted_at, deleted_by_user_id) precedes permanent purge for core entities.</text>
+      <text x="86" y="724">• /readyz includes a DB round trip · /healthz is a cheap liveness probe.</text>
+      <text x="86" y="744">• Sessions are server-side (sessions table); logout deletes the row. Logins are IP rate-limited.</text>
+
+      <text x="676" y="664">• audit_log captures actor · organization · entity · action · payload hash · timestamp.</text>
+      <text x="676" y="684">• Request and Response classes inject security headers consistently.</text>
+      <text x="676" y="704">• Cookies HttpOnly · SameSite=Lax · Secure when MAKERSPACE_COOKIE_SECURE=1.</text>
+      <text x="676" y="724">• Implementation in app/server.py — see Request/Response (~L3275)</text>
+      <text x="676" y="744">  and the WSGI entrypoint app(environ, start_response) (~L9624).</text>
+    </g>
+  </g>
+
+  <text x="64" y="788" font-size="11" fill="#a7bed8">Tokens: brand <tspan fill="#4db0ff">●</tspan> brand-2 <tspan fill="#21d1aa">●</tspan> focus <tspan fill="#ffbe55">●</tspan> danger <tspan fill="#ff5e7e">●</tspan></text>
+</svg>

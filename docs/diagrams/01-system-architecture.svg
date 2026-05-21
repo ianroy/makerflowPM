@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 760" font-family="Avenir Next, Trebuchet MS, Segoe UI, sans-serif">
+  <defs>
+    <radialGradient id="bgRadial1" cx="6%" cy="4%" r="55%">
+      <stop offset="0%" stop-color="#1d3852"/>
+      <stop offset="80%" stop-color="#0e141f"/>
+    </radialGradient>
+    <radialGradient id="bgRadial2" cx="95%" cy="2%" r="40%">
+      <stop offset="0%" stop-color="#133146"/>
+      <stop offset="100%" stop-color="#0e141f" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="brandGrad" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#4db0ff"/>
+      <stop offset="100%" stop-color="#21d1aa"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#a7bed8"/>
+    </marker>
+  </defs>
+
+  <rect width="1280" height="760" fill="#0e141f"/>
+  <rect width="1280" height="760" fill="url(#bgRadial1)"/>
+  <rect width="1280" height="760" fill="url(#bgRadial2)"/>
+
+  <!-- Header -->
+  <text x="64" y="60" font-size="13" font-weight="700" fill="#21d1aa" letter-spacing="2">MAKERFLOW PM</text>
+  <text x="64" y="92" font-size="26" font-weight="700" fill="#edf4ff">System architecture</text>
+  <text x="64" y="118" font-size="13" fill="#a7bed8">Server-rendered WSGI + progressive JS. SQLite or PostgreSQL. Droplet, App Platform, or local.</text>
+  <line x1="64" y1="138" x2="1216" y2="138" stroke="#304962" stroke-width="1"/>
+
+  <!-- Section labels -->
+  <g font-size="11" font-weight="700" letter-spacing="1.6" fill="#a7bed8">
+    <text x="80" y="172">CLIENT</text>
+    <text x="380" y="172">EDGE</text>
+    <text x="660" y="172">APPLICATION</text>
+    <text x="980" y="172">DATA &amp; INTEGRATIONS</text>
+  </g>
+
+  <!-- CLIENT lane -->
+  <g>
+    <rect x="74" y="190" width="280" height="120" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="72" y="184" width="280" height="120" rx="16" fill="#1a2636" stroke="#304962"/>
+    <text x="92" y="214" font-size="15" font-weight="700" fill="#edf4ff">Browser</text>
+    <text x="92" y="236" font-size="12" fill="#a7bed8">Server-rendered HTML</text>
+    <text x="92" y="254" font-size="12" fill="#a7bed8">progressively enhanced</text>
+    <rect x="92" y="266" width="80" height="22" rx="11" fill="#1d2d40" stroke="#4f79a0"/>
+    <text x="132" y="281" font-size="10" font-weight="700" fill="#8fd5ff" text-anchor="middle">HTTPS</text>
+    <rect x="180" y="266" width="98" height="22" rx="11" fill="#1d2d40" stroke="#4f79a0"/>
+    <text x="229" y="281" font-size="10" font-weight="700" fill="#8fd5ff" text-anchor="middle">cookie session</text>
+
+    <rect x="74" y="332" width="280" height="100" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="72" y="326" width="280" height="100" rx="16" fill="#1a2636" stroke="#304962"/>
+    <text x="92" y="356" font-size="15" font-weight="700" fill="#edf4ff">app/static/app.js</text>
+    <text x="92" y="378" font-size="12" fill="#a7bed8">~6.5k LOC vanilla JS</text>
+    <text x="92" y="396" font-size="12" fill="#a7bed8">CSRF · kanban · modals · fetch</text>
+
+    <rect x="74" y="454" width="280" height="100" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="72" y="448" width="280" height="100" rx="16" fill="#1a2636" stroke="#304962"/>
+    <text x="92" y="478" font-size="15" font-weight="700" fill="#edf4ff">app/static/style.css</text>
+    <text x="92" y="500" font-size="12" fill="#a7bed8">~2.7k LOC hand-rolled</text>
+    <text x="92" y="518" font-size="12" fill="#a7bed8">Tokens · dark/light · no build</text>
+
+    <rect x="74" y="576" width="280" height="100" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="72" y="570" width="280" height="100" rx="16" fill="#1a2636" stroke="#304962"/>
+    <text x="92" y="600" font-size="15" font-weight="700" fill="#edf4ff">CSV / ICS uploads</text>
+    <text x="92" y="622" font-size="12" fill="#a7bed8">Notes · schedules · calendars</text>
+    <text x="92" y="640" font-size="12" fill="#a7bed8">via multipart form posts</text>
+  </g>
+
+  <!-- EDGE lane -->
+  <g>
+    <rect x="374" y="190" width="260" height="120" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="372" y="184" width="260" height="120" rx="16" fill="#1a2636" stroke="#304962"/>
+    <text x="392" y="214" font-size="15" font-weight="700" fill="#edf4ff">nginx</text>
+    <text x="392" y="236" font-size="12" fill="#a7bed8">Reverse proxy</text>
+    <text x="392" y="254" font-size="12" fill="#a7bed8">TLS termination</text>
+    <rect x="392" y="266" width="92" height="22" rx="11" fill="#1d2d40" stroke="#79a7d5"/>
+    <text x="438" y="281" font-size="10" font-weight="700" fill="#8fd5ff" text-anchor="middle">Droplet path</text>
+
+    <rect x="374" y="332" width="260" height="100" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="372" y="326" width="260" height="100" rx="16" fill="#1a2636" stroke="#304962"/>
+    <text x="392" y="356" font-size="15" font-weight="700" fill="#edf4ff">certbot</text>
+    <text x="392" y="378" font-size="12" fill="#a7bed8">Let&apos;s Encrypt</text>
+    <text x="392" y="396" font-size="12" fill="#a7bed8">auto-renew</text>
+
+    <rect x="374" y="454" width="260" height="100" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="372" y="448" width="260" height="100" rx="16" fill="#1a2636" stroke="#304962"/>
+    <text x="392" y="478" font-size="15" font-weight="700" fill="#edf4ff">DO Load Balancer</text>
+    <text x="392" y="500" font-size="12" fill="#a7bed8">App Platform path</text>
+    <rect x="392" y="510" width="88" height="22" rx="11" fill="#1d2d40" stroke="#5a8a55"/>
+    <text x="436" y="525" font-size="10" font-weight="700" fill="#21d1aa" text-anchor="middle">/readyz</text>
+
+    <rect x="374" y="576" width="260" height="100" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="372" y="570" width="260" height="100" rx="16" fill="#1a2636" stroke="#304962"/>
+    <text x="392" y="600" font-size="15" font-weight="700" fill="#edf4ff">Security headers</text>
+    <text x="392" y="622" font-size="12" fill="#a7bed8">CSP · HSTS · XFO · XCTO</text>
+    <text x="392" y="640" font-size="12" fill="#a7bed8">Referrer-Policy</text>
+  </g>
+
+  <!-- APP lane -->
+  <g>
+    <rect x="654" y="190" width="280" height="100" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="652" y="184" width="280" height="100" rx="16" fill="#1a2636" stroke="#304962"/>
+    <text x="672" y="214" font-size="15" font-weight="700" fill="#edf4ff">Gunicorn</text>
+    <text x="672" y="236" font-size="12" fill="#a7bed8">2 workers · 2 threads</text>
+    <text x="672" y="254" font-size="12" fill="#a7bed8">timeout 120s</text>
+    <rect x="672" y="265" width="60" height="20" rx="10" fill="#1d2d40" stroke="#4f79a0"/>
+    <text x="702" y="279" font-size="10" font-weight="700" fill="#8fd5ff" text-anchor="middle">WSGI</text>
+
+    <rect x="654" y="312" width="280" height="80" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="652" y="306" width="280" height="80" rx="16" fill="#1a2636" stroke="#304962"/>
+    <text x="672" y="336" font-size="15" font-weight="700" fill="#edf4ff">wsgi.py</text>
+    <text x="672" y="358" font-size="12" fill="#a7bed8" font-family="Menlo, Consolas, monospace">application = flask_app</text>
+
+    <rect x="654" y="414" width="280" height="80" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="652" y="408" width="280" height="80" rx="16" fill="#1a2636" stroke="#304962"/>
+    <text x="672" y="438" font-size="15" font-weight="700" fill="#edf4ff">app/flask_app.py</text>
+    <text x="672" y="460" font-size="12" fill="#a7bed8">Catch-all → server.app()</text>
+
+    <rect x="654" y="516" width="280" height="160" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="652" y="510" width="280" height="160" rx="16" fill="#1a2636" stroke="#4db0ff" stroke-width="2"/>
+    <rect x="652" y="510" width="6" height="160" rx="3" fill="url(#brandGrad)"/>
+    <text x="672" y="540" font-size="15" font-weight="700" fill="#edf4ff">app/server.py</text>
+    <text x="672" y="560" font-size="12" fill="#a7bed8">~14k LOC stdlib core</text>
+    <g font-size="11" fill="#a7bed8">
+      <rect x="672" y="572" width="70" height="20" rx="10" fill="#1d2d40" stroke="#4f79a0"/>
+      <text x="707" y="586" font-size="10" font-weight="700" fill="#8fd5ff" text-anchor="middle">103 routes</text>
+      <rect x="748" y="572" width="74" height="20" rx="10" fill="#1d2d40" stroke="#4f79a0"/>
+      <text x="785" y="586" font-size="10" font-weight="700" fill="#8fd5ff" text-anchor="middle">39 tables</text>
+      <rect x="828" y="572" width="68" height="20" rx="10" fill="#1d2d40" stroke="#4f79a0"/>
+      <text x="862" y="586" font-size="10" font-weight="700" fill="#8fd5ff" text-anchor="middle">68 renders</text>
+    </g>
+    <text x="672" y="616" font-size="12" fill="#a7bed8">Auth · CSRF · RBAC · audit</text>
+    <text x="672" y="634" font-size="12" fill="#a7bed8">Render · calendar · imports</text>
+    <text x="672" y="654" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">def app(environ, start_response)</text>
+  </g>
+
+  <!-- DATA lane -->
+  <g>
+    <rect x="954" y="190" width="262" height="110" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="952" y="184" width="262" height="110" rx="16" fill="#1a2636" stroke="#304962"/>
+    <text x="972" y="214" font-size="15" font-weight="700" fill="#edf4ff">SQLite</text>
+    <text x="972" y="236" font-size="12" fill="#a7bed8">data/makerspace_ops.db</text>
+    <text x="972" y="254" font-size="12" fill="#a7bed8">WAL · 64MB cache</text>
+    <rect x="972" y="266" width="98" height="22" rx="11" fill="#1d2d40" stroke="#5a8a55"/>
+    <text x="1021" y="281" font-size="10" font-weight="700" fill="#21d1aa" text-anchor="middle">default backend</text>
+
+    <rect x="954" y="322" width="262" height="120" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="952" y="316" width="262" height="120" rx="16" fill="#1a2636" stroke="#304962"/>
+    <text x="972" y="346" font-size="15" font-weight="700" fill="#edf4ff">PostgreSQL</text>
+    <text x="972" y="368" font-size="12" fill="#a7bed8">DO Managed DB</text>
+    <text x="972" y="386" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">MAKERSPACE_DATABASE_URL</text>
+    <text x="972" y="404" font-size="12" fill="#a7bed8">sslmode=require</text>
+    <rect x="972" y="412" width="88" height="22" rx="11" fill="#1d2d40" stroke="#79a7d5"/>
+    <text x="1016" y="427" font-size="10" font-weight="700" fill="#8fd5ff" text-anchor="middle">production</text>
+
+    <rect x="954" y="464" width="262" height="100" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="952" y="458" width="262" height="100" rx="16" fill="#1a2636" stroke="#304962"/>
+    <text x="972" y="488" font-size="15" font-weight="700" fill="#edf4ff">Google Calendar</text>
+    <text x="972" y="510" font-size="12" fill="#a7bed8">OAuth refresh token</text>
+    <text x="972" y="528" font-size="12" fill="#a7bed8">Pull · push · sync_links</text>
+
+    <rect x="954" y="586" width="262" height="90" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="952" y="580" width="262" height="90" rx="16" fill="#1a2636" stroke="#304962"/>
+    <text x="972" y="610" font-size="15" font-weight="700" fill="#edf4ff">SMTP (optional)</text>
+    <text x="972" y="632" font-size="12" fill="#a7bed8">Password resets</text>
+    <text x="972" y="650" font-size="12" fill="#a7bed8">email_messages log</text>
+  </g>
+
+  <!-- Connecting arrows -->
+  <g stroke="#a7bed8" stroke-width="1.6" fill="none">
+    <line x1="354" y1="244" x2="372" y2="244" marker-end="url(#arrow)"/>
+    <line x1="634" y1="244" x2="652" y2="234" marker-end="url(#arrow)"/>
+    <line x1="934" y1="590" x2="952" y2="240" marker-end="url(#arrow)" stroke-dasharray="4,4" stroke="#8fd5ff" opacity="0.7"/>
+    <line x1="934" y1="590" x2="952" y2="376" marker-end="url(#arrow)" stroke-dasharray="4,4" stroke="#8fd5ff" opacity="0.7"/>
+    <line x1="934" y1="590" x2="952" y2="508" marker-end="url(#arrow)" stroke-dasharray="4,4" stroke="#8fd5ff" opacity="0.7"/>
+    <line x1="934" y1="590" x2="952" y2="625" marker-end="url(#arrow)" stroke-dasharray="4,4" stroke="#8fd5ff" opacity="0.7"/>
+  </g>
+
+  <!-- Footer caption -->
+  <text x="64" y="712" font-size="11" fill="#a7bed8">Solid arrows = primary request path · dashed arrows = backend integrations chosen at runtime via env vars.</text>
+  <text x="64" y="732" font-size="11" fill="#a7bed8">Tokens: brand <tspan fill="#4db0ff">●</tspan> brand-2 <tspan fill="#21d1aa">●</tspan> focus <tspan fill="#ffbe55">●</tspan> danger <tspan fill="#ff5e7e">●</tspan></text>
+</svg>

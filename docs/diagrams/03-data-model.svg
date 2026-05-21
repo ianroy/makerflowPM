@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1340 900" font-family="Avenir Next, Trebuchet MS, Segoe UI, sans-serif">
+  <defs>
+    <radialGradient id="bgRadial1" cx="6%" cy="4%" r="55%">
+      <stop offset="0%" stop-color="#1d3852"/>
+      <stop offset="80%" stop-color="#0e141f"/>
+    </radialGradient>
+    <radialGradient id="bgRadial2" cx="95%" cy="2%" r="40%">
+      <stop offset="0%" stop-color="#133146"/>
+      <stop offset="100%" stop-color="#0e141f" stop-opacity="0"/>
+    </radialGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#a7bed8"/>
+    </marker>
+  </defs>
+
+  <rect width="1340" height="900" fill="#0e141f"/>
+  <rect width="1340" height="900" fill="url(#bgRadial1)"/>
+  <rect width="1340" height="900" fill="url(#bgRadial2)"/>
+
+  <text x="64" y="60" font-size="13" font-weight="700" fill="#21d1aa" letter-spacing="2">MAKERFLOW PM</text>
+  <text x="64" y="92" font-size="26" font-weight="700" fill="#edf4ff">Data model</text>
+  <text x="64" y="118" font-size="13" fill="#a7bed8">39 tables grouped by domain. Every operational entity is keyed by organization_id and supports soft-delete.</text>
+  <line x1="64" y1="138" x2="1276" y2="138" stroke="#304962" stroke-width="1"/>
+
+  <!-- Tenancy -->
+  <g>
+    <rect x="68" y="166" width="300" height="280" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="66" y="160" width="300" height="280" rx="16" fill="#1a2636" stroke="#304962"/>
+    <rect x="66" y="160" width="6" height="280" rx="3" fill="#21d1aa"/>
+    <text x="92" y="190" font-size="11" font-weight="700" letter-spacing="1.6" fill="#21d1aa">TENANCY &amp; IDENTITY</text>
+    <text x="92" y="216" font-size="13" font-weight="700" fill="#edf4ff">organizations</text>
+    <text x="92" y="232" font-size="11" fill="#a7bed8">workspace · slug · settings</text>
+    <text x="92" y="258" font-size="13" font-weight="700" fill="#edf4ff">users</text>
+    <text x="92" y="274" font-size="11" fill="#a7bed8">email · pwd hash · is_superuser · is_active</text>
+    <text x="92" y="300" font-size="13" font-weight="700" fill="#edf4ff">memberships</text>
+    <text x="92" y="316" font-size="11" fill="#a7bed8">user_id × org_id × role</text>
+    <text x="92" y="342" font-size="13" font-weight="700" fill="#edf4ff">sessions</text>
+    <text x="92" y="358" font-size="11" fill="#a7bed8">token · csrf · expires_at</text>
+    <text x="92" y="384" font-size="13" font-weight="700" fill="#edf4ff">password_resets</text>
+    <text x="92" y="400" font-size="11" fill="#a7bed8">token · expires_at · used_at</text>
+    <rect x="92" y="412" width="64" height="20" rx="10" fill="#1d2d40" stroke="#5a8a55"/>
+    <text x="124" y="426" font-size="10" font-weight="700" fill="#21d1aa" text-anchor="middle">5 tables</text>
+  </g>
+
+  <!-- Project Mgmt -->
+  <g>
+    <rect x="388" y="166" width="300" height="368" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="386" y="160" width="300" height="368" rx="16" fill="#1a2636" stroke="#304962"/>
+    <rect x="386" y="160" width="6" height="368" rx="3" fill="#4db0ff"/>
+    <text x="412" y="190" font-size="11" font-weight="700" letter-spacing="1.6" fill="#8fd5ff">PROJECT MANAGEMENT</text>
+    <text x="412" y="216" font-size="13" font-weight="700" fill="#edf4ff">projects</text>
+    <text x="412" y="232" font-size="11" fill="#a7bed8">lane · status · priority · owner</text>
+    <text x="412" y="258" font-size="13" font-weight="700" fill="#edf4ff">tasks</text>
+    <text x="412" y="274" font-size="11" fill="#a7bed8">project_id · assignee · energy · due</text>
+    <text x="412" y="300" font-size="13" font-weight="700" fill="#edf4ff">custom_views</text>
+    <text x="412" y="316" font-size="11" fill="#a7bed8">saved filters / columns</text>
+    <text x="412" y="342" font-size="13" font-weight="700" fill="#edf4ff">field_configs</text>
+    <text x="412" y="358" font-size="11" fill="#a7bed8">per-org custom fields</text>
+    <text x="412" y="384" font-size="13" font-weight="700" fill="#edf4ff">item_comments</text>
+    <text x="412" y="400" font-size="11" fill="#a7bed8">threaded notes on entities</text>
+    <text x="412" y="426" font-size="13" font-weight="700" fill="#edf4ff">item_watchers</text>
+    <text x="412" y="442" font-size="11" fill="#a7bed8">follow / subscribe</text>
+    <text x="412" y="468" font-size="13" font-weight="700" fill="#edf4ff">report_templates</text>
+    <text x="412" y="484" font-size="11" fill="#a7bed8">saved report configs</text>
+    <rect x="412" y="498" width="64" height="20" rx="10" fill="#1d2d40" stroke="#79a7d5"/>
+    <text x="444" y="512" font-size="10" font-weight="700" fill="#8fd5ff" text-anchor="middle">7 tables</text>
+  </g>
+
+  <!-- Ops & Meetings -->
+  <g>
+    <rect x="708" y="166" width="300" height="368" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="706" y="160" width="300" height="368" rx="16" fill="#1a2636" stroke="#304962"/>
+    <rect x="706" y="160" width="6" height="368" rx="3" fill="#ffbe55"/>
+    <text x="732" y="190" font-size="11" font-weight="700" letter-spacing="1.6" fill="#ffbe55">OPERATIONS &amp; MEETINGS</text>
+    <text x="732" y="216" font-size="13" font-weight="700" fill="#edf4ff">meeting_agendas</text>
+    <text x="732" y="232" font-size="11" fill="#a7bed8">team · space · status · owner</text>
+    <text x="732" y="258" font-size="13" font-weight="700" fill="#edf4ff">meeting_items</text>
+    <text x="732" y="274" font-size="11" fill="#a7bed8">parent/child · links to task/project</text>
+    <text x="732" y="300" font-size="13" font-weight="700" fill="#edf4ff">meeting_item_updates</text>
+    <text x="732" y="316" font-size="11" fill="#a7bed8">timeline of edits / comments</text>
+    <text x="732" y="342" font-size="13" font-weight="700" fill="#edf4ff">meeting_item_files</text>
+    <text x="732" y="358" font-size="11" fill="#a7bed8">attachments</text>
+    <text x="732" y="384" font-size="13" font-weight="700" fill="#edf4ff">intake_requests</text>
+    <text x="732" y="400" font-size="11" fill="#a7bed8">scored queue · feature-flagged</text>
+    <text x="732" y="426" font-size="13" font-weight="700" fill="#edf4ff">equipment_assets · consumables</text>
+    <text x="732" y="442" font-size="11" fill="#a7bed8">maintenance · stock · reorder</text>
+    <text x="732" y="468" font-size="13" font-weight="700" fill="#edf4ff">partnerships</text>
+    <text x="732" y="484" font-size="11" fill="#a7bed8">external collab funnel</text>
+    <rect x="732" y="498" width="64" height="20" rx="10" fill="#1d2d40" stroke="#b88a30"/>
+    <text x="764" y="512" font-size="10" font-weight="700" fill="#ffbe55" text-anchor="middle">8 tables</text>
+  </g>
+
+  <!-- People Enablement -->
+  <g>
+    <rect x="1028" y="166" width="248" height="368" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="1026" y="160" width="248" height="368" rx="16" fill="#1a2636" stroke="#304962"/>
+    <rect x="1026" y="160" width="6" height="368" rx="3" fill="#21d1aa"/>
+    <text x="1052" y="190" font-size="11" font-weight="700" letter-spacing="1.6" fill="#21d1aa">PEOPLE ENABLEMENT</text>
+    <text x="1052" y="216" font-size="13" font-weight="700" fill="#edf4ff">spaces</text>
+    <text x="1052" y="232" font-size="11" fill="#a7bed8">physical locations</text>
+    <text x="1052" y="258" font-size="13" font-weight="700" fill="#edf4ff">teams</text>
+    <text x="1052" y="274" font-size="11" fill="#a7bed8">groupings inside an org</text>
+    <text x="1052" y="300" font-size="13" font-weight="700" fill="#edf4ff">team_members</text>
+    <text x="1052" y="316" font-size="11" fill="#a7bed8">user × team join</text>
+    <text x="1052" y="342" font-size="13" font-weight="700" fill="#edf4ff">onboarding_templates</text>
+    <text x="1052" y="358" font-size="11" fill="#a7bed8">role-based checklists</text>
+    <text x="1052" y="384" font-size="13" font-weight="700" fill="#edf4ff">onboarding_assignments</text>
+    <text x="1052" y="400" font-size="11" fill="#a7bed8">progress · due · completion</text>
+    <text x="1052" y="426" font-size="13" font-weight="700" fill="#edf4ff">user_preferences</text>
+    <text x="1052" y="442" font-size="11" fill="#a7bed8">theme · tz · notifications</text>
+    <text x="1052" y="468" font-size="13" font-weight="700" fill="#edf4ff">role_nav_preferences</text>
+    <text x="1052" y="484" font-size="11" fill="#a7bed8">per-role sidebar defaults</text>
+    <rect x="1052" y="498" width="64" height="20" rx="10" fill="#1d2d40" stroke="#5a8a55"/>
+    <text x="1084" y="512" font-size="10" font-weight="700" fill="#21d1aa" text-anchor="middle">7 tables</text>
+  </g>
+
+  <!-- Calendar -->
+  <g>
+    <rect x="68" y="466" width="300" height="240" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="66" y="460" width="300" height="240" rx="16" fill="#1a2636" stroke="#304962"/>
+    <rect x="66" y="460" width="6" height="240" rx="3" fill="#4db0ff"/>
+    <text x="92" y="490" font-size="11" font-weight="700" letter-spacing="1.6" fill="#8fd5ff">CALENDAR &amp; SYNC</text>
+    <text x="92" y="516" font-size="13" font-weight="700" fill="#edf4ff">calendar_events</text>
+    <text x="92" y="532" font-size="11" fill="#a7bed8">imported schedule records</text>
+    <text x="92" y="558" font-size="13" font-weight="700" fill="#edf4ff">calendar_sync_settings</text>
+    <text x="92" y="574" font-size="11" fill="#a7bed8">per-user Google OAuth</text>
+    <text x="92" y="600" font-size="13" font-weight="700" fill="#edf4ff">calendar_sync_links</text>
+    <text x="92" y="616" font-size="11" fill="#a7bed8">task ↔ gcal event mapping</text>
+    <text x="92" y="642" font-size="13" font-weight="700" fill="#edf4ff">meeting_note_sources</text>
+    <text x="92" y="658" font-size="11" fill="#a7bed8">cal-driven agenda metadata</text>
+    <rect x="92" y="670" width="64" height="20" rx="10" fill="#1d2d40" stroke="#79a7d5"/>
+    <text x="124" y="684" font-size="10" font-weight="700" fill="#8fd5ff" text-anchor="middle">4 tables</text>
+  </g>
+
+  <!-- Governance -->
+  <g>
+    <rect x="388" y="556" width="300" height="244" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="386" y="550" width="300" height="244" rx="16" fill="#1a2636" stroke="#304962"/>
+    <rect x="386" y="550" width="6" height="244" rx="3" fill="#ff5e7e"/>
+    <text x="412" y="580" font-size="11" font-weight="700" letter-spacing="1.6" fill="#ff5e7e">GOVERNANCE &amp; ANALYTICS</text>
+    <text x="412" y="606" font-size="13" font-weight="700" fill="#edf4ff">audit_log</text>
+    <text x="412" y="622" font-size="11" fill="#a7bed8">actor · org · entity · action · payload</text>
+    <text x="412" y="648" font-size="13" font-weight="700" fill="#edf4ff">insight_snapshots</text>
+    <text x="412" y="664" font-size="11" fill="#a7bed8">baseline metrics for reports</text>
+    <text x="412" y="690" font-size="13" font-weight="700" fill="#edf4ff">email_messages</text>
+    <text x="412" y="706" font-size="11" fill="#a7bed8">outbound email log</text>
+    <text x="412" y="732" font-size="12" fill="#ffbe55">Soft-delete columns on op tables:</text>
+    <text x="412" y="748" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">deleted_at, deleted_by_user_id</text>
+    <rect x="412" y="762" width="64" height="20" rx="10" fill="#1d2d40" stroke="#a14454"/>
+    <text x="444" y="776" font-size="10" font-weight="700" fill="#ff5e7e" text-anchor="middle">3 tables</text>
+  </g>
+
+  <!-- Notes panel -->
+  <g>
+    <rect x="708" y="556" width="568" height="244" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="706" y="550" width="568" height="244" rx="16" fill="#1a2636" stroke="#304962"/>
+    <text x="732" y="580" font-size="11" font-weight="700" letter-spacing="1.6" fill="#a7bed8">NOTES &amp; INVARIANTS</text>
+    <g font-size="12" fill="#a7bed8">
+      <text x="732" y="606">• Foreign keys to organizations cascade on delete to enforce tenant isolation.</text>
+      <text x="732" y="626">• Roles: viewer &lt; student &lt; staff &lt; manager &lt; workspace_admin &lt; owner.</text>
+      <text x="732" y="646">• Soft-delete-first on projects, tasks, intake_requests, equipment_assets,</text>
+      <text x="732" y="662">  consumables, partnerships.</text>
+      <text x="732" y="682">• custom_views + field_configs power saved filters and per-org schema extensions.</text>
+      <text x="732" y="702">• meeting_items can link to a task or a project — meeting → execution bridge.</text>
+      <text x="732" y="722">• calendar_sync_links is the bidirectional bridge between tasks and gcal events.</text>
+      <text x="732" y="742">• audit_log is the source of truth for governance, replay, and rollback decisions.</text>
+      <text x="732" y="762">• On PostgreSQL, ? placeholders are rewritten to $1, $2 at the connection wrapper.</text>
+    </g>
+  </g>
+
+  <!-- Soft-delete flow at bottom -->
+  <g transform="translate(64,820)">
+    <text x="0" y="0" font-size="11" font-weight="700" letter-spacing="1.6" fill="#a7bed8">SOFT-DELETE FLOW</text>
+    <g transform="translate(180,-14)">
+      <rect width="160" height="36" rx="18" fill="#1a2636" stroke="#304962"/>
+      <text x="80" y="22" font-size="12" fill="#edf4ff" text-anchor="middle">user deletes</text>
+    </g>
+    <line x1="346" y1="-2" x2="372" y2="-2" stroke="#a7bed8" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <g transform="translate(376,-14)">
+      <rect width="170" height="36" rx="18" fill="#1a2636" stroke="#304962"/>
+      <text x="85" y="22" font-size="12" fill="#edf4ff" text-anchor="middle">deleted_at set</text>
+    </g>
+    <line x1="552" y1="-2" x2="578" y2="-2" stroke="#a7bed8" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <g transform="translate(582,-14)">
+      <rect width="170" height="36" rx="18" fill="#1a2636" stroke="#ffbe55"/>
+      <text x="85" y="22" font-size="12" fill="#ffbe55" text-anchor="middle">/deleted queue</text>
+    </g>
+    <line x1="758" y1="-2" x2="784" y2="-2" stroke="#a7bed8" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <g transform="translate(788,-14)">
+      <rect width="190" height="36" rx="18" fill="#1a2636" stroke="#21d1aa"/>
+      <text x="95" y="22" font-size="12" fill="#21d1aa" text-anchor="middle">restore or purge</text>
+    </g>
+  </g>
+
+  <text x="64" y="884" font-size="11" fill="#a7bed8">Tokens: brand <tspan fill="#4db0ff">●</tspan> brand-2 <tspan fill="#21d1aa">●</tspan> focus <tspan fill="#ffbe55">●</tspan> danger <tspan fill="#ff5e7e">●</tspan></text>
+</svg>

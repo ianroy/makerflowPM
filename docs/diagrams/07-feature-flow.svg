@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1340 860" font-family="Avenir Next, Trebuchet MS, Segoe UI, sans-serif">
+  <defs>
+    <radialGradient id="bgRadial1" cx="6%" cy="4%" r="55%">
+      <stop offset="0%" stop-color="#1d3852"/>
+      <stop offset="80%" stop-color="#0e141f"/>
+    </radialGradient>
+    <radialGradient id="bgRadial2" cx="95%" cy="2%" r="40%">
+      <stop offset="0%" stop-color="#133146"/>
+      <stop offset="100%" stop-color="#0e141f" stop-opacity="0"/>
+    </radialGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#21d1aa"/>
+    </marker>
+  </defs>
+
+  <rect width="1340" height="860" fill="#0e141f"/>
+  <rect width="1340" height="860" fill="url(#bgRadial1)"/>
+  <rect width="1340" height="860" fill="url(#bgRadial2)"/>
+
+  <text x="64" y="60" font-size="13" font-weight="700" fill="#21d1aa" letter-spacing="2">MAKERFLOW PM</text>
+  <text x="64" y="92" font-size="26" font-weight="700" fill="#edf4ff">Work flow across features</text>
+  <text x="64" y="118" font-size="13" fill="#a7bed8">How a work item travels from idea to closed/auditable across the product&apos;s primary surfaces.</text>
+  <line x1="64" y1="138" x2="1276" y2="138" stroke="#304962" stroke-width="1"/>
+
+  <!-- 4 lane headers -->
+  <g>
+    <rect x="68" y="166" width="300" height="40" rx="20" fill="#1a2636" stroke="#4db0ff"/>
+    <text x="218" y="192" font-size="14" font-weight="700" fill="#8fd5ff" text-anchor="middle">1 · CAPTURE</text>
+
+    <rect x="386" y="166" width="300" height="40" rx="20" fill="#1a2636" stroke="#ffbe55"/>
+    <text x="536" y="192" font-size="14" font-weight="700" fill="#ffbe55" text-anchor="middle">2 · PLAN</text>
+
+    <rect x="704" y="166" width="300" height="40" rx="20" fill="#1a2636" stroke="#21d1aa"/>
+    <text x="854" y="192" font-size="14" font-weight="700" fill="#21d1aa" text-anchor="middle">3 · EXECUTE</text>
+
+    <rect x="1022" y="166" width="256" height="40" rx="20" fill="#1a2636" stroke="#ff5e7e"/>
+    <text x="1150" y="192" font-size="14" font-weight="700" fill="#ff5e7e" text-anchor="middle">4 · REVIEW &amp; GOVERN</text>
+  </g>
+
+  <!-- 4 lane backings -->
+  <g>
+    <rect x="68" y="222" width="300" height="540" rx="16" fill="#0e1a2a" opacity="0.4"/>
+    <rect x="386" y="222" width="300" height="540" rx="16" fill="#1f1a0e" opacity="0.4"/>
+    <rect x="704" y="222" width="300" height="540" rx="16" fill="#0e1f1a" opacity="0.4"/>
+    <rect x="1022" y="222" width="256" height="540" rx="16" fill="#1f0e15" opacity="0.4"/>
+  </g>
+
+  <!-- Capture cards -->
+  <g>
+    <g>
+      <rect x="84" y="242" width="268" height="86" rx="14" fill="#162332" stroke="#304962"/>
+      <rect x="84" y="242" width="6" height="86" rx="3" fill="#4db0ff"/>
+      <text x="104" y="266" font-size="14" font-weight="700" fill="#edf4ff">Intake</text>
+      <rect x="166" y="254" width="74" height="20" rx="10" fill="#1d2d40" stroke="#b88a30"/>
+      <text x="203" y="268" font-size="10" font-weight="700" fill="#ffbe55" text-anchor="middle">feature-flag</text>
+      <text x="104" y="290" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">/intake → intake_requests</text>
+      <text x="104" y="310" font-size="11" fill="#a7bed8">scored · convertible to project</text>
+    </g>
+    <g>
+      <rect x="84" y="344" width="268" height="86" rx="14" fill="#162332" stroke="#304962"/>
+      <rect x="84" y="344" width="6" height="86" rx="3" fill="#4db0ff"/>
+      <text x="104" y="368" font-size="14" font-weight="700" fill="#edf4ff">Meeting capture</text>
+      <text x="104" y="392" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">/agenda → meeting_items</text>
+      <text x="104" y="412" font-size="11" fill="#a7bed8">convert items → tasks / projects</text>
+    </g>
+    <g>
+      <rect x="84" y="446" width="268" height="86" rx="14" fill="#162332" stroke="#304962"/>
+      <rect x="84" y="446" width="6" height="86" rx="3" fill="#4db0ff"/>
+      <text x="104" y="470" font-size="14" font-weight="700" fill="#edf4ff">Imports</text>
+      <text x="104" y="494" font-size="11" fill="#a7bed8">CSV upload · ICS upload</text>
+      <text x="104" y="514" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">import_project_notes.py</text>
+    </g>
+    <g>
+      <rect x="84" y="548" width="268" height="86" rx="14" fill="#162332" stroke="#304962"/>
+      <rect x="84" y="548" width="6" height="86" rx="3" fill="#4db0ff"/>
+      <text x="104" y="572" font-size="14" font-weight="700" fill="#edf4ff">Partnerships pipeline</text>
+      <text x="104" y="596" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">partnerships table</text>
+      <text x="104" y="616" font-size="11" fill="#a7bed8">external collaboration funnel</text>
+    </g>
+    <g>
+      <rect x="84" y="650" width="268" height="96" rx="14" fill="#162332" stroke="#304962"/>
+      <rect x="84" y="650" width="6" height="96" rx="3" fill="#4db0ff"/>
+      <text x="104" y="674" font-size="14" font-weight="700" fill="#edf4ff">Direct task creation</text>
+      <text x="104" y="698" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">/tasks/new POST</text>
+      <text x="104" y="716" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">/api/tasks/create JSON</text>
+      <text x="104" y="734" font-size="11" fill="#a7bed8">CSRF-checked · role-gated</text>
+    </g>
+  </g>
+
+  <!-- Plan cards -->
+  <g>
+    <g>
+      <rect x="402" y="242" width="268" height="86" rx="14" fill="#162332" stroke="#304962"/>
+      <rect x="402" y="242" width="6" height="86" rx="3" fill="#ffbe55"/>
+      <text x="422" y="266" font-size="14" font-weight="700" fill="#edf4ff">Projects + lanes</text>
+      <text x="422" y="290" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">/projects board</text>
+      <text x="422" y="310" font-size="11" fill="#a7bed8">priorities · statuses · owners</text>
+    </g>
+    <g>
+      <rect x="402" y="344" width="268" height="86" rx="14" fill="#162332" stroke="#304962"/>
+      <rect x="402" y="344" width="6" height="86" rx="3" fill="#ffbe55"/>
+      <text x="422" y="368" font-size="14" font-weight="700" fill="#edf4ff">Custom views</text>
+      <text x="422" y="392" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">/views — saved filters</text>
+      <text x="422" y="412" font-size="11" fill="#a7bed8">columns &amp; sort order</text>
+    </g>
+    <g>
+      <rect x="402" y="446" width="268" height="86" rx="14" fill="#162332" stroke="#304962"/>
+      <rect x="402" y="446" width="6" height="86" rx="3" fill="#ffbe55"/>
+      <text x="422" y="470" font-size="14" font-weight="700" fill="#edf4ff">Teams &amp; spaces</text>
+      <text x="422" y="494" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">/settings/teams · /spaces</text>
+      <text x="422" y="514" font-size="11" fill="#a7bed8">assignment defaults</text>
+    </g>
+    <g>
+      <rect x="402" y="548" width="268" height="86" rx="14" fill="#162332" stroke="#304962"/>
+      <rect x="402" y="548" width="6" height="86" rx="3" fill="#ffbe55"/>
+      <text x="422" y="572" font-size="14" font-weight="700" fill="#edf4ff">Field configs</text>
+      <text x="422" y="596" font-size="11" fill="#a7bed8">per-org custom fields</text>
+      <text x="422" y="616" font-size="11" fill="#a7bed8">extend without code</text>
+    </g>
+    <g>
+      <rect x="402" y="650" width="268" height="96" rx="14" fill="#162332" stroke="#304962"/>
+      <rect x="402" y="650" width="6" height="96" rx="3" fill="#ffbe55"/>
+      <text x="422" y="674" font-size="14" font-weight="700" fill="#edf4ff">Onboarding</text>
+      <text x="422" y="698" font-size="11" fill="#a7bed8">templates → assignments</text>
+      <text x="422" y="716" font-size="11" fill="#a7bed8">role-based checklists</text>
+      <text x="422" y="734" font-size="11" fill="#a7bed8">due dates · completion</text>
+    </g>
+  </g>
+
+  <!-- Execute cards -->
+  <g>
+    <g>
+      <rect x="720" y="242" width="268" height="86" rx="14" fill="#162332" stroke="#304962"/>
+      <rect x="720" y="242" width="6" height="86" rx="3" fill="#21d1aa"/>
+      <text x="740" y="266" font-size="14" font-weight="700" fill="#edf4ff">Kanban / list / calendar</text>
+      <text x="740" y="290" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">/tasks toggle modes</text>
+      <text x="740" y="310" font-size="11" fill="#a7bed8">drag-and-drop status</text>
+    </g>
+    <g>
+      <rect x="720" y="344" width="268" height="86" rx="14" fill="#162332" stroke="#304962"/>
+      <rect x="720" y="344" width="6" height="86" rx="3" fill="#21d1aa"/>
+      <text x="740" y="368" font-size="14" font-weight="700" fill="#edf4ff">Comments / watchers</text>
+      <text x="740" y="392" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">item_comments · item_watchers</text>
+      <text x="740" y="412" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">/api/comments/add</text>
+    </g>
+    <g>
+      <rect x="720" y="446" width="268" height="86" rx="14" fill="#162332" stroke="#304962"/>
+      <rect x="720" y="446" width="6" height="86" rx="3" fill="#21d1aa"/>
+      <text x="740" y="470" font-size="14" font-weight="700" fill="#edf4ff">Calendar sync</text>
+      <text x="740" y="494" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">/calendar/gcal/pull · push</text>
+      <text x="740" y="514" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">calendar_sync_links</text>
+    </g>
+    <g>
+      <rect x="720" y="548" width="268" height="86" rx="14" fill="#162332" stroke="#304962"/>
+      <rect x="720" y="548" width="6" height="86" rx="3" fill="#21d1aa"/>
+      <text x="740" y="572" font-size="14" font-weight="700" fill="#edf4ff">Equipment &amp; consumables</text>
+      <text x="740" y="596" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">/assets · /consumables</text>
+      <text x="740" y="616" font-size="11" fill="#a7bed8">maintenance · reorder</text>
+    </g>
+    <g>
+      <rect x="720" y="650" width="268" height="96" rx="14" fill="#162332" stroke="#304962"/>
+      <rect x="720" y="650" width="6" height="96" rx="3" fill="#21d1aa"/>
+      <text x="740" y="674" font-size="14" font-weight="700" fill="#edf4ff">Delegations</text>
+      <text x="740" y="698" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">/tasks/delegate</text>
+      <text x="740" y="716" font-size="11" fill="#a7bed8">role-aware handoff</text>
+      <text x="740" y="734" font-size="11" fill="#a7bed8">audit_log entry written</text>
+    </g>
+  </g>
+
+  <!-- Review cards -->
+  <g>
+    <g>
+      <rect x="1038" y="242" width="224" height="86" rx="14" fill="#162332" stroke="#304962"/>
+      <rect x="1038" y="242" width="6" height="86" rx="3" fill="#ff5e7e"/>
+      <text x="1058" y="266" font-size="14" font-weight="700" fill="#edf4ff">Reports</text>
+      <text x="1058" y="290" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">/reports · templates</text>
+      <text x="1058" y="310" font-size="11" fill="#a7bed8">insight_snapshots seeded</text>
+    </g>
+    <g>
+      <rect x="1038" y="344" width="224" height="86" rx="14" fill="#162332" stroke="#304962"/>
+      <rect x="1038" y="344" width="6" height="86" rx="3" fill="#ff5e7e"/>
+      <text x="1058" y="368" font-size="14" font-weight="700" fill="#edf4ff">Audit log</text>
+      <text x="1058" y="392" font-size="11" fill="#a7bed8">every mutation recorded</text>
+      <text x="1058" y="412" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">/admin/audit/rollback</text>
+    </g>
+    <g>
+      <rect x="1038" y="446" width="224" height="86" rx="14" fill="#162332" stroke="#304962"/>
+      <rect x="1038" y="446" width="6" height="86" rx="3" fill="#ff5e7e"/>
+      <text x="1058" y="470" font-size="14" font-weight="700" fill="#edf4ff">Soft-delete queue</text>
+      <text x="1058" y="494" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">/deleted</text>
+      <text x="1058" y="514" font-size="11" fill="#a7bed8">restore or purge</text>
+    </g>
+    <g>
+      <rect x="1038" y="548" width="224" height="86" rx="14" fill="#162332" stroke="#304962"/>
+      <rect x="1038" y="548" width="6" height="86" rx="3" fill="#ff5e7e"/>
+      <text x="1058" y="572" font-size="14" font-weight="700" fill="#edf4ff">CSV export</text>
+      <text x="1058" y="596" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">export_all_csv.sh</text>
+      <text x="1058" y="616" font-size="11" fill="#a7bed8">vendor exit · portability</text>
+    </g>
+    <g>
+      <rect x="1038" y="650" width="224" height="96" rx="14" fill="#162332" stroke="#304962"/>
+      <rect x="1038" y="650" width="6" height="96" rx="3" fill="#ff5e7e"/>
+      <text x="1058" y="674" font-size="14" font-weight="700" fill="#edf4ff">Admin governance</text>
+      <text x="1058" y="698" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">/admin/users</text>
+      <text x="1058" y="716" font-size="11" fill="#a7bed8" font-family="Menlo, Consolas, monospace">purge-item · purge-keyword</text>
+      <text x="1058" y="734" font-size="11" fill="#a7bed8">owner-only operations</text>
+    </g>
+  </g>
+
+  <!-- Cross-lane arrows -->
+  <g stroke="#21d1aa" stroke-width="1.6" fill="none" opacity="0.7">
+    <line x1="352" y1="285" x2="402" y2="285" marker-end="url(#arrow)"/>
+    <line x1="670" y1="285" x2="720" y2="285" marker-end="url(#arrow)"/>
+    <line x1="988" y1="285" x2="1038" y2="285" marker-end="url(#arrow)"/>
+
+    <line x1="352" y1="489" x2="402" y2="489" marker-end="url(#arrow)"/>
+    <line x1="670" y1="489" x2="720" y2="489" marker-end="url(#arrow)"/>
+    <line x1="988" y1="489" x2="1038" y2="489" marker-end="url(#arrow)"/>
+
+    <line x1="352" y1="693" x2="402" y2="693" marker-end="url(#arrow)"/>
+    <line x1="670" y1="693" x2="720" y2="693" marker-end="url(#arrow)"/>
+    <line x1="988" y1="693" x2="1038" y2="693" marker-end="url(#arrow)"/>
+  </g>
+
+  <!-- End-to-end summary -->
+  <g>
+    <rect x="68" y="782" width="1210" height="60" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="66" y="776" width="1210" height="60" rx="16" fill="#1a2636" stroke="#304962"/>
+    <text x="92" y="806" font-size="13" font-weight="700" fill="#edf4ff">Common end-to-end loop</text>
+    <text x="92" y="824" font-size="12" fill="#a7bed8">intake / meeting → convert to project &amp; tasks → assigned via team/space → executed on kanban → snapshotted in reports → archived via audit</text>
+  </g>
+</svg>
