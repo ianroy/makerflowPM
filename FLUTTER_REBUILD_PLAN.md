@@ -673,7 +673,7 @@ Stand up `serverpod_auth` (email/password), the `MembershipRole` enum + rank, th
 
 #### fl-0-a11y-web-spike — Flutter Web WCAG 2.1 AA feasibility spike (GATE)
 
-- **Status:** [ ] ready
+- **Status:** [ ] blocked — fixture + report instrument built; **empirical AT pass is human-gated** (needs NVDA/VoiceOver/keyboard on a real toolchain)
 - **Agent Persona:** flutter-a11y
 - **Priority:** P0
 - **Complexity:** M
@@ -686,15 +686,21 @@ Stand up `serverpod_auth` (email/password), the `MembershipRole` enum + rank, th
 **Spec (human-editable):**
 Build a small but representative slice (login form + a kanban board + a modal editor + a data table) in Flutter Web and test it against real assistive technology. Decide whether Flutter Web can meet WCAG 2.1 AA for compliance-critical surfaces, or whether the web target needs a server-rendered fallback (§8).
 
-- [ ] Slice tested with NVDA+Firefox, VoiceOver+Safari, and keyboard-only
-- [ ] Each relevant WCAG criterion from §8 marked pass/partial/fail with evidence
-- [ ] Written recommendation: (a) Flutter Web is sufficient, or (b) ship server-rendered web fallback, with rationale
-- [ ] If (b): a follow-up task card is filed for the fallback approach
-- [ ] Report committed under `docs/accessibility/`
+- [ ] Slice tested with NVDA+Firefox, VoiceOver+Safari, and keyboard-only — **HUMAN**
+- [ ] Each relevant WCAG criterion from §8 marked pass/partial/fail with evidence — **HUMAN**
+- [ ] Written recommendation: (a) Flutter Web is sufficient, or (b) ship server-rendered web fallback, with rationale — **HUMAN**
+- [ ] If (b): a follow-up task card is filed for the fallback approach — conditional
+- [x] Report committed under `docs/accessibility/` (instrument; results pending the human pass)
+- [x] Representative fixture built (route `/spike`)
 
 **Notes:** This is a **gate**. Do not declare the web target parity-complete until this resolves. Highest-value early task.
 
-**Agent Decisions (append-only, verbose):** _(empty)_
+**Agent Decisions (append-only, verbose):**
+- `2026-06-15` — Picked up by execution prompt (§0.3). Top-ready P0 card; deps (`fl-0-design-tokens`) done.
+- `2026-06-15` — **Built the fixture** [`makerflow_flutter/lib/src/features/_spike/a11y_spike_screen.dart`](makerflow_dart/makerflow_flutter/lib/src/features/_spike/a11y_spike_screen.dart) exercising the four highest-risk surfaces from §8/Appendix F: (1) labelled form with validation + error-identify + `SemanticsService.announce` (1.3.5/3.3.1/3.3.2/4.1.2/4.1.3); (2) keyboard-movable kanban with live-region announcements (2.1.1/2.5.1/4.1.3); (3) Material `Dialog` modal for focus-trap + return-focus + dialog semantics (2.1.2/2.4.3/4.1.2); (4) `DataTable` with header semantics (1.3.1). Wired route `/spike` in `state/providers.dart`.
+- `2026-06-15` — **Built the report instrument** [`makerflow_dart/docs/accessibility/flutter-web-spike-report.md`](makerflow_dart/docs/accessibility/flutter-web-spike-report.md): run instructions, an environment matrix, the full WCAG-2.1-AA criterion × surface results grid (empty, for the human), a CanvasKit-vs-HTML-renderer comparison prompt, and the binary go/fallback decision template.
+- `2026-06-15` — **Decision: do NOT mark done.** Three DOD items are empirical (require running NVDA+Firefox, VoiceOver+Safari, and keyboard-only against a Flutter Web build) and cannot be produced in this no-toolchain/headless environment — and producing a fabricated verdict would defeat the purpose of the gate (R1). Considered marking `in_progress`; chose `[ ] blocked` because the remaining work is a hard **human + toolchain** dependency, not more authoring. **Verification run here:** none possible (no `flutter`/browser/AT); the fixture compiles in principle but is unverified like the rest of the skeleton.
+- `2026-06-15` — **To unblock (human):** `cd makerflow_dart && melos bootstrap && cd makerflow_flutter && flutter run -d chrome`, open `/spike`, complete the report's matrix on NVDA+Firefox / VoiceOver+Safari / keyboard-only (test both CanvasKit and HTML renderers), record the decision, then set this card `[x] done` and propagate (the web target's fate in §8/R1, and whether to file `fl-0-web-fallback`).
 
 ---
 
@@ -1567,6 +1573,7 @@ Append-only. One line per completed-or-deferred task, in execution order.
 
 - `2026-06-15` — `fl-plan-bootstrap` — Authored this plan: 4 decisions of record (Serverpod / 6 platforms / greenfield / parity+native), target-architecture diagram (`docs/diagrams/11-flutter-target-architecture.svg`), Python→Dart translation, data-model + RBAC + tenancy mapping, parity matrix, native-feature designs, Flutter-Web accessibility risk analysis + Phase-0 gate, monorepo layout, infra/deploy, risks, and 21 phased task cards across 8 phases.
 - `2026-06-15` — `fl-skeleton` — Built the Phase 0 + Phase 1 walking skeleton under `makerflow_dart/` (28 files): Melos workspace + 5 packages; Serverpod server (org/membership/project/task/audit models + enums, RBAC/tenancy/audit guards, project/task/health endpoints, serverpod_auth bootstrap, unit test); `makerflow_design` (ported tokens, ThemeData, MfCard, non-color StatusBadge); Flutter app (router, Riverpod, login, dashboard, keyboard-accessible kanban on a repository seam, smoke test); docker-compose, CI workflow, monorepo README + BUILD_STATUS. Authored without a local toolchain — not yet compiled; `fl-0-a11y-web-spike` gate still unstarted.
+- `2026-06-15` — `fl-0-a11y-web-spike` — **Executed via §0.3 (top-ready P0).** Built the AT test fixture (route `/spike`, four highest-risk surfaces) + the WCAG 2.1 AA report instrument. Ended `[ ] blocked`: the empirical screen-reader/keyboard pass + the go/fallback decision are a human + toolchain dependency that cannot be produced headlessly (and must not be fabricated — it's the R1 gate). Unblock steps recorded on the card. Next ready work: resume `fl-0-auth-rbac-tenancy` / `fl-1-projects-tasks` (both `in_progress`).
 - `2026-06-15` — `fl-plan-selfcontained` — Made the plan fully self-contained: embedded a Flutter-specific recursive regeneration prompt (§0.2) + execution prompt (§0.3), in-file task-card schema (§0.4), status legend / personas / scales (§0.5), and a resumability + context-window protocol (§0.6). Removed cross-file delegation for the loop. Authored companion onboarding guide `Flutter_ProductSpec.md` and updated `README.md` for the Flutter/Dart pivot (two-codebases framing + GitHub deploy for all six targets).
 - `2026-06-15` — `fl-plan-deepen` — Deepened the plan: full 39-table data-model mapping (+ ID/relation/pagination/polymorphic conventions, enum inventory); 10 new task cards (error-taxonomy, state-conventions, seed-data, realtime-infra, testing-harness, i18n, pagination-perf, observability, store-compliance, security-hardening) → 30 cards across 8 phases; new personas (`qa-automation-dart`, `security-reviewer`); risks R8–R10; infra cost sizing; and a 13-part deep-dive appendix (A endpoint map · B auth · C realtime/offline-sync · D errors · E state/nav · F testing · G security · H performance · I observability · J i18n · K store compliance · L cost/effort · M parity checklist).
 

@@ -12,7 +12,7 @@ Maps what's on disk to the task cards in [`../FLUTTER_REBUILD_PLAN.md`](../FLUTT
 | `fl-0-monorepo-scaffold` | `[~]` | Melos workspace, 5 packages, docker-compose, server config, entrypoint authored. Not run through `serverpod create`/`generate` (no toolchain here). |
 | `fl-0-design-tokens` | `[x]` | `makerflow_design`: all 12 color tokens (dark+light) ported from `style.css`, `ThemeData` + `ThemeExtension`, `MfCard`, non-color `StatusBadge`. Avenir Next font bundling left as a TODO in pubspec. |
 | `fl-0-auth-rbac-tenancy` | `[~]` | RBAC guard (`requireRole`, role rank), `AuthContext`, audit interceptor, soft-delete pattern, models (org/membership/audit) authored + a unit test. `serverpod_auth` wired in `server.dart`. Tenancy repository base + full org-switch UI still to do. |
-| `fl-0-a11y-web-spike` | `[ ]` | **GATE — not started.** Highest-priority next task; must resolve before the web target is promised. |
+| `fl-0-a11y-web-spike` | `[~]` | **GATE — blocked on human AT pass.** Fixture built (`makerflow_flutter/lib/src/features/_spike/a11y_spike_screen.dart`, route `/spike`) + report instrument (`docs/accessibility/flutter-web-spike-report.md`). A person must run NVDA/VoiceOver/keyboard against a Flutter Web build, fill the matrix, and record the go/fallback decision. |
 | `fl-0-ci-pipelines` | `[~]` | `dart-ci.yml` authored (analyze + test + web/android build, ephemeral PG/Redis). axe-core web gate still to add. |
 
 ## Phase 1 — Core PM (vertical slice)
@@ -30,7 +30,7 @@ Maps what's on disk to the task cards in [`../FLUTTER_REBUILD_PLAN.md`](../FLUTT
 ## Immediate next steps (in order)
 
 1. Install toolchain; `serverpod create`-align the server package layout; `serverpod generate`; `melos bootstrap`; resolve analyzer findings.
-2. Run `fl-0-a11y-web-spike` (the gate) — decide Flutter Web vs server-rendered web fallback.
+2. **Close `fl-0-a11y-web-spike` (the gate):** the fixture (`/spike`) + report instrument are built — run NVDA/VoiceOver/keyboard against `flutter run -d chrome`, fill `docs/accessibility/flutter-web-spike-report.md`, and record the Flutter-Web-vs-fallback decision.
 3. Finish `fl-0-auth-rbac-tenancy`: real sign-in, org switch, tenancy repository base, role-matrix tests.
 4. Swap `InMemoryTaskRepository` → `ServerpodTaskRepository`; wire the kanban to live endpoints.
 5. Round out `fl-1`: list + calendar views, projects screen, comments/watchers.

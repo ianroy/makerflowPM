@@ -7,6 +7,7 @@ import '../data/task_repository.dart';
 import '../features/auth/login_screen.dart';
 import '../features/dashboard/dashboard_screen.dart';
 import '../features/tasks/kanban_screen.dart';
+import '../features/_spike/a11y_spike_screen.dart';
 
 /// Light/dark toggle (persisted to user prefs server-side in fl-3).
 final themeModeProvider = StateProvider<ThemeMode>((_) => ThemeMode.dark);
@@ -45,6 +46,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
       GoRoute(path: '/dashboard', builder: (_, __) => const DashboardScreen()),
       GoRoute(path: '/tasks', builder: (_, __) => const KanbanScreen()),
+      // fl-0-a11y-web-spike fixture. Reach at /spike for AT testing.
+      GoRoute(path: '/spike', builder: (_, __) => const A11ySpikeScreen()),
     ],
   );
 });
