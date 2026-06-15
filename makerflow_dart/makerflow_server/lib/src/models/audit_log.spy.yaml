@@ -1,0 +1,18 @@
+### Append-only action trace. Written by the central audit interceptor on every
+### mutation (docs/SECURITY.md). Never soft-deleted; never purged.
+class: AuditLog
+table: audit_log
+fields:
+  organizationId: int
+  actorUserInfoId: int?
+  entityType: String
+  entityId: int?
+  action: String          # create | update | delete | restore | purge | login | ...
+  payloadHash: String?
+  summary: String?
+  createdAt: DateTime
+indexes:
+  audit_org_idx:
+    fields: organizationId
+  audit_entity_idx:
+    fields: organizationId, entityType, entityId

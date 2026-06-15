@@ -1,0 +1,11 @@
+# Role ladder (least → most privileged). The integer order is significant:
+# RBAC comparisons use index ranking. Mirrors docs/SECURITY.md and diagram 04.
+enum: MembershipRole
+serialized: byName
+values:
+  - viewer
+  - student
+  - staff
+  - manager
+  - workspaceAdmin
+  - owner

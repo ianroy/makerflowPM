@@ -1,0 +1,12 @@
+### A workspace / tenant. Every operational row is scoped to one of these.
+class: Organization
+table: organization
+fields:
+  name: String
+  slug: String
+  createdAt: DateTime
+  updatedAt: DateTime
+indexes:
+  organization_slug_idx:
+    fields: slug
+    unique: true

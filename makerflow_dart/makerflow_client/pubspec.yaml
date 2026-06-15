@@ -1,0 +1,13 @@
+name: makerflow_client
+description: Generated, type-safe Serverpod client for MakerFlow PM. DO NOT hand-edit.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+# `serverpod generate` (run from ../makerflow_server) populates lib/ with the
+# generated protocol + client. This pubspec + placeholder exist so the Melos
+# workspace resolves before the first codegen run.
+dependencies:
+  serverpod_client: ^2.1.0

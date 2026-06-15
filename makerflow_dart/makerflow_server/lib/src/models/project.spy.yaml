@@ -1,0 +1,22 @@
+### Portfolio unit. Org-scoped, soft-deletable, audited.
+class: Project
+table: project
+fields:
+  organizationId: int, relation(parent=organization)
+  name: String
+  lane: String?
+  status: String
+  priority: TaskPriority
+  ownerUserInfoId: int?
+  teamId: int?
+  spaceId: int?
+  createdAt: DateTime
+  updatedAt: DateTime
+  createdByUserInfoId: int?
+  deletedAt: DateTime?
+  deletedByUserInfoId: int?
+indexes:
+  project_org_idx:
+    fields: organizationId
+  project_org_status_idx:
+    fields: organizationId, status

@@ -1,0 +1,56 @@
+# makerflow_dart
+
+The **Flutter + Serverpod (Dart)** rebuild of [MakerFlow PM](../README.md). Greenfield, single-language, six platform targets. Governed by [`../FLUTTER_REBUILD_PLAN.md`](../FLUTTER_REBUILD_PLAN.md); status in [`BUILD_STATUS.md`](BUILD_STATUS.md).
+
+> This is a **walking skeleton** (Phase 0 + a Phase 1 vertical slice), not the finished product. It was authored without a local Dart/Flutter/Serverpod toolchain, so **it has not been compiled here** — run the bring-up below and resolve any analyzer findings.
+
+## What's here
+
+```
+makerflow_dart/
+├── melos.yaml                # workspace
+├── makerflow_server/         # Serverpod backend
+│   ├── config/               # dev config + passwords.example.yaml
+│   ├── docker-compose.yaml   # Postgres + Redis
+│   ├── lib/src/models/       # Serverpod model YAML (org, membership, project, task, audit) + enums
+│   ├── lib/src/business/     # auth context, RBAC guard, audit, (tenancy)
+│   ├── lib/src/endpoints/    # task, project, health
+│   └── lib/server.dart       # bootstrap (serverpod_auth + /healthz)
+├── makerflow_client/         # generated client (populated by `serverpod generate`)
+├── makerflow_design/         # tokens (ported from style.css), ThemeData, MfCard, StatusBadge
+├── makerflow_flutter/        # the app — auth, dashboard, keyboard-accessible kanban
+└── makerflow_shared/         # non-generated shared constants
+```
+
+## Bring-up (local — requires the toolchain)
+
+```bash
+# 1. Tooling
+dart pub global activate melos
+dart pub global activate serverpod_cli      # the `serverpod` CLI
+
+# 2. Workspace deps
+cd makerflow_dart
+melos bootstrap
+
+# 3. Infra + DB
+cd makerflow_server
+cp config/passwords.example.yaml config/passwords.yaml
+docker compose up -d                          # Postgres :8090, Redis :8091
+
+# 4. Code generation (produces makerflow_client + ORM bindings the server imports)
+serverpod generate
+dart bin/main.dart --apply-migrations         # create tables
+dart bin/main.dart                            # serve on :8080
+
+# 5. Run the app (any target)
+cd ../makerflow_flutter
+flutter run -d chrome        # or: macos | windows | linux | <device>
+```
+
+## Important notes
+
+- **Codegen first.** `makerflow_server/lib/src/generated/**` and `makerflow_client/lib/**` do not exist until you run `serverpod generate`. The server's `import '.../generated/...'` lines and the `MembershipRole`/`TaskStatus` enums resolve only after that — this is the normal Serverpod workflow.
+- **The Flutter app runs before codegen.** It uses a repository seam (`InMemoryTaskRepository`) so the UI, theme, and keyboard kanban are demoable immediately. Swap to `ServerpodTaskRepository` (wraps the generated client) once codegen + auth land — see [`makerflow_flutter/lib/src/data/task_repository.dart`](makerflow_flutter/lib/src/data/task_repository.dart).
+- **Accessibility:** the kanban ships a keyboard move pattern + live-region announcements (WCAG 2.1.1 / 2.5.1 / 4.1.3) and a non-color [`StatusBadge`](makerflow_design/lib/src/widgets/status_badge.dart) (1.4.1) from day one. The **Flutter Web a11y feasibility gate** (`fl-0-a11y-web-spike`) is unbuilt and must run before the web target is promised — see [`../FLUTTER_REBUILD_PLAN.md` §8](../FLUTTER_REBUILD_PLAN.md#8-accessibility--the-hard-part).
+- This codebase is **independent** of the Python app at the repo root and does not modify it (D3: new deployments only).

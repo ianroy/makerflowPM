@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 980" font-family="Avenir Next, Trebuchet MS, Segoe UI, sans-serif">
+  <defs>
+    <radialGradient id="bgRadial1" cx="6%" cy="3%" r="55%">
+      <stop offset="0%" stop-color="#1d3852"/>
+      <stop offset="80%" stop-color="#0e141f"/>
+    </radialGradient>
+    <radialGradient id="bgRadial2" cx="94%" cy="2%" r="40%">
+      <stop offset="0%" stop-color="#133146"/>
+      <stop offset="100%" stop-color="#0e141f" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="brandGrad" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#4db0ff"/>
+      <stop offset="100%" stop-color="#21d1aa"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#a7bed8"/>
+    </marker>
+    <marker id="arrowTeal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#21d1aa"/>
+    </marker>
+  </defs>
+
+  <rect width="1400" height="980" fill="#0e141f"/>
+  <rect width="1400" height="980" fill="url(#bgRadial1)"/>
+  <rect width="1400" height="980" fill="url(#bgRadial2)"/>
+
+  <text x="64" y="58" font-size="13" font-weight="700" fill="#21d1aa" letter-spacing="2">MAKERFLOW PM · FLUTTER REBUILD</text>
+  <text x="64" y="92" font-size="26" font-weight="700" fill="#edf4ff">Target architecture — Flutter + Serverpod, one Dart codebase</text>
+  <text x="64" y="118" font-size="13" fill="#a7bed8">Greenfield single-language stack · 6 platform targets · full parity + offline · push · camera · biometric</text>
+  <line x1="64" y1="138" x2="1336" y2="138" stroke="#304962" stroke-width="1"/>
+
+  <!-- ===== CLIENT TIER ===== -->
+  <text x="80" y="172" font-size="11" font-weight="700" letter-spacing="1.6" fill="#a7bed8">CLIENT — single Flutter app</text>
+  <g>
+    <rect x="68" y="186" width="430" height="660" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="66" y="180" width="430" height="660" rx="16" fill="#1a2636" stroke="#4db0ff" stroke-width="2"/>
+    <rect x="66" y="180" width="6" height="660" rx="3" fill="#4db0ff"/>
+
+    <text x="92" y="214" font-size="17" font-weight="700" fill="#edf4ff">makerflow_flutter</text>
+    <text x="92" y="234" font-size="11" fill="#a7bed8">Dart · Material 3 · one widget tree</text>
+
+    <!-- platform pills -->
+    <text x="92" y="266" font-size="11" font-weight="700" fill="#8fd5ff">Build targets</text>
+    <g font-size="10" font-weight="700">
+      <rect x="92" y="276" width="62" height="22" rx="11" fill="#1d2d40" stroke="#4f79a0"/><text x="123" y="291" fill="#8fd5ff" text-anchor="middle">Web</text>
+      <rect x="160" y="276" width="62" height="22" rx="11" fill="#1d2d40" stroke="#4f79a0"/><text x="191" y="291" fill="#8fd5ff" text-anchor="middle">iOS</text>
+      <rect x="228" y="276" width="82" height="22" rx="11" fill="#1d2d40" stroke="#4f79a0"/><text x="269" y="291" fill="#8fd5ff" text-anchor="middle">Android</text>
+      <rect x="316" y="276" width="74" height="22" rx="11" fill="#1d2d40" stroke="#4f79a0"/><text x="353" y="291" fill="#8fd5ff" text-anchor="middle">macOS</text>
+      <rect x="92" y="304" width="82" height="22" rx="11" fill="#1d2d40" stroke="#4f79a0"/><text x="133" y="319" fill="#8fd5ff" text-anchor="middle">Windows</text>
+      <rect x="180" y="304" width="64" height="22" rx="11" fill="#1d2d40" stroke="#4f79a0"/><text x="212" y="319" fill="#8fd5ff" text-anchor="middle">Linux</text>
+    </g>
+
+    <!-- app layers -->
+    <g>
+      <rect x="92" y="344" width="378" height="60" rx="12" fill="#162332" stroke="#304962"/>
+      <rect x="92" y="344" width="6" height="60" rx="3" fill="#21d1aa"/>
+      <text x="112" y="368" font-size="13" font-weight="700" fill="#edf4ff">UI — screens &amp; widgets</text>
+      <text x="112" y="388" font-size="11" fill="#a7bed8">replaces 68 render_*() + app.js · go_router navigation</text>
+    </g>
+    <g>
+      <rect x="92" y="414" width="378" height="60" rx="12" fill="#162332" stroke="#304962"/>
+      <rect x="92" y="414" width="6" height="60" rx="3" fill="#21d1aa"/>
+      <text x="112" y="438" font-size="13" font-weight="700" fill="#edf4ff">State — Riverpod</text>
+      <text x="112" y="458" font-size="11" fill="#a7bed8">providers, async notifiers, optimistic updates</text>
+    </g>
+    <g>
+      <rect x="92" y="484" width="378" height="60" rx="12" fill="#162332" stroke="#304962"/>
+      <rect x="92" y="484" width="6" height="60" rx="3" fill="#ffbe55"/>
+      <text x="112" y="508" font-size="13" font-weight="700" fill="#edf4ff">Design — makerflow_design</text>
+      <text x="112" y="528" font-size="11" fill="#a7bed8">ThemeData from current CSS tokens · dark/light</text>
+    </g>
+    <g>
+      <rect x="92" y="554" width="378" height="60" rx="12" fill="#162332" stroke="#304962"/>
+      <rect x="92" y="554" width="6" height="60" rx="3" fill="#ff5e7e"/>
+      <text x="112" y="578" font-size="13" font-weight="700" fill="#edf4ff">Offline cache — Drift (local SQLite)</text>
+      <text x="112" y="598" font-size="11" fill="#a7bed8">mutation queue · last-write-wins + version reconcile</text>
+    </g>
+
+    <!-- native capabilities -->
+    <text x="92" y="642" font-size="11" font-weight="700" fill="#a7bed8">Native capabilities</text>
+    <g font-size="11">
+      <rect x="92" y="652" width="180" height="42" rx="10" fill="#162332" stroke="#304962"/>
+      <text x="182" y="670" font-weight="700" fill="#edf4ff" text-anchor="middle">Biometric unlock</text>
+      <text x="182" y="686" fill="#a7bed8" text-anchor="middle" font-size="10">local_auth</text>
+
+      <rect x="290" y="652" width="180" height="42" rx="10" fill="#162332" stroke="#304962"/>
+      <text x="380" y="670" font-weight="700" fill="#edf4ff" text-anchor="middle">Camera capture</text>
+      <text x="380" y="686" fill="#a7bed8" text-anchor="middle" font-size="10">image_picker · camera</text>
+
+      <rect x="92" y="704" width="180" height="42" rx="10" fill="#162332" stroke="#304962"/>
+      <text x="182" y="722" font-weight="700" fill="#edf4ff" text-anchor="middle">Push notifications</text>
+      <text x="182" y="738" fill="#a7bed8" text-anchor="middle" font-size="10">FCM · APNs · local</text>
+
+      <rect x="290" y="704" width="180" height="42" rx="10" fill="#162332" stroke="#304962"/>
+      <text x="380" y="722" font-weight="700" fill="#edf4ff" text-anchor="middle">Offline-first sync</text>
+      <text x="380" y="738" fill="#a7bed8" text-anchor="middle" font-size="10">stream reconcile</text>
+    </g>
+
+    <!-- a11y warning -->
+    <rect x="92" y="760" width="378" height="62" rx="10" fill="#2a1014" stroke="#ff5e7e"/>
+    <text x="112" y="782" font-size="12" font-weight="700" fill="#ff5e7e">⚠ Flutter Web a11y risk</text>
+    <text x="112" y="800" font-size="10" fill="#ffb3c2">Semantics tree weaker than server-rendered DOM —</text>
+    <text x="112" y="814" font-size="10" fill="#ffb3c2">must validate WCAG 2.1 AA per the ADA/§504 program.</text>
+  </g>
+
+  <!-- ===== TRANSPORT ===== -->
+  <text x="540" y="172" font-size="11" font-weight="700" letter-spacing="1.6" fill="#a7bed8">TRANSPORT</text>
+  <g>
+    <rect x="528" y="186" width="250" height="660" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="526" y="180" width="250" height="660" rx="16" fill="#1a2636" stroke="#21d1aa" stroke-width="2"/>
+    <rect x="526" y="180" width="6" height="660" rx="3" fill="url(#brandGrad)"/>
+    <text x="552" y="214" font-size="15" font-weight="700" fill="#edf4ff">makerflow_client</text>
+    <text x="552" y="234" font-size="11" fill="#a7bed8">generated, type-safe</text>
+
+    <rect x="548" y="262" width="206" height="86" rx="12" fill="#162332" stroke="#304962"/>
+    <text x="651" y="288" font-size="12" font-weight="700" fill="#21d1aa" text-anchor="middle">Endpoint calls</text>
+    <text x="651" y="308" font-size="10" fill="#a7bed8" text-anchor="middle">Future&lt;T&gt; over HTTP</text>
+    <text x="651" y="324" font-size="10" fill="#a7bed8" text-anchor="middle">no CSRF — token auth</text>
+
+    <rect x="548" y="364" width="206" height="86" rx="12" fill="#162332" stroke="#304962"/>
+    <text x="651" y="390" font-size="12" font-weight="700" fill="#21d1aa" text-anchor="middle">Streaming endpoints</text>
+    <text x="651" y="410" font-size="10" fill="#a7bed8" text-anchor="middle">WebSocket · Stream&lt;T&gt;</text>
+    <text x="651" y="426" font-size="10" fill="#a7bed8" text-anchor="middle">realtime + sync push</text>
+
+    <rect x="548" y="466" width="206" height="86" rx="12" fill="#162332" stroke="#304962"/>
+    <text x="651" y="492" font-size="12" font-weight="700" fill="#21d1aa" text-anchor="middle">Shared models</text>
+    <text x="651" y="512" font-size="10" fill="#a7bed8" text-anchor="middle">one source of truth</text>
+    <text x="651" y="528" font-size="10" fill="#a7bed8" text-anchor="middle">client = server types</text>
+
+    <rect x="548" y="568" width="206" height="86" rx="12" fill="#162332" stroke="#304962"/>
+    <text x="651" y="594" font-size="12" font-weight="700" fill="#21d1aa" text-anchor="middle">Auth tokens</text>
+    <text x="651" y="614" font-size="10" fill="#a7bed8" text-anchor="middle">serverpod_auth</text>
+    <text x="651" y="630" font-size="10" fill="#a7bed8" text-anchor="middle">secure storage</text>
+
+    <text x="552" y="690" font-size="11" fill="#a7bed8">Codegen: serverpod</text>
+    <text x="552" y="708" font-size="11" fill="#a7bed8">generate keeps client</text>
+    <text x="552" y="726" font-size="11" fill="#a7bed8">+ server + ORM in lockstep.</text>
+    <text x="552" y="758" font-size="11" fill="#a7bed8">End-to-end type safety</text>
+    <text x="552" y="776" font-size="11" fill="#a7bed8">eliminates the JSON</text>
+    <text x="552" y="794" font-size="11" fill="#a7bed8">contract drift the current</text>
+    <text x="552" y="812" font-size="11" fill="#a7bed8">/api/* routes risk.</text>
+  </g>
+
+  <!-- ===== SERVER TIER ===== -->
+  <text x="820" y="172" font-size="11" font-weight="700" letter-spacing="1.6" fill="#a7bed8">SERVER — makerflow_server (Serverpod)</text>
+  <g>
+    <rect x="808" y="186" width="528" height="430" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="806" y="180" width="528" height="430" rx="16" fill="#1a2636" stroke="#ffbe55" stroke-width="2"/>
+    <rect x="806" y="180" width="6" height="430" rx="3" fill="#ffbe55"/>
+
+    <text x="832" y="214" font-size="15" font-weight="700" fill="#edf4ff">Endpoints — replace 103 WSGI routes</text>
+
+    <g>
+      <rect x="832" y="232" width="232" height="58" rx="10" fill="#162332" stroke="#304962"/>
+      <text x="852" y="254" font-size="12" font-weight="700" fill="#edf4ff">Feature endpoints</text>
+      <text x="852" y="272" font-size="10" fill="#a7bed8">projects · tasks · agendas · assets …</text>
+
+      <rect x="1080" y="232" width="232" height="58" rx="10" fill="#162332" stroke="#304962"/>
+      <text x="1100" y="254" font-size="12" font-weight="700" fill="#edf4ff">serverpod_auth</text>
+      <text x="1100" y="272" font-size="10" fill="#a7bed8">email/pwd · sessions · tokens</text>
+
+      <rect x="832" y="300" width="232" height="58" rx="10" fill="#162332" stroke="#304962"/>
+      <rect x="832" y="300" width="6" height="58" rx="3" fill="#ff5e7e"/>
+      <text x="852" y="322" font-size="12" font-weight="700" fill="#edf4ff">RBAC + tenancy guard</text>
+      <text x="852" y="340" font-size="10" fill="#a7bed8">requireRole(org, minRole) · org-scope</text>
+
+      <rect x="1080" y="300" width="232" height="58" rx="10" fill="#162332" stroke="#304962"/>
+      <rect x="1080" y="300" width="6" height="58" rx="3" fill="#ff5e7e"/>
+      <text x="1100" y="322" font-size="12" font-weight="700" fill="#edf4ff">Audit + soft-delete</text>
+      <text x="1100" y="340" font-size="10" fill="#a7bed8">mutation interceptor · deleted_at</text>
+
+      <rect x="832" y="368" width="232" height="58" rx="10" fill="#162332" stroke="#304962"/>
+      <text x="852" y="390" font-size="12" font-weight="700" fill="#edf4ff">ORM (generated)</text>
+      <text x="852" y="408" font-size="10" fill="#a7bed8">39 models · relations · migrations</text>
+
+      <rect x="1080" y="368" width="232" height="58" rx="10" fill="#162332" stroke="#304962"/>
+      <text x="1100" y="390" font-size="12" font-weight="700" fill="#edf4ff">FutureCalls (scheduled)</text>
+      <text x="1100" y="408" font-size="10" fill="#a7bed8">calendar sync · reminders · digests</text>
+
+      <rect x="832" y="436" width="232" height="58" rx="10" fill="#162332" stroke="#304962"/>
+      <text x="852" y="458" font-size="12" font-weight="700" fill="#edf4ff">File storage API</text>
+      <text x="852" y="476" font-size="10" fill="#a7bed8">attachments → object store</text>
+
+      <rect x="1080" y="436" width="232" height="58" rx="10" fill="#162332" stroke="#304962"/>
+      <text x="1100" y="458" font-size="12" font-weight="700" fill="#edf4ff">Import / export</text>
+      <text x="1100" y="476" font-size="10" fill="#a7bed8">CSV · ICS · PDF (Dart libs)</text>
+    </g>
+
+    <rect x="832" y="506" width="480" height="84" rx="10" fill="#11202f" stroke="#304962"/>
+    <text x="852" y="530" font-size="12" font-weight="700" fill="#8fd5ff">Health &amp; ops</text>
+    <text x="852" y="550" font-size="10" fill="#a7bed8">/health · readiness · structured logs · request id · insight snapshots</text>
+    <text x="852" y="572" font-size="10" fill="#a7bed8">Serverpod Insights dashboard for monitoring + logging in dev/prod</text>
+  </g>
+
+  <!-- ===== DATA TIER ===== -->
+  <text x="820" y="650" font-size="11" font-weight="700" letter-spacing="1.6" fill="#a7bed8">DATA &amp; INTEGRATIONS</text>
+  <g>
+    <rect x="808" y="664" width="528" height="182" rx="16" fill="#0b1019" opacity="0.45"/>
+    <rect x="806" y="658" width="528" height="182" rx="16" fill="#1a2636" stroke="#21d1aa" stroke-width="2"/>
+    <rect x="806" y="658" width="6" height="182" rx="3" fill="#21d1aa"/>
+
+    <rect x="832" y="684" width="150" height="64" rx="10" fill="#162332" stroke="#5a8a55"/>
+    <text x="907" y="710" font-size="13" font-weight="700" fill="#21d1aa" text-anchor="middle">PostgreSQL</text>
+    <text x="907" y="730" font-size="10" fill="#a7bed8" text-anchor="middle">primary store</text>
+
+    <rect x="998" y="684" width="150" height="64" rx="10" fill="#162332" stroke="#5a8a55"/>
+    <text x="1073" y="710" font-size="13" font-weight="700" fill="#21d1aa" text-anchor="middle">Redis</text>
+    <text x="1073" y="730" font-size="10" fill="#a7bed8" text-anchor="middle">cache · pub/sub</text>
+
+    <rect x="1164" y="684" width="148" height="64" rx="10" fill="#162332" stroke="#5a8a55"/>
+    <text x="1238" y="710" font-size="13" font-weight="700" fill="#21d1aa" text-anchor="middle">Object store</text>
+    <text x="1238" y="730" font-size="10" fill="#a7bed8" text-anchor="middle">DO Spaces / S3</text>
+
+    <rect x="832" y="762" width="150" height="60" rx="10" fill="#162332" stroke="#304962"/>
+    <text x="907" y="786" font-size="12" font-weight="700" fill="#edf4ff" text-anchor="middle">Google Calendar</text>
+    <text x="907" y="804" font-size="10" fill="#a7bed8" text-anchor="middle">googleapis (Dart)</text>
+
+    <rect x="998" y="762" width="150" height="60" rx="10" fill="#162332" stroke="#304962"/>
+    <text x="1073" y="786" font-size="12" font-weight="700" fill="#edf4ff" text-anchor="middle">SMTP email</text>
+    <text x="1073" y="804" font-size="10" fill="#a7bed8" text-anchor="middle">mailer (Dart)</text>
+
+    <rect x="1164" y="762" width="148" height="60" rx="10" fill="#162332" stroke="#304962"/>
+    <text x="1238" y="786" font-size="12" font-weight="700" fill="#edf4ff" text-anchor="middle">FCM / APNs</text>
+    <text x="1238" y="804" font-size="10" fill="#a7bed8" text-anchor="middle">push delivery</text>
+  </g>
+
+  <!-- flow arrows -->
+  <g stroke="#a7bed8" stroke-width="1.8" fill="none">
+    <line x1="498" y1="470" x2="526" y2="470" marker-end="url(#arrow)"/>
+    <line x1="498" y1="430" x2="526" y2="430" marker-start="url(#arrow)"/>
+  </g>
+  <g stroke="#21d1aa" stroke-width="1.8" fill="none">
+    <line x1="778" y1="400" x2="806" y2="400" marker-end="url(#arrowTeal)"/>
+    <line x1="778" y1="440" x2="806" y2="440" marker-start="url(#arrowTeal)"/>
+  </g>
+  <line x1="1070" y1="610" x2="1070" y2="658" stroke="#a7bed8" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+
+  <text x="660" y="448" font-size="9" fill="#8fd5ff" text-anchor="middle" transform="rotate(0)">calls</text>
+
+  <text x="64" y="922" font-size="11" fill="#a7bed8">Deploy: server as Docker (server + Postgres + Redis) on DO/any host · web → CDN · iOS/Android → App Store/Play · macOS/Windows/Linux → signed installers.</text>
+  <text x="64" y="944" font-size="11" fill="#a7bed8">Greenfield — runs independently of the existing Python app; new deployments only. See FLUTTER_REBUILD_PLAN.md for the phased task cards.</text>
+  <text x="64" y="966" font-size="11" fill="#a7bed8">Tokens: brand <tspan fill="#4db0ff">●</tspan> brand-2 <tspan fill="#21d1aa">●</tspan> focus <tspan fill="#ffbe55">●</tspan> danger <tspan fill="#ff5e7e">●</tspan></text>
+</svg>
