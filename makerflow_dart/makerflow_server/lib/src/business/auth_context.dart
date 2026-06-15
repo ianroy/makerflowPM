@@ -28,7 +28,7 @@ class AuthContext {
 class AuthIdentity {
   /// Returns the signed-in UserInfo id, or throws if unauthenticated.
   static Future<int> requireUserInfoId(Session session) async {
-    final authInfo = await session.authenticated;
+    final authInfo = session.authenticated;
     final userId = authInfo?.userId;
     if (userId == null) {
       throw const MakerflowAuthException('Authentication required.');
@@ -38,7 +38,7 @@ class AuthIdentity {
 
   /// Whether the signed-in user carries the platform `superuser` scope.
   static Future<bool> isSuperuser(Session session) async {
-    final authInfo = await session.authenticated;
+    final authInfo = session.authenticated;
     return authInfo?.scopes.contains(const Scope('superuser')) ?? false;
   }
 

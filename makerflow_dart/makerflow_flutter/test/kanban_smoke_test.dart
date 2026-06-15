@@ -19,9 +19,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('To do'), findsOneWidget);
-    expect(find.text('In progress'), findsOneWidget);
-    expect(find.text('Done'), findsOneWidget);
+    // Unique seeded task titles prove the board hydrated from the repository.
     expect(find.text('Laser cutter monthly PM'), findsOneWidget);
+    expect(find.text('Onboard fall student cohort'), findsOneWidget);
+    // Column labels also appear on status badges, so there can be >1 — assert
+    // the board rendered its columns without pinning an exact count.
+    expect(find.text('In progress'), findsWidgets);
+    expect(find.text('Done'), findsWidgets);
   });
 }

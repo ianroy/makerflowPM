@@ -10,4 +10,4 @@ environment:
 # generated protocol + client. This pubspec + placeholder exist so the Melos
 # workspace resolves before the first codegen run.
 dependencies:
-  serverpod_client: ^2.1.0
+  serverpod_client: 3.4.10

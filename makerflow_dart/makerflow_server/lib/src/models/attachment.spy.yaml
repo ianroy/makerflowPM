@@ -7,7 +7,7 @@ fields:
   organizationId: int, relation(parent=organization)
   entityType: String
   entityId: int
-  kind: AttachmentKind, default='other'
+  kind: AttachmentKind, default=other
   filename: String
   contentType: String
   bytes: int

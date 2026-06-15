@@ -2,7 +2,6 @@ import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
 import '../business/audit.dart';
-import '../business/auth_context.dart';
 import '../business/rbac.dart';
 import '../business/channels.dart';
 
@@ -52,7 +51,7 @@ class CollabEndpoint extends Endpoint {
       organizationId: ctx.organizationId,
       event: ChangeEvent(
         entityType: 'itemComment',
-        entityId: saved.id,
+        entityId: saved.id!,
         op: 'create',
         version: saved.version,
         updatedAt: saved.updatedAt,

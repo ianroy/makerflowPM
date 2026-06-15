@@ -2,6 +2,7 @@ import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
 import '../business/audit.dart';
+import '../business/auth_context.dart';
 import '../business/rbac.dart';
 import 'task_endpoint.dart' show MakerflowNotFoundException;
 

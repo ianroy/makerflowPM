@@ -26,7 +26,7 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
   int? _targetColumn;
 
   void _announce(String msg) =>
-      SemanticsService.announce(msg, TextDirection.ltr);
+      SemanticsService.sendAnnouncement(View.of(context), msg, TextDirection.ltr);
 
   Future<void> _commitMove(TaskVm task, String toStatus) async {
     final repo = ref.read(taskRepositoryProvider);

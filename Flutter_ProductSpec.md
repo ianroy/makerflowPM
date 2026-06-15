@@ -2,7 +2,7 @@
 
 > Audience: a developer joining the **Flutter + Serverpod** rebuild of MakerFlow PM. By the end you can run the Dart stack locally, find anything in the monorepo, ship a small change end-to-end, and know where the work is sequenced.
 >
-> **Status (read first):** the Dart rebuild is a **walking skeleton** (Phase 0 + a Phase 1 vertical slice), not the shipping product. The shipping product is the Python app at the repo root ([`ProductSpec.md`](ProductSpec.md)). This rebuild is **greenfield, new deployments only** — it does not replace the Python app for existing installs.
+> **Status (read first):** the Dart rebuild is a **walking skeleton** (Phase 0 + a Phase 1 vertical slice), not the shipping product — but it **compiles and tests pass** (Serverpod codegen + `dart analyze` + server unit tests; `flutter analyze` + widget test; `flutter build web`; first migration generated). The shipping product is the Python app at the repo root ([`ProductSpec.md`](ProductSpec.md)). This rebuild is **greenfield, new deployments only** — it does not replace the Python app for existing installs.
 
 - Plan & backlog: [`FLUTTER_REBUILD_PLAN.md`](FLUTTER_REBUILD_PLAN.md)
 - What's actually on disk: [`makerflow_dart/BUILD_STATUS.md`](makerflow_dart/BUILD_STATUS.md)
@@ -62,7 +62,7 @@ Four decisions are **locked** (see [`FLUTTER_REBUILD_PLAN.md` §1](FLUTTER_REBUI
 
 ## 3. Current status — what's built
 
-A walking skeleton authored to convention but **not yet compiled** (it was created without a local Dart toolchain). Tracked in [`makerflow_dart/BUILD_STATUS.md`](makerflow_dart/BUILD_STATUS.md):
+A walking skeleton that **compiles and passes its tests** (Dart 3.12.2 / Flutter 3.44.2 / Serverpod 3.4.10 — see [`makerflow_dart/BUILD_STATUS.md`](makerflow_dart/BUILD_STATUS.md)):
 
 - **Server:** `Organization` / `Membership` / `Project` / `Task` / `AuditLog` models + enums; the security contract (`RbacGuard.requireRole`, `AuthContext`, `Tenancy`, `Audit`); `TaskEndpoint` (CRUD + kanban move + optimistic version + soft-delete + audit), `ProjectEndpoint`, `HealthEndpoint`; `serverpod_auth` bootstrap; an RBAC unit test.
 - **Design:** `makerflow_design` — the 12 color tokens (dark + light) ported from the Python `style.css`, `ThemeData`, `MfCard`, and a non-color `StatusBadge`.

@@ -591,11 +591,11 @@ Schema in [§0.4](#04-task-card-schema); legend/personas/scales in [§0.5](#05-s
 
 ### Phase 0 — Foundations
 
-> **Build progress (2026-06-15):** a walking skeleton is on disk under [`makerflow_dart/`](makerflow_dart/) — see [`makerflow_dart/BUILD_STATUS.md`](makerflow_dart/BUILD_STATUS.md). Authored without a local toolchain (not yet compiled). Statuses below reflect that partial state.
+> **Build progress (2026-06-15):** the skeleton is on disk under [`makerflow_dart/`](makerflow_dart/) and now **compiles** — see [`makerflow_dart/BUILD_STATUS.md`](makerflow_dart/BUILD_STATUS.md). Toolchain run on Dart 3.12.2 / Flutter 3.44.2 / Serverpod 3.4.10: `serverpod generate` ✓, `dart analyze` (server) ✓ + unit tests ✓, `flutter analyze` (design + app) ✓ + widget test ✓, `flutter build web` ✓, `serverpod create-migration` ✓ (112 tables). **R6 resolved** — Serverpod pinned to 3.4.10.
 
 #### fl-0-monorepo-scaffold — Serverpod + Melos monorepo scaffold
 
-- **Status:** [~] in_progress — workspace, 5 packages, docker-compose, config, entrypoint authored; needs `serverpod create` alignment + `serverpod generate` + `melos bootstrap` on a real toolchain
+- **Status:** [~] in_progress — workspace + 5 packages + docker-compose + `config/generator.yaml` (database feature on); **codegen, analyze, web build, and migration generation all pass** on the real toolchain. Remaining for done: `melos bootstrap` end-to-end (per-package pub get verified instead) + a live Flutter↔server endpoint round-trip.
 - **Agent Persona:** devops-dart
 - **Priority:** P0
 - **Complexity:** M
@@ -617,6 +617,30 @@ Scaffold the Serverpod 3-package project under a Melos workspace; pin the Server
 - [ ] README in `makerflow_dart/` explains local bring-up
 
 **Notes:** This replaces nothing in the Python app; it's a new top-level dir (or a new repo — decide during triage).
+
+**Agent Decisions (append-only, verbose):**
+- `2026-06-15` — Toolchain run validated the scaffold: `config/generator.yaml` added (DB feature), Serverpod pinned to 3.4.10, codegen + analyze + web build + migration all green. See checkpoint log `fl-toolchain-run`.
+
+---
+
+#### fl-0-health-route — Re-add a `/healthz` liveness web route (Relic)
+
+- **Status:** [ ] ready
+- **Agent Persona:** serverpod-backend
+- **Priority:** P2
+- **Complexity:** XS
+- **Dependencies:** fl-0-monorepo-scaffold
+- **Unblocks:** container health checks in fl-7
+- **Files to modify:**
+  - `makerflow_server/lib/src/web/routes/health_route.dart` (new)
+  - `makerflow_server/lib/server.dart`
+
+**Spec (human-editable):**
+The 2.x `Route.handleCall(Session, HttpRequest) → bool` API was removed in Serverpod 3.x (web routing is now Relic-based: `handleCall(Session, Request) → FutureOr<Result>`). Re-add a bare `/healthz` string liveness route as a `WidgetRoute`/`Route` on the 3.x API for container orchestration. Readiness already exists via `HealthEndpoint.ready`.
+
+- [ ] `GET /healthz` returns `200` + `{"status":"ok"}` without touching the DB
+- [ ] Registered in `server.dart`
+- [ ] `dart analyze` clean
 
 **Agent Decisions (append-only, verbose):** _(empty)_
 
@@ -1572,6 +1596,8 @@ Native features (camera, push, biometric) are the review-risk drivers (R8) — l
 ## 15. Checkpoint log
 
 Append-only. One line per completed-or-deferred task, in execution order.
+
+- `2026-06-15` — `fl-toolchain-run` — **Installed the toolchain and compiled everything.** Dart 3.12.2 + Flutter 3.44.2 + Serverpod CLI 3.4.10 (via Homebrew). Fixes surfaced + applied: added `config/generator.yaml` (the missing file silently disabled the database feature → no models generated); bumped + pinned Serverpod deps `^2.1.0`→`3.4.10` (R6); un-quoted 6 enum `default=` values; removed an all-comment exceptions YAML; renamed model `MeetingItemUpdate`→`MeetingItemNote` (collided with Serverpod's generated `MeetingItem` + `UpdateTable`); dropped the 2.x web `/healthz` Route (Relic API change → follow-up `fl-0-health-route`); fixed nullable-`id`, missing-import, deprecated `SemanticsService.announce`→`sendAnnouncement`, and unused-import issues; corrected a too-naive kanban widget test. **Results:** server `serverpod generate` ✓ · `dart analyze` clean · unit tests 2/2 ✓; design `flutter analyze` clean; app `flutter analyze` clean · widget test ✓ · `flutter build web` ✓ (2.7 MB, WASM dry-run ✓); `serverpod create-migration` ✓ (112 tables). Not yet run: live server against Postgres/Redis (Docker absent) + Flutter↔server round-trip.
 
 - `2026-06-15` — `fl-plan-bootstrap` — Authored this plan: 4 decisions of record (Serverpod / 6 platforms / greenfield / parity+native), target-architecture diagram (`docs/diagrams/11-flutter-target-architecture.svg`), Python→Dart translation, data-model + RBAC + tenancy mapping, parity matrix, native-feature designs, Flutter-Web accessibility risk analysis + Phase-0 gate, monorepo layout, infra/deploy, risks, and 21 phased task cards across 8 phases.
 - `2026-06-15` — `fl-skeleton` — Built the Phase 0 + Phase 1 walking skeleton under `makerflow_dart/` (28 files): Melos workspace + 5 packages; Serverpod server (org/membership/project/task/audit models + enums, RBAC/tenancy/audit guards, project/task/health endpoints, serverpod_auth bootstrap, unit test); `makerflow_design` (ported tokens, ThemeData, MfCard, non-color StatusBadge); Flutter app (router, Riverpod, login, dashboard, keyboard-accessible kanban on a repository seam, smoke test); docker-compose, CI workflow, monorepo README + BUILD_STATUS. Authored without a local toolchain — not yet compiled; `fl-0-a11y-web-spike` gate still unstarted.

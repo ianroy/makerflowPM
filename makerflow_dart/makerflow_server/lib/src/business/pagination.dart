@@ -1,5 +1,3 @@
-import 'package:serverpod/serverpod.dart';
-
 /// Keyset/cursor pagination (Appendix D/H). Every `list` endpoint returns a
 /// [Page] and orders by `(updatedAt, id)` — never `offset` (which drifts under
 /// concurrent writes and scans). The sync engine reuses the same cursor shape.

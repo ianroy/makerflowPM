@@ -41,13 +41,13 @@ class _A11ySpikeScreenState extends State<A11ySpikeScreen> {
                 style: TextStyle(color: c.muted),
               ),
               const SizedBox(height: 24),
-              _Section(title: '1 · Labelled form (1.3.5 / 3.3.1 / 3.3.2 / 4.1.2)', child: const _SpikeForm()),
+              const _Section(title: '1 · Labelled form (1.3.5 / 3.3.1 / 3.3.2 / 4.1.2)', child: _SpikeForm()),
               const SizedBox(height: 24),
-              _Section(title: '2 · Keyboard kanban + live region (2.1.1 / 2.5.1 / 4.1.3)', child: const _SpikeKanban()),
+              const _Section(title: '2 · Keyboard kanban + live region (2.1.1 / 2.5.1 / 4.1.3)', child: _SpikeKanban()),
               const SizedBox(height: 24),
-              _Section(title: '3 · Modal editor: focus trap + return focus (2.1.2 / 2.4.3 / 4.1.2)', child: const _SpikeModalLauncher()),
+              const _Section(title: '3 · Modal editor: focus trap + return focus (2.1.2 / 2.4.3 / 4.1.2)', child: _SpikeModalLauncher()),
               const SizedBox(height: 24),
-              _Section(title: '4 · Data table: header semantics (1.3.1)', child: const _SpikeTable()),
+              const _Section(title: '4 · Data table: header semantics (1.3.1)', child: _SpikeTable()),
             ],
           ),
         ),
@@ -101,7 +101,7 @@ class _SpikeFormState extends State<_SpikeForm> {
     final ok = _formKey.currentState?.validate() ?? false;
     setState(() => _result = ok ? 'Submitted' : 'Fix the errors above');
     // Announce the outcome without moving focus (4.1.3).
-    SemanticsService.announce(_result!, TextDirection.ltr);
+    SemanticsService.sendAnnouncement(View.of(context), _result!, TextDirection.ltr);
   }
 
   @override
@@ -143,7 +143,8 @@ class _SpikeKanbanState extends State<_SpikeKanban> {
   bool _grabbed = false;
   int _target = 0;
 
-  void _announce(String m) => SemanticsService.announce(m, TextDirection.ltr);
+  void _announce(String m) =>
+      SemanticsService.sendAnnouncement(View.of(context), m, TextDirection.ltr);
 
   void _onKey(KeyEvent e) {
     if (e is! KeyDownEvent) return;

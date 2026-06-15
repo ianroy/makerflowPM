@@ -4,7 +4,7 @@ table: partnership
 fields:
   organizationId: int, relation(parent=organization)
   name: String
-  stage: PartnershipStage, default='prospect'
+  stage: PartnershipStage, default=prospect
   contactName: String?
   contactEmail: String?
   health: String?           # green | yellow | red (non-color label retained)

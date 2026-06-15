@@ -1,7 +1,6 @@
 import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
-import '../business/auth_context.dart';
 import '../business/audit.dart';
 import '../business/rbac.dart';
 
@@ -59,7 +58,11 @@ class TaskEndpoint extends Endpoint {
   /// Update a task. Optimistic-concurrency aware via [Task.version]:
   /// throws if the client's base version is stale (offline reconcile, R5).
   Future<Task> update(Session session, Task incoming) async {
-    final existing = await _requireLive(session, incoming.id);
+    final incomingId = incoming.id;
+    if (incomingId == null) {
+      throw const MakerflowNotFoundException('Task id is required for update.');
+    }
+    final existing = await _requireLive(session, incomingId);
     final ctx = await RbacGuard.requireRole(
         session, existing.organizationId, MembershipRole.staff);
 

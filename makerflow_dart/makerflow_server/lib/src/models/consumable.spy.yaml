@@ -7,7 +7,7 @@ fields:
   unit: String?
   quantityOnHand: double, default=0
   reorderPoint: double, default=0
-  status: ConsumableStatus, default='inStock'
+  status: ConsumableStatus, default=inStock
   spaceId: int?
   category: String?
   clientUuid: String?

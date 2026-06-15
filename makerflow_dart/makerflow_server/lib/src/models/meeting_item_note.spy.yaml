@@ -1,0 +1,15 @@
+### Timeline entry (note/comment) on a meeting item.
+### NB: named *Note*, not *Update* — Serverpod generates a `MeetingItemUpdateTable`
+### helper for the `MeetingItem` model, which would collide with a model named
+### `MeetingItemUpdate`.
+class: MeetingItemNote
+table: meeting_item_note
+fields:
+  organizationId: int, relation(parent=organization)
+  itemId: int, relation(parent=meeting_item)
+  body: String
+  createdAt: DateTime
+  createdByUserInfoId: int?
+indexes:
+  meeting_item_note_item_idx:
+    fields: organizationId, itemId

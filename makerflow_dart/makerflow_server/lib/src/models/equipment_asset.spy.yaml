@@ -5,7 +5,7 @@ fields:
   organizationId: int, relation(parent=organization)
   name: String
   assetTag: String?
-  status: EquipmentStatus, default='operational'
+  status: EquipmentStatus, default=operational
   spaceId: int?
   certificationRequired: bool, default=false
   lastMaintenanceAt: DateTime?

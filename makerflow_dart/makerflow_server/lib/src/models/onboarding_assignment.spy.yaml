@@ -5,7 +5,7 @@ fields:
   organizationId: int, relation(parent=organization)
   templateId: int, relation(parent=onboarding_template)
   assigneeUserInfoId: int
-  state: OnboardingState, default='notStarted'
+  state: OnboardingState, default=notStarted
   progressJson: String?      # per-step completion
   dueAt: DateTime?
   completedAt: DateTime?

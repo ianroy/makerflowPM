@@ -2,7 +2,7 @@
 
 The **Flutter + Serverpod (Dart)** rebuild of [MakerFlow PM](../README.md). Greenfield, single-language, six platform targets. Governed by [`../FLUTTER_REBUILD_PLAN.md`](../FLUTTER_REBUILD_PLAN.md); status in [`BUILD_STATUS.md`](BUILD_STATUS.md).
 
-> This is a **walking skeleton** (Phase 0 + a Phase 1 vertical slice), not the finished product. It was authored without a local Dart/Flutter/Serverpod toolchain, so **it has not been compiled here** — run the bring-up below and resolve any analyzer findings.
+> This is a **walking skeleton** (Phase 0 + a Phase 1 vertical slice), not the finished product — but it **compiles and its tests pass** (Dart 3.12.2 / Flutter 3.44.2 / Serverpod 3.4.10): server `serverpod generate` + `dart analyze` + tests, `flutter analyze` + widget test, `flutter build web`, and `serverpod create-migration` (112 tables) all succeed. Not yet run: the server against a live Postgres/Redis + a Flutter↔server round-trip. See [`BUILD_STATUS.md`](BUILD_STATUS.md).
 
 ## What's here
 

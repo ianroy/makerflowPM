@@ -2,7 +2,13 @@
 
 Authoritative per-card state for the Dart rebuild. Maps to the task cards in [`../FLUTTER_REBUILD_PLAN.md`](../FLUTTER_REBUILD_PLAN.md).
 
-> **Authored, NOT compiled.** Everything here was written without a local Dart/Flutter/Serverpod toolchain. Before relying on any of it: `cd makerflow_dart && melos bootstrap && (cd makerflow_server && serverpod generate) && melos run analyze` and resolve findings. The server's `lib/src/generated/**` + `makerflow_client/lib/**` do not exist until codegen runs; the Flutter app runs before codegen via in-memory repositories.
+> **Compiles + green (2026-06-15).** Run on Dart 3.12.2 / Flutter 3.44.2 / Serverpod 3.4.10:
+> - Server: `serverpod generate` ✓ · `dart analyze` clean · `dart test` 2/2 ✓ · `serverpod create-migration` ✓ (112 tables).
+> - Design: `flutter analyze` clean.
+> - App: `flutter analyze` clean · `flutter test` ✓ · `flutter build web` ✓ (2.7 MB; WASM dry-run ✓).
+> - Generated code (`makerflow_server/lib/src/generated/**`, `makerflow_client/lib/**`) and the first migration are committed.
+>
+> **Not yet run:** the server against live Postgres/Redis (Docker absent in the build env) and a Flutter↔server endpoint round-trip. The Flutter app still uses in-memory repositories until the generated client is wired in.
 
 ## Legend
 `[x]` built · `[~]` partial / authored-not-verified · `[ ]` not started
@@ -85,8 +91,9 @@ Authoritative per-card state for the Dart rebuild. Maps to the task cards in [`.
 
 ## Immediate next steps (in order)
 
-1. Install toolchain; `serverpod generate`; `melos bootstrap`; `melos run analyze` — resolve first-compile findings (relations syntax, generated imports, serverpod_auth API shape).
-2. Close `fl-0-a11y-web-spike` (the gate): run the AT matrix on `/spike`; decide Flutter Web vs server-rendered fallback.
-3. Finish `fl-0-auth-rbac-tenancy`: real sign-in, org switch wired to live auth, fill the role-matrix test fixtures.
-4. Swap in-memory repositories → `Serverpod*` impls wrapping the generated client.
-5. Generate migrations (`serverpod create-migration`) and run them.
+1. ~~Install toolchain + first compile~~ — **done** (everything analyzes/builds; migration generated).
+2. Bring up Postgres + Redis (Docker or `brew install postgresql@16 redis`), `dart bin/main.dart --apply-migrations`, run the server, and verify a Flutter↔server round-trip.
+3. Close `fl-0-a11y-web-spike` (the gate): run the AT matrix on `/spike` against `flutter run -d chrome`; decide Flutter Web vs server-rendered fallback.
+4. Finish `fl-0-auth-rbac-tenancy`: real sign-in, org switch wired to live auth, fill the role-matrix test fixtures (serverpod_test).
+5. Swap in-memory repositories → `Serverpod*` impls wrapping the generated client.
+6. Re-add `/healthz` on the 3.x Relic API (`fl-0-health-route`).

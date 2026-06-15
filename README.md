@@ -364,7 +364,7 @@ MakerFlow is being rebuilt as a **single-language Dart stack** — a **Flutter**
 
 **Four locked decisions** ([`FLUTTER_REBUILD_PLAN.md` §1](FLUTTER_REBUILD_PLAN.md#1-decisions-of-record)): Serverpod backend · all six platforms · greenfield (new deployments only, no data migration) · full parity **plus** native-only features.
 
-**Status — walking skeleton.** Phase 0 + a Phase 1 vertical slice are authored under [`makerflow_dart/`](makerflow_dart/) (server models + RBAC/tenancy/audit contract + task/project endpoints; ported design tokens; a keyboard-accessible kanban). It is **not yet compiled** — see [`makerflow_dart/BUILD_STATUS.md`](makerflow_dart/BUILD_STATUS.md) for exactly what's built.
+**Status — walking skeleton that compiles.** Phase 0 + a Phase 1 vertical slice live under [`makerflow_dart/`](makerflow_dart/) (37 Serverpod models + 14 endpoints with the RBAC/tenancy/audit contract; ported design tokens; a keyboard-accessible kanban + feature screens). On Dart 3.12.2 / Flutter 3.44.2 / Serverpod 3.4.10 it **builds green**: `serverpod generate`, `dart analyze` + server tests, `flutter analyze` + widget test, `flutter build web`, and the first DB migration (112 tables) all pass. Not yet run against a live database. See [`makerflow_dart/BUILD_STATUS.md`](makerflow_dart/BUILD_STATUS.md).
 
 **Honest caveat.** The Python app is server-rendered HTML — the most accessible substrate there is — and MakerFlow carries a WCAG 2.1 AA mandate (ADA Title II + § 504, above). Flutter **Web** accessibility lags real HTML, so the rebuild treats web-target conformance as a Phase-0 gate with a server-rendered fallback in reserve. Native mobile/desktop a11y is strong.
 

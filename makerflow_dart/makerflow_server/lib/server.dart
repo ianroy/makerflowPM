@@ -3,7 +3,6 @@ import 'package:serverpod_auth_server/serverpod_auth_server.dart' as auth;
 
 import 'src/generated/protocol.dart';
 import 'src/generated/endpoints.dart';
-import 'src/web/routes/health_route.dart';
 
 // Server bootstrap. Mirrors the responsibilities of the legacy Python
 // `ensure_bootstrap()` + WSGI app entrypoint, but Serverpod owns routing,
@@ -33,9 +32,9 @@ Future<void> run(List<String> args) async {
     },
   ));
 
-  // Cheap liveness probe (legacy /healthz). Readiness with a DB round-trip is
-  // a custom endpoint — see HealthEndpoint.
-  pod.webServer.addRoute(HealthRoute(), '/healthz');
-
+  // Readiness (DB round-trip) is exposed via HealthEndpoint.ready. A bare
+  // `/healthz` web route was dropped in the 2.x→3.x move (the web Route API is
+  // now Relic-based); re-add as a WidgetRoute if a string liveness path is
+  // needed for container health checks (follow-up: fl-0-health-route).
   await pod.start();
 }

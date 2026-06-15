@@ -1,7 +1,6 @@
 import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
-import '../business/auth_context.dart';
 import '../business/pagination.dart';
 import '../business/rbac.dart';
 
