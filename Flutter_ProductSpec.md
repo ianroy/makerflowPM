@@ -242,7 +242,7 @@ The pyramid ([Appendix F](FLUTTER_REBUILD_PLAN.md#f-testing-strategy)): unit (bu
 
 Six client targets + a server image. Details in [`FLUTTER_REBUILD_PLAN.md` §11](FLUTTER_REBUILD_PLAN.md#11-infrastructure--deployment) and [Appendix K](FLUTTER_REBUILD_PLAN.md#k-platform--store-compliance); GitHub specifics in the [README](README.md#deploying-the-dart-rebuild-on-github).
 
-- **Server** → Docker image (server + Postgres + Redis) on DO / any container host; or GHCR + a deploy job.
+- **Server** → **DigitalOcean App Platform (the required target — D5)**: builds [`makerflow_dart/makerflow_server/Dockerfile`](makerflow_dart/makerflow_server/Dockerfile) on push via [`makerflow_dart/.do/app.yaml`](makerflow_dart/.do/app.yaml), with DO Managed PostgreSQL + Redis. `entrypoint.sh` renders config from the managed-DB bindings, applies migrations, and serves. (`dart compile exe` — the image's build step — is verified.)
 - **Web** → `flutter build web` → GitHub Pages or a CDN.
 - **iOS/Android** → TestFlight / Play internal → stores (signing in CI).
 - **macOS/Windows/Linux** → notarized `.dmg` / signed MSIX / Flatpak-Snap-AppImage → GitHub Releases.

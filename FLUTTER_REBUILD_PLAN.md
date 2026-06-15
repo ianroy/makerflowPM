@@ -259,6 +259,7 @@ These four decisions are locked. Reopen only with an explicit ADR appended here.
 | D2 | **Platforms** | **Web + iOS + Android + macOS + Windows + Linux** (all six). | Maximum reach from one codebase. Largest QA + accessibility surface; app-store + desktop signing pipelines required. |
 | D3 | **Migration** | **Greenfield, new deployments only.** | No data migration. The Python app stays for existing deployments. Two products coexist for the foreseeable future. Lets the rebuild move fast without a cutover. |
 | D4 | **Scope** | **Full parity + native-only features** (offline-first, push, camera, biometric). | The most ambitious scope. Parity with all 39 tables and every feature, plus capabilities Flutter unlocks. Longest runway; sequence native features after parity foundations. |
+| D5 | **Deployment target** | **DigitalOcean** — App Platform (deploy-from-Git) for the Serverpod server + **DO Managed PostgreSQL + Managed Redis/Valkey**; Flutter web to a CDN / Pages; mobile/desktop to the stores. | Matches where the Python app already runs. The server ships as a Docker image built on push; config + secrets come from DO managed-DB bindings + app secrets. Spec: [`makerflow_dart/.do/app.yaml`](makerflow_dart/.do/app.yaml); image: [`makerflow_dart/makerflow_server/Dockerfile`](makerflow_dart/makerflow_server/Dockerfile). **The rebuild must deploy on DigitalOcean.** |
 
 **Why Serverpod over Dart Frog / Supabase (recorded for posterity):** a 39-table, RBAC-heavy, multi-tenant app benefits most from Serverpod's batteries — generated typed client (kills JSON contract drift), ORM with relations + migrations, `serverpod_auth`, streaming endpoints (for realtime + offline sync), and scheduled `FutureCall`s (for calendar sync). Dart Frog would mean hand-writing all of that; Supabase would mean vendor-hosted data and an RLS-centric model that fights the existing audit/soft-delete design and the self-host story.
 
@@ -536,7 +537,7 @@ makerflow_dart/                  # melos workspace
 
 | Target | Pipeline |
 |---|---|
-| Server | Docker image (Serverpod) + `docker-compose` for Postgres + Redis; deploy to DO (Droplet or App Platform) or any container host. Serverpod migrations run on deploy. |
+| Server | **DigitalOcean App Platform** (required, D5): builds [`makerflow_server/Dockerfile`](makerflow_dart/makerflow_server/Dockerfile) on push via [`makerflow_dart/.do/app.yaml`](makerflow_dart/.do/app.yaml); DO **Managed PostgreSQL + Managed Redis** bound as env; `entrypoint.sh` renders config from those env vars, applies migrations, then serves. Local dev still uses `docker-compose`/brew Postgres+Redis. |
 | Web | `flutter build web` → static host / CDN (DO Spaces+CDN, Netlify, or behind the same nginx). |
 | iOS | `flutter build ipa` → TestFlight → App Store; signing + provisioning in CI (Codemagic/Fastlane). |
 | Android | `flutter build appbundle` → Play Console (internal → production). |
@@ -1372,10 +1373,11 @@ Port the legacy [`docs/SECURITY.md`](docs/SECURITY.md) threat model to the Dart 
   - `makerflow_dart/makerflow_flutter/{ios,android,macos,windows,linux,web}/**`
 
 **Spec (human-editable):**
-Automated, signed releases for all six targets + the server image. TestFlight/Play internal tracks; notarized desktop installers; web to CDN; server Docker to host.
+Automated, signed releases for all six targets + the server image. TestFlight/Play internal tracks; notarized desktop installers; web to CDN; **server to DigitalOcean App Platform (D5)**.
 
-- [ ] Signed builds for all six targets in CI
-- [ ] Server image published + deploy job
+- [x] Server Dockerfile + entrypoint + `.do/app.yaml` authored; `dart compile exe` verified (the image build step). DO managed PG + Redis bound via env.
+- [ ] First DO deploy executed (`doctl apps create --spec makerflow_dart/.do/app.yaml`, or connect the repo) — needs DO credentials
+- [ ] Signed builds for all six client targets in CI
 - [ ] Beta channels (TestFlight, Play internal) live
 - [ ] Rollback documented
 
@@ -1597,6 +1599,7 @@ Native features (camera, push, biometric) are the review-risk drivers (R8) — l
 
 Append-only. One line per completed-or-deferred task, in execution order.
 
+- `2026-06-15` — `fl-do-deploy` — **Made the rebuild deploy on DigitalOcean (D5).** Authored the Serverpod [`Dockerfile`](makerflow_dart/makerflow_server/Dockerfile) (multi-stage: `dart compile exe` → debian-slim runtime), [`deploy/entrypoint.sh`](makerflow_dart/makerflow_server/deploy/entrypoint.sh) (renders `config/<mode>.yaml` + `passwords.yaml` from DO managed-DB bindings + secrets, applies migrations, serves), `.dockerignore`, and the App Platform spec [`makerflow_dart/.do/app.yaml`](makerflow_dart/.do/app.yaml) (web service from the Dockerfile, deploy-on-push, DO **Managed PostgreSQL + Redis**, health check `GET /`). Verified `dart compile exe` (the image's build step) → 15.8 MB native server binary; `sh -n` on the entrypoint passes. Could not run the live DO deploy (no `doctl`/credentials here) — one `doctl apps create --spec` (or connecting the repo) ships it. Added D5 to decisions; updated §11 + fl-7.
 - `2026-06-15` — `fl-live-db + fl-0-error-taxonomy` — **Ran the server against a live database and closed the error taxonomy.** Stood up Postgres 17 (port 8090) + Redis 8 (8091) without Docker; `serverpod` maintenance role applied the migration (**56 tables** in Postgres); booted the server (monolith). Verified end-to-end over HTTP: `GET /` → `200 OK` (built-in liveness); `POST /health {"method":"ready"}` → `true` (real `Organization.db.count` round-trip); `POST /task {"method":"list"}` **unauthenticated** → first a raw `500` (caught the gap), then — after converting the exception layer — a clean **`400` with a typed serializable exception** `{"className":"MakerflowAuthException","message":"Authentication required."}`. `fl-0-error-taxonomy`: replaced the 4 hand-written exceptions with Serverpod serializable exceptions (`lib/src/models/exceptions/`), rewired ~16 throw sites to named `message:` params, regenerated, `dart analyze` clean, unit tests green. Discovered Serverpod's API server already serves `GET /` liveness → `fl-0-health-route` reduced to optional (deferred). DB/server processes stopped + cleaned up afterward.
 
 - `2026-06-15` — `fl-toolchain-run` — **Installed the toolchain and compiled everything.** Dart 3.12.2 + Flutter 3.44.2 + Serverpod CLI 3.4.10 (via Homebrew). Fixes surfaced + applied: added `config/generator.yaml` (the missing file silently disabled the database feature → no models generated); bumped + pinned Serverpod deps `^2.1.0`→`3.4.10` (R6); un-quoted 6 enum `default=` values; removed an all-comment exceptions YAML; renamed model `MeetingItemUpdate`→`MeetingItemNote` (collided with Serverpod's generated `MeetingItem` + `UpdateTable`); dropped the 2.x web `/healthz` Route (Relic API change → follow-up `fl-0-health-route`); fixed nullable-`id`, missing-import, deprecated `SemanticsService.announce`→`sendAnnouncement`, and unused-import issues; corrected a too-naive kanban widget test. **Results:** server `serverpod generate` ✓ · `dart analyze` clean · unit tests 2/2 ✓; design `flutter analyze` clean; app `flutter analyze` clean · widget test ✓ · `flutter build web` ✓ (2.7 MB, WASM dry-run ✓); `serverpod create-migration` ✓ (112 tables). Not yet run: live server against Postgres/Redis (Docker absent) + Flutter↔server round-trip.

@@ -48,6 +48,26 @@ cd ../makerflow_flutter
 flutter run -d chrome        # or: macos | windows | linux | <device>
 ```
 
+## Deploy to DigitalOcean (required target — D5)
+
+The server ships to **DO App Platform** as a Docker image, with **DO Managed PostgreSQL + Redis**. Two files drive it:
+
+- [`makerflow_server/Dockerfile`](makerflow_server/Dockerfile) — multi-stage: `dart compile exe bin/main.dart` → slim runtime (verified locally; produces a ~16 MB native binary).
+- [`makerflow_server/deploy/entrypoint.sh`](makerflow_server/deploy/entrypoint.sh) — renders `config/<mode>.yaml` + `config/passwords.yaml` from env (DO managed-DB bindings + the `SERVICE_SECRET`), applies migrations, then serves.
+- [`.do/app.yaml`](.do/app.yaml) — App Platform spec: web service from the Dockerfile (deploy-on-push from `main`), a managed `makerflow-db` (PG 16) and `makerflow-redis`, health check on `GET /`.
+
+```bash
+# one-time: install + auth the DO CLI, then create the app
+doctl auth init
+doctl apps create --spec makerflow_dart/.do/app.yaml
+# set the SERVICE_SECRET encrypted env in the dashboard (64+ random chars),
+# then every push to main redeploys automatically.
+```
+
+Or in the DO dashboard: **Create App → GitHub → ianroy/makerflowPM** and point it at `makerflow_dart/.do/app.yaml`. The local `docker-compose.yaml` (Postgres + Redis) remains the dev path; DO managed databases are production.
+
+> Build the image locally to test before DO: `docker build -f makerflow_server/Dockerfile -t makerflow-server makerflow_dart` (run from the repo root). Not run in the authoring env (no Docker), but `dart compile exe` — the image's build step — is verified.
+
 ## Important notes
 
 - **Codegen first.** `makerflow_server/lib/src/generated/**` and `makerflow_client/lib/**` do not exist until you run `serverpod generate`. The server's `import '.../generated/...'` lines and the `MembershipRole`/`TaskStatus` enums resolve only after that — this is the normal Serverpod workflow.
