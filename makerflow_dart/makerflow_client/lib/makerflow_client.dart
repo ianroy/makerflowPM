@@ -1,7 +1,7 @@
-// PLACEHOLDER — replaced by `serverpod generate` (run from ../makerflow_server).
-//
-// After codegen this file exports the generated `Client` and protocol types.
-// Until then it exists only so the Melos workspace resolves.
-//
-//   cd ../makerflow_server && serverpod generate
+/// Public entry for the generated Serverpod client.
+/// `serverpod generate` writes the implementation under `src/protocol/`;
+/// this barrel re-exports the `Client` and all protocol types/exceptions.
 library makerflow_client;
+
+export 'src/protocol/client.dart';
+export 'src/protocol/protocol.dart';

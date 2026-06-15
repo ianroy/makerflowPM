@@ -805,7 +805,7 @@ Establish the state + navigation patterns from [Appendix E](#e-state-management-
 
 #### fl-0-seed-data — Demo/seed data + first-run bootstrap
 
-- **Status:** [ ] backlog
+- **Status:** [x] done — `business/seed.dart` + `bin/seed.dart` create a default org, a serverpod_auth owner login (+ superuser scope + owner membership + profile), a project, 6 tasks, equipment + consumable. Verified live (psql row counts); idempotent; clean CLI exit.
 - **Agent Persona:** dart-data
 - **Priority:** P2
 - **Complexity:** S
@@ -830,7 +830,7 @@ A seed routine that creates a default org, an owner admin (rotate-on-first-login
 
 #### fl-1-projects-tasks — Projects + tasks (kanban/list/calendar)
 
-- **Status:** [~] in_progress — Project/Task models + endpoints (full security contract + optimistic version), keyboard-accessible kanban, and a projects list screen built on the repository seam; task list/calendar views + live-client wiring remain
+- **Status:** [~] in_progress — Project/Task models + endpoints (full security contract + optimistic version), keyboard-accessible kanban, projects list screen, **and a live `ServerpodTaskRepository` wired through the generated client** (proven end-to-end via `tool/client_smoke.dart`; toggle with `--dart-define=MAKERFLOW_LIVE=true`). Remaining: task list/calendar views + client-side auth/session so live reads pass the RBAC gate
 - **Agent Persona:** serverpod-backend + flutter-ui
 - **Priority:** P0
 - **Complexity:** XL
@@ -1599,6 +1599,7 @@ Native features (camera, push, biometric) are the review-risk drivers (R8) — l
 
 Append-only. One line per completed-or-deferred task, in execution order.
 
+- `2026-06-15` — `fl-0-seed-data + fl-client-wiring` — **Seeded live data and wired/proved the generated client end-to-end.** `fl-0-seed-data`: `business/seed.dart` + `bin/seed.dart` create a default org, an **owner login via serverpod_auth** (`admin@makerflow.local`, superuser scope, owner membership) + UserProfile, a sample project, 6 tasks, equipment + consumable. Ran against live Postgres → verified by `psql` (org=1, owner membership, project=1, task=6, serverpod_user_info=1); idempotent re-run + clean exit confirmed. **Generated client proven**: fixed two gaps that only surfaced on use — the hand-made `makerflow_client` barrel didn't export the generated `Client`, and `makerflow_client` lacked the `serverpod_auth_client` dep (the server uses the auth module). `tool/client_smoke.dart` then ran through the typed client: `health.ready → true` and `task.list` (no auth) → a **deserialized typed `MakerflowAuthException`**. **Wired into Flutter**: `serverpod_flutter` + `makerflow_client` deps, `serverpodClientProvider`, `ServerpodTaskRepository` (generated `Task`→`TaskVm`), switched on via `--dart-define=MAKERFLOW_LIVE=true` (defaults to in-memory so the app runs serverless). `flutter analyze` clean · widget test ✓ · `flutter build web` ✓ (2.69 MB). Removed a stale `flutter create` default test. Git reconciled after PRs #3/#4 merged; recovered the DO-deploy commit onto a fresh branch.
 - `2026-06-15` — `fl-do-deploy` — **Made the rebuild deploy on DigitalOcean (D5).** Authored the Serverpod [`Dockerfile`](makerflow_dart/makerflow_server/Dockerfile) (multi-stage: `dart compile exe` → debian-slim runtime), [`deploy/entrypoint.sh`](makerflow_dart/makerflow_server/deploy/entrypoint.sh) (renders `config/<mode>.yaml` + `passwords.yaml` from DO managed-DB bindings + secrets, applies migrations, serves), `.dockerignore`, and the App Platform spec [`makerflow_dart/.do/app.yaml`](makerflow_dart/.do/app.yaml) (web service from the Dockerfile, deploy-on-push, DO **Managed PostgreSQL + Redis**, health check `GET /`). Verified `dart compile exe` (the image's build step) → 15.8 MB native server binary; `sh -n` on the entrypoint passes. Could not run the live DO deploy (no `doctl`/credentials here) — one `doctl apps create --spec` (or connecting the repo) ships it. Added D5 to decisions; updated §11 + fl-7.
 - `2026-06-15` — `fl-live-db + fl-0-error-taxonomy` — **Ran the server against a live database and closed the error taxonomy.** Stood up Postgres 17 (port 8090) + Redis 8 (8091) without Docker; `serverpod` maintenance role applied the migration (**56 tables** in Postgres); booted the server (monolith). Verified end-to-end over HTTP: `GET /` → `200 OK` (built-in liveness); `POST /health {"method":"ready"}` → `true` (real `Organization.db.count` round-trip); `POST /task {"method":"list"}` **unauthenticated** → first a raw `500` (caught the gap), then — after converting the exception layer — a clean **`400` with a typed serializable exception** `{"className":"MakerflowAuthException","message":"Authentication required."}`. `fl-0-error-taxonomy`: replaced the 4 hand-written exceptions with Serverpod serializable exceptions (`lib/src/models/exceptions/`), rewired ~16 throw sites to named `message:` params, regenerated, `dart analyze` clean, unit tests green. Discovered Serverpod's API server already serves `GET /` liveness → `fl-0-health-route` reduced to optional (deferred). DB/server processes stopped + cleaned up afterward.
 

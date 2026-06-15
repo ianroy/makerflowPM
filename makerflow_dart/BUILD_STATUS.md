@@ -13,7 +13,12 @@ Authoritative per-card state for the Dart rebuild. Maps to the task cards in [`.
 > - server booted (monolith); `GET /` → `200 OK` (built-in liveness); `POST /health{ready}` → `true` (live `Organization.db.count`).
 > - `POST /task{list}` unauthenticated → **`400` + typed `MakerflowAuthException`** (RBAC gate fires end-to-end; serializable exceptions verified — `fl-0-error-taxonomy` done).
 >
-> **Still using in-memory repositories** in the Flutter app until the generated `ServerpodTaskRepository` is wired in. Auth sign-in flow + role-matrix fixtures still to do.
+> **Seed + generated client (2026-06-15):**
+> - `dart bin/seed.dart` → default org + serverpod_auth owner login + project + 6 tasks + equipment/consumable (verified via psql; idempotent).
+> - **Generated client proven** end-to-end (`tool/client_smoke.dart`): `health.ready → true`; `task.list` no-auth → deserialized typed `MakerflowAuthException`. Fixed the client barrel export + added the `serverpod_auth_client` dep.
+> - `ServerpodTaskRepository` + `serverpodClientProvider` wired into the Flutter app; enable with `--dart-define=MAKERFLOW_LIVE=true` (defaults to in-memory). `flutter analyze`/test/`build web` green.
+>
+> **Remaining for a live UI round-trip:** client-side serverpod_auth sign-in/session (so live reads pass the RBAC gate), then the app talks to the live server. Role-matrix serverpod_test fixtures still to do.
 
 ## Legend
 `[x]` built · `[~]` partial / authored-not-verified · `[ ]` not started

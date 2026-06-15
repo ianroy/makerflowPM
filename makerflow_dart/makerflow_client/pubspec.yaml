@@ -11,3 +11,6 @@ environment:
 # workspace resolves before the first codegen run.
 dependencies:
   serverpod_client: 3.4.10
+  # The server uses the serverpod_auth module, so the generated protocol
+  # references the auth module's client. Required for the client to resolve.
+  serverpod_auth_client: 3.4.10

@@ -14,11 +14,10 @@ dependencies:
   go_router: ^14.0.0
   makerflow_design:
     path: ../makerflow_design
-  # Wired in once `serverpod generate` has produced the client:
-  # makerflow_client:
-  #   path: ../makerflow_client
-  # serverpod_flutter: ^2.1.0
-  # serverpod_auth_shared_flutter: ^2.1.0
+  # Generated client + Serverpod Flutter integration (verified working).
+  makerflow_client:
+    path: ../makerflow_client
+  serverpod_flutter: 3.4.10
 
 dev_dependencies:
   flutter_test:

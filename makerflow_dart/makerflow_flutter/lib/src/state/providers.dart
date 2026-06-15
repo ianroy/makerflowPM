@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../data/models.dart';
 import '../data/feature_models.dart';
 import '../data/task_repository.dart';
+import '../data/serverpod_task_repository.dart';
+import '../data/api_client.dart';
 import '../data/feature_repositories.dart';
 import '../features/auth/login_screen.dart';
 import '../features/dashboard/dashboard_screen.dart';
@@ -25,8 +27,15 @@ final isSignedInProvider = StateProvider<bool>((_) => false);
 /// The active organization id (drives every org-scoped read).
 final activeOrgIdProvider = StateProvider<int>((_) => 1);
 
-// --- Repository bindings (swap the InMemory* impls for Serverpod* after codegen) ---
-final taskRepositoryProvider = Provider<TaskRepository>((_) => InMemoryTaskRepository());
+// --- Repository bindings ---
+// Default to in-memory so the app runs with no server. Build with
+// `--dart-define=MAKERFLOW_LIVE=true` to talk to the live Serverpod backend
+// via the generated client (verified end-to-end).
+const _useLiveBackend = bool.fromEnvironment('MAKERFLOW_LIVE');
+
+final taskRepositoryProvider = Provider<TaskRepository>((ref) => _useLiveBackend
+    ? ServerpodTaskRepository(ref.watch(serverpodClientProvider))
+    : InMemoryTaskRepository());
 final orgRepositoryProvider = Provider<OrgRepository>((_) => InMemoryOrgRepository());
 final projectRepositoryProvider = Provider<ProjectRepository>((_) => InMemoryProjectRepository());
 final equipmentRepositoryProvider = Provider<EquipmentRepository>((_) => InMemoryEquipmentRepository());
