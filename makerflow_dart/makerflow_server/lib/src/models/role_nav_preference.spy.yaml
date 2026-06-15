@@ -1,0 +1,12 @@
+### Per-role default sidebar/nav config for an org (legacy role_nav_preferences).
+class: RoleNavPreference
+table: role_nav_preference
+fields:
+  organizationId: int, relation(parent=organization)
+  role: MembershipRole
+  navJson: String          # ordered nav items + visibility
+  updatedAt: DateTime
+indexes:
+  role_nav_preference_unique_idx:
+    fields: organizationId, role
+    unique: true

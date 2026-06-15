@@ -1,0 +1,13 @@
+### Calendar-driven metadata that seeds an agenda from an external event.
+class: MeetingNoteSource
+table: meeting_note_source
+fields:
+  organizationId: int, relation(parent=organization)
+  agendaId: int?
+  calendarEventId: int?
+  sourceKind: String        # gcal | ics | manual
+  rawJson: String?
+  createdAt: DateTime
+indexes:
+  meeting_note_source_org_idx:
+    fields: organizationId

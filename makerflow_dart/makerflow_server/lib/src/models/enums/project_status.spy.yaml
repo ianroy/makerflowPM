@@ -1,0 +1,8 @@
+enum: ProjectStatus
+serialized: byName
+values:
+  - planned
+  - active
+  - onHold
+  - completed
+  - archived

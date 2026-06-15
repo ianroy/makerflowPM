@@ -1,0 +1,7 @@
+enum: OnboardingState
+serialized: byName
+values:
+  - notStarted
+  - inProgress
+  - completed
+  - waived

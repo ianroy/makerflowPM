@@ -1,0 +1,9 @@
+### A compact realtime change notice broadcast on an org channel and streamed
+### to subscribers (Appendix C). Also the unit the offline sync engine applies.
+class: ChangeEvent
+fields:
+  entityType: String
+  entityId: int
+  op: String              # create | update | delete | move
+  version: int
+  updatedAt: DateTime

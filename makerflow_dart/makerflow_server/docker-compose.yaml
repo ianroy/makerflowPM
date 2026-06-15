@@ -1,0 +1,33 @@
+# Local dev infrastructure for the Serverpod server: PostgreSQL + Redis.
+# `docker compose up -d` then run the server with `dart bin/main.dart`.
+# Credentials here are DEV ONLY and mirror config/passwords.yaml — never use in production.
+services:
+  postgres:
+    image: postgres:16
+    ports:
+      - "8090:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: makerflow
+      POSTGRES_PASSWORD: "makerflow_dev_password"
+    volumes:
+      - makerflow_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    ports:
+      - "8091:6379"
+    command: redis-server --requirepass "makerflow_dev_redis"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  makerflow_pg:

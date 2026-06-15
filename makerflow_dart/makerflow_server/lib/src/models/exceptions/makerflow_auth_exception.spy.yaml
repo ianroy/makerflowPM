@@ -1,0 +1,6 @@
+### Thrown when a request is unauthenticated. As a Serverpod serializable
+### exception it crosses the wire as a typed error (the generated client
+### rethrows it) instead of surfacing as an opaque 500.
+exception: MakerflowAuthException
+fields:
+  message: String

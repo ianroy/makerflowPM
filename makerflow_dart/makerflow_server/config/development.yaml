@@ -1,0 +1,31 @@
+# Serverpod development configuration.
+# Ports mirror docker-compose.yaml. Production overrides live in production.yaml
+# and secrets in passwords.yaml (gitignored).
+apiServer:
+  port: 8080
+  publicHost: localhost
+  publicPort: 8080
+  publicScheme: http
+
+insightsServer:
+  port: 8081
+  publicHost: localhost
+  publicPort: 8081
+  publicScheme: http
+
+webServer:
+  port: 8082
+  publicHost: localhost
+  publicPort: 8082
+  publicScheme: http
+
+database:
+  host: localhost
+  port: 8090
+  name: makerflow
+  user: postgres
+
+redis:
+  enabled: true
+  host: localhost
+  port: 8091

@@ -1,0 +1,57 @@
+collab:
+  - comments:
+  - addComment:
+  - watch:
+  - activityStream:
+consumable:
+  - list:
+  - save:
+  - softDelete:
+equipment:
+  - list:
+  - save:
+  - softDelete:
+health:
+  - ready:
+intake:
+  - list:
+  - save:
+  - convertToProject:
+meeting:
+  - agendas:
+  - items:
+  - saveAgenda:
+  - saveItem:
+  - convertItemToTask:
+onboarding:
+  - templates:
+  - saveTemplate:
+  - assign:
+  - setState:
+org:
+  - listMine:
+  - members:
+  - setRole:
+  - removeMember:
+partnership:
+  - list:
+  - save:
+  - softDelete:
+project:
+  - list:
+  - create:
+realtime:
+  - subscribe:
+sync:
+  - pullTasks:
+  - ackCursor:
+task:
+  - list:
+  - create:
+  - update:
+  - move:
+  - softDelete:
+trash:
+  - deletedTasks:
+  - restoreTask:
+  - purgeTask:

@@ -1,0 +1,16 @@
+### Per-user UI/workflow settings (theme, timezone, locale, notifications,
+### session-timeout accommodation). Pinned in the local cache for offline.
+class: UserPreference
+table: user_preference
+fields:
+  userInfoId: int
+  theme: String, default='dark'        # dark | light | system
+  locale: String, default='en'
+  timezone: String?
+  notificationsJson: String?
+  sessionTimeoutSeconds: int?          # accommodation override (WCAG 2.2.1)
+  updatedAt: DateTime
+indexes:
+  user_preference_unique_idx:
+    fields: userInfoId
+    unique: true

@@ -1,0 +1,44 @@
+name: makerflow_dart
+
+# Melos-managed monorepo for the MakerFlow PM Flutter + Serverpod (Dart) rebuild.
+# See ../FLUTTER_REBUILD_PLAN.md for the full plan and ./BUILD_STATUS.md for what is built.
+#
+# Bring-up (requires the Dart + Flutter + Serverpod toolchain installed locally):
+#   dart pub global activate melos
+#   melos bootstrap
+#   (cd makerflow_server && docker compose up -d)     # Postgres + Redis
+#   (cd makerflow_server && dart bin/main.dart --apply-migrations)
+#   cd makerflow_server && serverpod generate          # regenerates makerflow_client
+#   melos run analyze
+
+packages:
+  - makerflow_server
+  - makerflow_client
+  - makerflow_flutter
+  - makerflow_design
+  - makerflow_shared
+
+command:
+  bootstrap:
+    runPubGetInParallel: true
+
+scripts:
+  analyze:
+    description: Analyze all packages.
+    run: melos exec -- dart analyze .
+    packageFilters:
+      flutter: false
+  analyze:flutter:
+    description: Analyze Flutter packages.
+    run: melos exec -- flutter analyze .
+    packageFilters:
+      flutter: true
+  test:
+    description: Run Dart tests across packages that have them.
+    run: melos exec --dir-exists=test -- dart test
+  format:
+    description: Format all Dart code.
+    run: melos exec -- dart format .
+  generate:
+    description: Re-run Serverpod code generation (server + client + ORM).
+    run: cd makerflow_server && serverpod generate

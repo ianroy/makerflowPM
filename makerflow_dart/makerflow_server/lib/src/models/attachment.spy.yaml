@@ -1,0 +1,22 @@
+### Object-store metadata for an uploaded file (supersedes blob storage in the
+### legacy meeting_item_files). Polymorphic via entityType+entityId. altText
+### is required for images (WCAG 1.1.1).
+class: Attachment
+table: attachment
+fields:
+  organizationId: int, relation(parent=organization)
+  entityType: String
+  entityId: int
+  kind: AttachmentKind, default=other
+  filename: String
+  contentType: String
+  bytes: int
+  storageKey: String        # object-store key (DO Spaces / S3)
+  altText: String?
+  createdAt: DateTime
+  createdByUserInfoId: int?
+  deletedAt: DateTime?
+  deletedByUserInfoId: int?
+indexes:
+  attachment_entity_idx:
+    fields: organizationId, entityType, entityId

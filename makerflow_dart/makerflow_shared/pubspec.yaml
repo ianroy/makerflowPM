@@ -1,0 +1,7 @@
+name: makerflow_shared
+description: Hand-written helpers/constants shared across packages (beyond generated code).
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"

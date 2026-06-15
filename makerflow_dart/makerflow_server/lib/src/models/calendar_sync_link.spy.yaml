@@ -1,0 +1,14 @@
+### Bidirectional bridge between a MakerFlow task and a Google event.
+class: CalendarSyncLink
+table: calendar_sync_link
+fields:
+  organizationId: int, relation(parent=organization)
+  taskId: int, relation(parent=task)
+  externalEventId: String
+  lastPushedAt: DateTime?
+  lastPulledAt: DateTime?
+indexes:
+  calendar_sync_link_task_idx:
+    fields: organizationId, taskId
+  calendar_sync_link_external_idx:
+    fields: organizationId, externalEventId

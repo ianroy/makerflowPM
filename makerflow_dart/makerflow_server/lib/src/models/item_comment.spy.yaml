@@ -1,0 +1,22 @@
+### Threaded comment on any entity (polymorphic via entityType+entityId).
+### Org-scoped, soft-deletable, audited, offline-cacheable.
+class: ItemComment
+table: item_comment
+fields:
+  organizationId: int, relation(parent=organization)
+  entityType: String        # 'task' | 'project' | 'meetingItem' | ...
+  entityId: int
+  parentCommentId: int?      # threading
+  body: String
+  clientUuid: String?        # offline identity
+  version: int, default=1
+  createdAt: DateTime
+  updatedAt: DateTime
+  createdByUserInfoId: int?
+  deletedAt: DateTime?
+  deletedByUserInfoId: int?
+indexes:
+  item_comment_org_idx:
+    fields: organizationId
+  item_comment_entity_idx:
+    fields: organizationId, entityType, entityId

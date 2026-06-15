@@ -1,0 +1,8 @@
+enum: EquipmentStatus
+serialized: byName
+values:
+  - operational
+  - maintenanceDue
+  - underMaintenance
+  - outOfService
+  - retired

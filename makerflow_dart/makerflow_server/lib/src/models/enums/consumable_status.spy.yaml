@@ -1,0 +1,7 @@
+enum: ConsumableStatus
+serialized: byName
+values:
+  - inStock
+  - low
+  - reorder
+  - outOfStock

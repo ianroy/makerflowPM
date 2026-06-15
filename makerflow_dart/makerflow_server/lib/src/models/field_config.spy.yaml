@@ -1,0 +1,18 @@
+### Per-org custom field definition applied to an entity type.
+class: FieldConfig
+table: field_config
+fields:
+  organizationId: int, relation(parent=organization)
+  entityType: String
+  key: String
+  label: String
+  fieldType: String         # text | number | date | select | bool
+  optionsJson: String?       # for select
+  required: bool, default=false
+  sortOrder: double, default=0
+  createdAt: DateTime
+  updatedAt: DateTime
+indexes:
+  field_config_unique_idx:
+    fields: organizationId, entityType, key
+    unique: true

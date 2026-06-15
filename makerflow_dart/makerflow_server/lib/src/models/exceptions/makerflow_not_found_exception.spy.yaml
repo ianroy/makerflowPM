@@ -1,0 +1,4 @@
+### Thrown when a requested entity does not exist (or is soft-deleted).
+exception: MakerflowNotFoundException
+fields:
+  message: String

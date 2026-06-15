@@ -1,0 +1,9 @@
+enum: TaskStatus
+serialized: byName
+values:
+  - backlog
+  - todo
+  - inProgress
+  - blocked
+  - inReview
+  - done

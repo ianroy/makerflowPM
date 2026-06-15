@@ -1,0 +1,9 @@
+# Serverpod code-generation config. Without this file the database feature
+# defaults OFF (missingFileDefault: false) — which is why models with `table:`
+# failed to generate. Its presence enables `database: true`.
+type: server
+
+client_package_path: ../makerflow_client
+
+features:
+  database: true

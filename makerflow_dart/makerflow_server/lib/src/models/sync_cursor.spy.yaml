@@ -1,0 +1,15 @@
+### Last-applied server change per device (fl-5-offline-sync). The client
+### advances this as it pulls deltas; the server uses it to compute what's new.
+class: SyncCursor
+table: sync_cursor
+fields:
+  organizationId: int, relation(parent=organization)
+  userInfoId: int
+  deviceId: String
+  lastUpdatedAt: DateTime
+  lastId: int, default=0
+  updatedAt: DateTime
+indexes:
+  sync_cursor_unique_idx:
+    fields: organizationId, userInfoId, deviceId
+    unique: true

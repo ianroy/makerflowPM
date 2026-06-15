@@ -1,0 +1,17 @@
+### Binds a serverpod_auth user to an organization with a role.
+### Non-superuser admins are pinned to ONE org (docs/DECISIONS.md). The
+### platform-level superuser flag lives on serverpod_auth's UserInfo scopes.
+class: Membership
+table: membership
+fields:
+  organizationId: int, relation(parent=organization)
+  userInfoId: int   # serverpod_auth UserInfo id
+  role: MembershipRole
+  createdAt: DateTime
+  updatedAt: DateTime
+indexes:
+  membership_unique_idx:
+    fields: organizationId, userInfoId
+    unique: true
+  membership_user_idx:
+    fields: userInfoId

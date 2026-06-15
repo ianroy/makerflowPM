@@ -1,0 +1,23 @@
+# Dart / Flutter
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+**/doc/api/
+.melos_tool/
+
+# Serverpod generated code is committed by convention (regenerated via `serverpod generate`),
+# but local migration scratch + secrets are not:
+makerflow_server/config/passwords.yaml
+makerflow_server/.serverpod/
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Local env
+*.local.yaml

@@ -1,0 +1,22 @@
+### Agenda line item. Supports parent/child nesting and can link to a task or
+### project (the meeting → execution bridge) or be converted into one.
+class: MeetingItem
+table: meeting_item
+fields:
+  organizationId: int, relation(parent=organization)
+  agendaId: int, relation(parent=meeting_agenda)
+  parentItemId: int?
+  title: String
+  notes: String?
+  status: String, default='open'    # open | discussed | actioned | deferred
+  linkedTaskId: int?
+  linkedProjectId: int?
+  sortOrder: double, default=0
+  createdAt: DateTime
+  updatedAt: DateTime
+  createdByUserInfoId: int?
+  deletedAt: DateTime?
+  deletedByUserInfoId: int?
+indexes:
+  meeting_item_agenda_idx:
+    fields: organizationId, agendaId

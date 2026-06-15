@@ -1,0 +1,22 @@
+### Scored intake queue (feature-flagged; matches legacy FEATURE_INTAKE_ENABLED).
+class: IntakeRequest
+table: intake_request
+fields:
+  organizationId: int, relation(parent=organization)
+  title: String
+  description: String?
+  stage: IntakeStage, default=submitted
+  score: double?
+  requesterName: String?
+  requesterEmail: String?
+  convertedProjectId: int?
+  createdAt: DateTime
+  updatedAt: DateTime
+  createdByUserInfoId: int?
+  deletedAt: DateTime?
+  deletedByUserInfoId: int?
+indexes:
+  intake_request_org_idx:
+    fields: organizationId
+  intake_request_stage_idx:
+    fields: organizationId, stage

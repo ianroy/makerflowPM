@@ -1,0 +1,32 @@
+### Execution item. The `version` field supports offline conflict reconcile
+### (fl-5-offline-sync). Org-scoped, soft-deletable, audited.
+class: Task
+table: task
+fields:
+  organizationId: int, relation(parent=organization)
+  projectId: int?, relation(parent=project)
+  title: String
+  description: String?
+  status: TaskStatus
+  priority: TaskPriority
+  assigneeUserInfoId: int?
+  reporterUserInfoId: int?
+  energy: String?
+  estimateHours: double?
+  dueAt: DateTime?
+  spaceId: int?
+  teamId: int?
+  sortOrder: double, default=0     # within-column ordering for kanban
+  version: int, default=1          # bumped on every update; offline reconcile
+  createdAt: DateTime
+  updatedAt: DateTime
+  createdByUserInfoId: int?
+  deletedAt: DateTime?
+  deletedByUserInfoId: int?
+indexes:
+  task_org_idx:
+    fields: organizationId
+  task_org_status_idx:
+    fields: organizationId, status
+  task_org_assignee_idx:
+    fields: organizationId, assigneeUserInfoId

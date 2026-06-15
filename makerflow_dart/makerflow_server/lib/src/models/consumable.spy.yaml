@@ -1,0 +1,24 @@
+### Per-space stock + reorder tracking.
+class: Consumable
+table: consumable
+fields:
+  organizationId: int, relation(parent=organization)
+  name: String
+  unit: String?
+  quantityOnHand: double, default=0
+  reorderPoint: double, default=0
+  status: ConsumableStatus, default=inStock
+  spaceId: int?
+  category: String?
+  clientUuid: String?
+  version: int, default=1
+  createdAt: DateTime
+  updatedAt: DateTime
+  createdByUserInfoId: int?
+  deletedAt: DateTime?
+  deletedByUserInfoId: int?
+indexes:
+  consumable_org_idx:
+    fields: organizationId
+  consumable_status_idx:
+    fields: organizationId, status
