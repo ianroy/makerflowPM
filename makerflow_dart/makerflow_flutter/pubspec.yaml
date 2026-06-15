@@ -17,6 +17,7 @@ dependencies:
   # Generated client + Serverpod Flutter integration (verified working).
   makerflow_client:
     path: ../makerflow_client
+  serverpod_client: 3.4.10
   serverpod_flutter: 3.4.10
 
 dev_dependencies:

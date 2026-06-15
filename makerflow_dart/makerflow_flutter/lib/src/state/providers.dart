@@ -8,6 +8,7 @@ import '../data/task_repository.dart';
 import '../data/serverpod_task_repository.dart';
 import '../data/api_client.dart';
 import '../data/feature_repositories.dart';
+import 'session.dart';
 import '../features/auth/login_screen.dart';
 import '../features/dashboard/dashboard_screen.dart';
 import '../features/tasks/kanban_screen.dart';
@@ -20,20 +21,14 @@ import '../features/_spike/a11y_spike_screen.dart';
 /// Light/dark toggle (persisted to UserPreference server-side in fl-3).
 final themeModeProvider = StateProvider<ThemeMode>((_) => ThemeMode.dark);
 
-/// Naive auth state for the skeleton. Replaced by serverpod_auth session state
-/// (SessionManager) in fl-0-auth-rbac-tenancy.
-final isSignedInProvider = StateProvider<bool>((_) => false);
-
 /// The active organization id (drives every org-scoped read).
 final activeOrgIdProvider = StateProvider<int>((_) => 1);
 
 // --- Repository bindings ---
 // Default to in-memory so the app runs with no server. Build with
 // `--dart-define=MAKERFLOW_LIVE=true` to talk to the live Serverpod backend
-// via the generated client (verified end-to-end).
-const _useLiveBackend = bool.fromEnvironment('MAKERFLOW_LIVE');
-
-final taskRepositoryProvider = Provider<TaskRepository>((ref) => _useLiveBackend
+// via the authenticated generated client (verified end-to-end).
+final taskRepositoryProvider = Provider<TaskRepository>((ref) => useLiveBackend
     ? ServerpodTaskRepository(ref.watch(serverpodClientProvider))
     : InMemoryTaskRepository());
 final orgRepositoryProvider = Provider<OrgRepository>((_) => InMemoryOrgRepository());
@@ -81,7 +76,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/dashboard',
     redirect: (context, state) {
-      final signedIn = ref.read(isSignedInProvider);
+      final signedIn = ref.read(sessionProvider).isSignedIn;
       final atLogin = state.matchedLocation == '/login';
       if (!signedIn && !atLogin) return '/login';
       if (signedIn && atLogin) return '/dashboard';

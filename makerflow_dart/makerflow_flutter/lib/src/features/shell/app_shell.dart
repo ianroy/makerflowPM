@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:makerflow_design/makerflow_design.dart';
 
 import '../../state/providers.dart';
+import '../../state/session.dart';
 
 /// Shared chrome for authenticated screens: a navigation rail (responsive →
 /// drawer below 760px), an organization switcher, theme toggle, and sign-out.
@@ -54,9 +55,9 @@ class AppShell extends ConsumerWidget {
           IconButton(
             tooltip: 'Sign out',
             icon: const Icon(Icons.logout),
-            onPressed: () {
-              ref.read(isSignedInProvider.notifier).state = false;
-              context.go('/login');
+            onPressed: () async {
+              await ref.read(sessionProvider.notifier).signOut();
+              if (context.mounted) context.go('/login');
             },
           ),
         ],

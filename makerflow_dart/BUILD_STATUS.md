@@ -18,7 +18,12 @@ Authoritative per-card state for the Dart rebuild. Maps to the task cards in [`.
 > - **Generated client proven** end-to-end (`tool/client_smoke.dart`): `health.ready → true`; `task.list` no-auth → deserialized typed `MakerflowAuthException`. Fixed the client barrel export + added the `serverpod_auth_client` dep.
 > - `ServerpodTaskRepository` + `serverpodClientProvider` wired into the Flutter app; enable with `--dart-define=MAKERFLOW_LIVE=true` (defaults to in-memory). `flutter analyze`/test/`build web` green.
 >
-> **Remaining for a live UI round-trip:** client-side serverpod_auth sign-in/session (so live reads pass the RBAC gate), then the app talks to the live server. Role-matrix serverpod_test fixtures still to do.
+> **Auth + deploy dry-run (2026-06-15):**
+> - **Authenticated round-trip proven** (`tool/auth_smoke.dart`): sign in as the seeded owner via `modules.auth.email.authenticate` → Bearer-wrapped session key → `task.list(1)` returns the 6 seeded tasks through the RBAC gate.
+> - **Flutter sign-in wired**: `MakerflowKeyManager` + `SessionController` + a real login screen (`--dart-define=MAKERFLOW_LIVE=true`); analyze/test/web-build green.
+> - **Production deploy dry-run**: `dart compile exe` output run through the real `entrypoint.sh` in `runMode: production` (env-rendered config, migrations applied, `GET /` 200 + `health.ready` true). `.do/app.yaml` validated.
+>
+> **Remaining:** push to a live DO account (needs `doctl` + token), persist the session, org-switch wired to live memberships, role-matrix serverpod_test fixtures, offline/push/camera/biometric.
 
 ## Legend
 `[x]` built · `[~]` partial / authored-not-verified · `[ ]` not started
