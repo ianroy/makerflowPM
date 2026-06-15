@@ -1,0 +1,5 @@
+### Thrown on a stale optimistic-version write (offline reconcile, R5/R9).
+exception: MakerflowConflictException
+fields:
+  message: String
+  currentVersion: int?

@@ -3,7 +3,6 @@ import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
 import '../business/audit.dart';
 import '../business/rbac.dart';
-import 'task_endpoint.dart' show MakerflowNotFoundException;
 
 /// Meetings & agendas. Items can be **converted** into a task or project — the
 /// meeting → execution bridge. Replaces /agenda* and /api/agenda*.
@@ -65,7 +64,7 @@ class MeetingEndpoint extends Endpoint {
         await RbacGuard.requireRole(session, organizationId, MembershipRole.staff);
     final item = await MeetingItem.db.findById(session, itemId);
     if (item == null || item.organizationId != organizationId || item.deletedAt != null) {
-      throw const MakerflowNotFoundException('Meeting item not found.');
+      throw MakerflowNotFoundException(message: 'Meeting item not found.');
     }
     final now = DateTime.now().toUtc();
     final task = await Task.db.insertRow(

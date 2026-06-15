@@ -2,9 +2,7 @@ import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
 import '../business/audit.dart';
-import '../business/auth_context.dart';
 import '../business/rbac.dart';
-import 'task_endpoint.dart' show MakerflowNotFoundException;
 
 /// Onboarding templates → assignments. Templates are manager-managed; an
 /// assignee (student+) can advance their own assignment's state.
@@ -57,12 +55,12 @@ class OnboardingEndpoint extends Endpoint {
   Future<OnboardingAssignment> setState(
       Session session, int assignmentId, OnboardingState state, String? progressJson) async {
     final a = await OnboardingAssignment.db.findById(session, assignmentId);
-    if (a == null) throw const MakerflowNotFoundException('Assignment not found.');
+    if (a == null) throw MakerflowNotFoundException(message: 'Assignment not found.');
     final ctx = await RbacGuard.requireRole(session, a.organizationId, MembershipRole.student);
     final isSelf = a.assigneeUserInfoId == ctx.userInfoId;
     final isManager = RbacGuard.atLeast(ctx.role, MembershipRole.manager) || ctx.isSuperuser;
     if (!isSelf && !isManager) {
-      throw const MakerflowForbiddenException('Only the assignee or a manager may update this.');
+      throw MakerflowForbiddenException(message: 'Only the assignee or a manager may update this.');
     }
     final now = DateTime.now().toUtc();
     final saved = await OnboardingAssignment.db.updateRow(

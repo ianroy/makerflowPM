@@ -60,15 +60,14 @@ class TaskEndpoint extends Endpoint {
   Future<Task> update(Session session, Task incoming) async {
     final incomingId = incoming.id;
     if (incomingId == null) {
-      throw const MakerflowNotFoundException('Task id is required for update.');
+      throw MakerflowNotFoundException(message: 'Task id is required for update.');
     }
     final existing = await _requireLive(session, incomingId);
     final ctx = await RbacGuard.requireRole(
         session, existing.organizationId, MembershipRole.staff);
 
     if (incoming.version != existing.version) {
-      throw const MakerflowConflictException(
-        'Task was modified by someone else. Reload and retry.',
+      throw MakerflowConflictException(message: 'Task was modified by someone else. Reload and retry.',
       );
     }
 
@@ -139,22 +138,12 @@ class TaskEndpoint extends Endpoint {
   Future<Task> _requireLive(Session session, int taskId) async {
     final t = await Task.db.findById(session, taskId);
     if (t == null || t.deletedAt != null) {
-      throw const MakerflowNotFoundException('Task not found.');
+      throw MakerflowNotFoundException(message: 'Task not found.');
     }
     return t;
   }
 }
 
-class MakerflowConflictException implements Exception {
-  const MakerflowConflictException(this.message);
-  final String message;
-  @override
-  String toString() => 'MakerflowConflictException: $message';
-}
-
-class MakerflowNotFoundException implements Exception {
-  const MakerflowNotFoundException(this.message);
-  final String message;
-  @override
-  String toString() => 'MakerflowNotFoundException: $message';
-}
+// MakerflowConflictException + MakerflowNotFoundException are now Serverpod
+// serializable exceptions (lib/src/models/exceptions/), available via
+// generated/protocol.dart. Removed the hand-written classes in fl-0-error-taxonomy.

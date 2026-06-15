@@ -31,7 +31,7 @@ class AuthIdentity {
     final authInfo = session.authenticated;
     final userId = authInfo?.userId;
     if (userId == null) {
-      throw const MakerflowAuthException('Authentication required.');
+      throw MakerflowAuthException(message: 'Authentication required.');
     }
     return userId;
   }
@@ -48,18 +48,7 @@ class AuthIdentity {
   }
 }
 
-/// Thrown on missing authentication. Surfaces to the client as an auth failure.
-class MakerflowAuthException implements Exception {
-  const MakerflowAuthException(this.message);
-  final String message;
-  @override
-  String toString() => 'MakerflowAuthException: $message';
-}
-
-/// Thrown when an authenticated user lacks the required role or org membership.
-class MakerflowForbiddenException implements Exception {
-  const MakerflowForbiddenException(this.message);
-  final String message;
-  @override
-  String toString() => 'MakerflowForbiddenException: $message';
-}
+// MakerflowAuthException + MakerflowForbiddenException are now Serverpod
+// serializable exceptions, generated from lib/src/models/exceptions/ and
+// available via generated/protocol.dart (so they cross the wire as typed
+// errors). The hand-written classes were removed in fl-0-error-taxonomy.

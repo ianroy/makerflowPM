@@ -3,7 +3,6 @@ import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
 import '../business/audit.dart';
 import '../business/rbac.dart';
-import 'task_endpoint.dart' show MakerflowNotFoundException;
 
 /// Equipment assets — maintenance + certification tracking. Same security
 /// contract as TaskEndpoint (requireRole → org-scope → audit → soft-delete).
@@ -36,7 +35,7 @@ class EquipmentEndpoint extends Endpoint {
     } else {
       final existing = await EquipmentAsset.db.findById(session, draft.id!);
       if (existing == null || existing.deletedAt != null) {
-        throw const MakerflowNotFoundException('Equipment not found.');
+        throw MakerflowNotFoundException(message: 'Equipment not found.');
       }
       saved = await EquipmentAsset.db.updateRow(
         session,

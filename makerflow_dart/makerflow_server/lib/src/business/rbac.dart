@@ -42,14 +42,12 @@ class RbacGuard {
           isSuperuser: true,
         );
       }
-      throw const MakerflowForbiddenException(
-        'No membership in the requested organization.',
+      throw MakerflowForbiddenException(message: 'No membership in the requested organization.',
       );
     }
 
     if (!superuser && !atLeast(membership.role, minRole)) {
-      throw MakerflowForbiddenException(
-        'Requires ${minRole.name}; caller is ${membership.role.name}.',
+      throw MakerflowForbiddenException(message: 'Requires ${minRole.name}; caller is ${membership.role.name}.',
       );
     }
 

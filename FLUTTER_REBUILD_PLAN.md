@@ -625,7 +625,7 @@ Scaffold the Serverpod 3-package project under a Melos workspace; pin the Server
 
 #### fl-0-health-route — Re-add a `/healthz` liveness web route (Relic)
 
-- **Status:** [ ] ready
+- **Status:** [~] deferred — **largely unnecessary:** Serverpod's API server already answers `GET /` with `200 OK <timestamp>` (built-in liveness), and `HealthEndpoint.ready` covers readiness with a DB round-trip. Point container health checks at `GET http://host:8080/`. Only build a dedicated `/healthz` WidgetRoute if an orchestrator requires that exact path.
 - **Agent Persona:** serverpod-backend
 - **Priority:** P2
 - **Complexity:** XS
@@ -755,7 +755,7 @@ GitHub Actions: `melos run analyze` + `melos run test` on every PR; build web + 
 
 #### fl-0-error-taxonomy — Exception taxonomy & API conventions
 
-- **Status:** [~] in_progress — exception types (auth/forbidden/conflict/notFound) authored in the skeleton; need Serverpod serializable-exception wiring + client surfacing + cursor-pagination convention
+- **Status:** [x] done (server) — 4 Serverpod **serializable** exceptions (auth/forbidden/conflict/notFound) generated + thrown across all endpoints; **verified live**: an unauthorized call returns `400` + a typed `MakerflowAuthException` the client deserializes (no more 500). Cursor-pagination envelope authored. Remaining (client-side, tracked under fl-1): map typed exceptions to the Flutter error surface + a11y announce; add a `ValidationException` when forms land.
 - **Agent Persona:** serverpod-backend + flutter-ui
 - **Priority:** P1
 - **Complexity:** S
@@ -1596,6 +1596,8 @@ Native features (camera, push, biometric) are the review-risk drivers (R8) — l
 ## 15. Checkpoint log
 
 Append-only. One line per completed-or-deferred task, in execution order.
+
+- `2026-06-15` — `fl-live-db + fl-0-error-taxonomy` — **Ran the server against a live database and closed the error taxonomy.** Stood up Postgres 17 (port 8090) + Redis 8 (8091) without Docker; `serverpod` maintenance role applied the migration (**56 tables** in Postgres); booted the server (monolith). Verified end-to-end over HTTP: `GET /` → `200 OK` (built-in liveness); `POST /health {"method":"ready"}` → `true` (real `Organization.db.count` round-trip); `POST /task {"method":"list"}` **unauthenticated** → first a raw `500` (caught the gap), then — after converting the exception layer — a clean **`400` with a typed serializable exception** `{"className":"MakerflowAuthException","message":"Authentication required."}`. `fl-0-error-taxonomy`: replaced the 4 hand-written exceptions with Serverpod serializable exceptions (`lib/src/models/exceptions/`), rewired ~16 throw sites to named `message:` params, regenerated, `dart analyze` clean, unit tests green. Discovered Serverpod's API server already serves `GET /` liveness → `fl-0-health-route` reduced to optional (deferred). DB/server processes stopped + cleaned up afterward.
 
 - `2026-06-15` — `fl-toolchain-run` — **Installed the toolchain and compiled everything.** Dart 3.12.2 + Flutter 3.44.2 + Serverpod CLI 3.4.10 (via Homebrew). Fixes surfaced + applied: added `config/generator.yaml` (the missing file silently disabled the database feature → no models generated); bumped + pinned Serverpod deps `^2.1.0`→`3.4.10` (R6); un-quoted 6 enum `default=` values; removed an all-comment exceptions YAML; renamed model `MeetingItemUpdate`→`MeetingItemNote` (collided with Serverpod's generated `MeetingItem` + `UpdateTable`); dropped the 2.x web `/healthz` Route (Relic API change → follow-up `fl-0-health-route`); fixed nullable-`id`, missing-import, deprecated `SemanticsService.announce`→`sendAnnouncement`, and unused-import issues; corrected a too-naive kanban widget test. **Results:** server `serverpod generate` ✓ · `dart analyze` clean · unit tests 2/2 ✓; design `flutter analyze` clean; app `flutter analyze` clean · widget test ✓ · `flutter build web` ✓ (2.7 MB, WASM dry-run ✓); `serverpod create-migration` ✓ (112 tables). Not yet run: live server against Postgres/Redis (Docker absent) + Flutter↔server round-trip.
 

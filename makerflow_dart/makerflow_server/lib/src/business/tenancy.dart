@@ -1,3 +1,4 @@
+import '../generated/protocol.dart';
 import 'auth_context.dart';
 
 /// Tenancy invariants. The Dart analog of the legacy explicit
@@ -12,8 +13,7 @@ class Tenancy {
   /// Throws if [rowOrganizationId] is not the caller's active org.
   static void assertSameOrg(AuthContext ctx, int rowOrganizationId) {
     if (rowOrganizationId != ctx.organizationId && !ctx.isSuperuser) {
-      throw const MakerflowForbiddenException(
-        'Cross-organization access is not permitted.',
+      throw MakerflowForbiddenException(message: 'Cross-organization access is not permitted.',
       );
     }
   }
@@ -21,8 +21,7 @@ class Tenancy {
   /// Throws if an update attempts to move a row to a different org.
   static void assertNoOrgReassignment(int existingOrgId, int incomingOrgId) {
     if (existingOrgId != incomingOrgId) {
-      throw const MakerflowForbiddenException(
-        'organizationId is immutable on update.',
+      throw MakerflowForbiddenException(message: 'organizationId is immutable on update.',
       );
     }
   }

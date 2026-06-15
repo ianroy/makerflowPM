@@ -1,0 +1,5 @@
+### Thrown when an authenticated caller lacks the required role or crosses orgs.
+exception: MakerflowForbiddenException
+fields:
+  message: String
+  requiredRole: String?

@@ -3,7 +3,6 @@ import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
 import '../business/audit.dart';
 import '../business/rbac.dart';
-import 'task_endpoint.dart' show MakerflowNotFoundException;
 
 /// The deleted queue (/deleted): list soft-deleted rows, restore, or
 /// permanently purge. Restore is staff+; purge is workspace_admin+ (matches
@@ -21,7 +20,7 @@ class TrashEndpoint extends Endpoint {
 
   Future<Task> restoreTask(Session session, int id) async {
     final t = await Task.db.findById(session, id);
-    if (t == null) throw const MakerflowNotFoundException('Task not found.');
+    if (t == null) throw MakerflowNotFoundException(message: 'Task not found.');
     final ctx = await RbacGuard.requireRole(
         session, t.organizationId, MembershipRole.staff);
     final saved = await Task.db.updateRow(session,

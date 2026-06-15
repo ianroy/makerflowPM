@@ -43,8 +43,7 @@ class OrgEndpoint extends Endpoint {
     final grantingOwner = role == MembershipRole.owner;
     final actingOwner = ctx.role == MembershipRole.owner || ctx.isSuperuser;
     if (grantingOwner && !actingOwner) {
-      throw const MakerflowForbiddenException(
-        'Only an owner or superuser may grant the owner role.',
+      throw MakerflowForbiddenException(message: 'Only an owner or superuser may grant the owner role.',
       );
     }
 
@@ -59,8 +58,7 @@ class OrgEndpoint extends Endpoint {
     if (existing != null &&
         existing.role == MembershipRole.owner &&
         !actingOwner) {
-      throw const MakerflowForbiddenException(
-        'Only an owner or superuser may modify an owner account.',
+      throw MakerflowForbiddenException(message: 'Only an owner or superuser may modify an owner account.',
       );
     }
 
@@ -102,8 +100,7 @@ class OrgEndpoint extends Endpoint {
     if (existing == null) return;
     if (existing.role == MembershipRole.owner &&
         !(ctx.role == MembershipRole.owner || ctx.isSuperuser)) {
-      throw const MakerflowForbiddenException(
-          'Only an owner or superuser may remove an owner.');
+      throw MakerflowForbiddenException(message: 'Only an owner or superuser may remove an owner.');
     }
     await Membership.db.deleteRow(session, existing);
     await Audit.record(session,

@@ -33,45 +33,49 @@ import 'enums/project_status.dart' as _i20;
 import 'enums/task_priority.dart' as _i21;
 import 'enums/task_status.dart' as _i22;
 import 'equipment_asset.dart' as _i23;
-import 'field_config.dart' as _i24;
-import 'insight_snapshot.dart' as _i25;
-import 'intake_request.dart' as _i26;
-import 'item_comment.dart' as _i27;
-import 'item_watcher.dart' as _i28;
-import 'meeting_agenda.dart' as _i29;
-import 'meeting_item.dart' as _i30;
-import 'meeting_item_note.dart' as _i31;
-import 'meeting_note_source.dart' as _i32;
-import 'membership.dart' as _i33;
-import 'onboarding_assignment.dart' as _i34;
-import 'onboarding_template.dart' as _i35;
-import 'organization.dart' as _i36;
-import 'partnership.dart' as _i37;
-import 'password_reset.dart' as _i38;
-import 'project.dart' as _i39;
-import 'report_template.dart' as _i40;
-import 'role_nav_preference.dart' as _i41;
-import 'space.dart' as _i42;
-import 'sync_cursor.dart' as _i43;
-import 'task.dart' as _i44;
-import 'task_delta_page.dart' as _i45;
-import 'team.dart' as _i46;
-import 'team_member.dart' as _i47;
-import 'user_preference.dart' as _i48;
-import 'user_profile.dart' as _i49;
-import 'package:makerflow_client/src/protocol/item_comment.dart' as _i50;
-import 'package:makerflow_client/src/protocol/consumable.dart' as _i51;
-import 'package:makerflow_client/src/protocol/equipment_asset.dart' as _i52;
-import 'package:makerflow_client/src/protocol/intake_request.dart' as _i53;
-import 'package:makerflow_client/src/protocol/meeting_agenda.dart' as _i54;
-import 'package:makerflow_client/src/protocol/meeting_item.dart' as _i55;
-import 'package:makerflow_client/src/protocol/onboarding_template.dart' as _i56;
-import 'package:makerflow_client/src/protocol/organization.dart' as _i57;
-import 'package:makerflow_client/src/protocol/membership.dart' as _i58;
-import 'package:makerflow_client/src/protocol/partnership.dart' as _i59;
-import 'package:makerflow_client/src/protocol/project.dart' as _i60;
-import 'package:makerflow_client/src/protocol/task.dart' as _i61;
-import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i62;
+import 'exceptions/makerflow_auth_exception.dart' as _i24;
+import 'exceptions/makerflow_conflict_exception.dart' as _i25;
+import 'exceptions/makerflow_forbidden_exception.dart' as _i26;
+import 'exceptions/makerflow_not_found_exception.dart' as _i27;
+import 'field_config.dart' as _i28;
+import 'insight_snapshot.dart' as _i29;
+import 'intake_request.dart' as _i30;
+import 'item_comment.dart' as _i31;
+import 'item_watcher.dart' as _i32;
+import 'meeting_agenda.dart' as _i33;
+import 'meeting_item.dart' as _i34;
+import 'meeting_item_note.dart' as _i35;
+import 'meeting_note_source.dart' as _i36;
+import 'membership.dart' as _i37;
+import 'onboarding_assignment.dart' as _i38;
+import 'onboarding_template.dart' as _i39;
+import 'organization.dart' as _i40;
+import 'partnership.dart' as _i41;
+import 'password_reset.dart' as _i42;
+import 'project.dart' as _i43;
+import 'report_template.dart' as _i44;
+import 'role_nav_preference.dart' as _i45;
+import 'space.dart' as _i46;
+import 'sync_cursor.dart' as _i47;
+import 'task.dart' as _i48;
+import 'task_delta_page.dart' as _i49;
+import 'team.dart' as _i50;
+import 'team_member.dart' as _i51;
+import 'user_preference.dart' as _i52;
+import 'user_profile.dart' as _i53;
+import 'package:makerflow_client/src/protocol/item_comment.dart' as _i54;
+import 'package:makerflow_client/src/protocol/consumable.dart' as _i55;
+import 'package:makerflow_client/src/protocol/equipment_asset.dart' as _i56;
+import 'package:makerflow_client/src/protocol/intake_request.dart' as _i57;
+import 'package:makerflow_client/src/protocol/meeting_agenda.dart' as _i58;
+import 'package:makerflow_client/src/protocol/meeting_item.dart' as _i59;
+import 'package:makerflow_client/src/protocol/onboarding_template.dart' as _i60;
+import 'package:makerflow_client/src/protocol/organization.dart' as _i61;
+import 'package:makerflow_client/src/protocol/membership.dart' as _i62;
+import 'package:makerflow_client/src/protocol/partnership.dart' as _i63;
+import 'package:makerflow_client/src/protocol/project.dart' as _i64;
+import 'package:makerflow_client/src/protocol/task.dart' as _i65;
+import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i66;
 export 'attachment.dart';
 export 'audit_log.dart';
 export 'calendar_event.dart';
@@ -94,6 +98,10 @@ export 'enums/project_status.dart';
 export 'enums/task_priority.dart';
 export 'enums/task_status.dart';
 export 'equipment_asset.dart';
+export 'exceptions/makerflow_auth_exception.dart';
+export 'exceptions/makerflow_conflict_exception.dart';
+export 'exceptions/makerflow_forbidden_exception.dart';
+export 'exceptions/makerflow_not_found_exception.dart';
 export 'field_config.dart';
 export 'insight_snapshot.dart';
 export 'intake_request.dart';
@@ -222,83 +230,95 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i23.EquipmentAsset) {
       return _i23.EquipmentAsset.fromJson(data) as T;
     }
-    if (t == _i24.FieldConfig) {
-      return _i24.FieldConfig.fromJson(data) as T;
+    if (t == _i24.MakerflowAuthException) {
+      return _i24.MakerflowAuthException.fromJson(data) as T;
     }
-    if (t == _i25.InsightSnapshot) {
-      return _i25.InsightSnapshot.fromJson(data) as T;
+    if (t == _i25.MakerflowConflictException) {
+      return _i25.MakerflowConflictException.fromJson(data) as T;
     }
-    if (t == _i26.IntakeRequest) {
-      return _i26.IntakeRequest.fromJson(data) as T;
+    if (t == _i26.MakerflowForbiddenException) {
+      return _i26.MakerflowForbiddenException.fromJson(data) as T;
     }
-    if (t == _i27.ItemComment) {
-      return _i27.ItemComment.fromJson(data) as T;
+    if (t == _i27.MakerflowNotFoundException) {
+      return _i27.MakerflowNotFoundException.fromJson(data) as T;
     }
-    if (t == _i28.ItemWatcher) {
-      return _i28.ItemWatcher.fromJson(data) as T;
+    if (t == _i28.FieldConfig) {
+      return _i28.FieldConfig.fromJson(data) as T;
     }
-    if (t == _i29.MeetingAgenda) {
-      return _i29.MeetingAgenda.fromJson(data) as T;
+    if (t == _i29.InsightSnapshot) {
+      return _i29.InsightSnapshot.fromJson(data) as T;
     }
-    if (t == _i30.MeetingItem) {
-      return _i30.MeetingItem.fromJson(data) as T;
+    if (t == _i30.IntakeRequest) {
+      return _i30.IntakeRequest.fromJson(data) as T;
     }
-    if (t == _i31.MeetingItemNote) {
-      return _i31.MeetingItemNote.fromJson(data) as T;
+    if (t == _i31.ItemComment) {
+      return _i31.ItemComment.fromJson(data) as T;
     }
-    if (t == _i32.MeetingNoteSource) {
-      return _i32.MeetingNoteSource.fromJson(data) as T;
+    if (t == _i32.ItemWatcher) {
+      return _i32.ItemWatcher.fromJson(data) as T;
     }
-    if (t == _i33.Membership) {
-      return _i33.Membership.fromJson(data) as T;
+    if (t == _i33.MeetingAgenda) {
+      return _i33.MeetingAgenda.fromJson(data) as T;
     }
-    if (t == _i34.OnboardingAssignment) {
-      return _i34.OnboardingAssignment.fromJson(data) as T;
+    if (t == _i34.MeetingItem) {
+      return _i34.MeetingItem.fromJson(data) as T;
     }
-    if (t == _i35.OnboardingTemplate) {
-      return _i35.OnboardingTemplate.fromJson(data) as T;
+    if (t == _i35.MeetingItemNote) {
+      return _i35.MeetingItemNote.fromJson(data) as T;
     }
-    if (t == _i36.Organization) {
-      return _i36.Organization.fromJson(data) as T;
+    if (t == _i36.MeetingNoteSource) {
+      return _i36.MeetingNoteSource.fromJson(data) as T;
     }
-    if (t == _i37.Partnership) {
-      return _i37.Partnership.fromJson(data) as T;
+    if (t == _i37.Membership) {
+      return _i37.Membership.fromJson(data) as T;
     }
-    if (t == _i38.PasswordReset) {
-      return _i38.PasswordReset.fromJson(data) as T;
+    if (t == _i38.OnboardingAssignment) {
+      return _i38.OnboardingAssignment.fromJson(data) as T;
     }
-    if (t == _i39.Project) {
-      return _i39.Project.fromJson(data) as T;
+    if (t == _i39.OnboardingTemplate) {
+      return _i39.OnboardingTemplate.fromJson(data) as T;
     }
-    if (t == _i40.ReportTemplate) {
-      return _i40.ReportTemplate.fromJson(data) as T;
+    if (t == _i40.Organization) {
+      return _i40.Organization.fromJson(data) as T;
     }
-    if (t == _i41.RoleNavPreference) {
-      return _i41.RoleNavPreference.fromJson(data) as T;
+    if (t == _i41.Partnership) {
+      return _i41.Partnership.fromJson(data) as T;
     }
-    if (t == _i42.Space) {
-      return _i42.Space.fromJson(data) as T;
+    if (t == _i42.PasswordReset) {
+      return _i42.PasswordReset.fromJson(data) as T;
     }
-    if (t == _i43.SyncCursor) {
-      return _i43.SyncCursor.fromJson(data) as T;
+    if (t == _i43.Project) {
+      return _i43.Project.fromJson(data) as T;
     }
-    if (t == _i44.Task) {
-      return _i44.Task.fromJson(data) as T;
+    if (t == _i44.ReportTemplate) {
+      return _i44.ReportTemplate.fromJson(data) as T;
     }
-    if (t == _i45.TaskDeltaPage) {
-      return _i45.TaskDeltaPage.fromJson(data) as T;
+    if (t == _i45.RoleNavPreference) {
+      return _i45.RoleNavPreference.fromJson(data) as T;
     }
-    if (t == _i46.Team) {
-      return _i46.Team.fromJson(data) as T;
+    if (t == _i46.Space) {
+      return _i46.Space.fromJson(data) as T;
     }
-    if (t == _i47.TeamMember) {
-      return _i47.TeamMember.fromJson(data) as T;
+    if (t == _i47.SyncCursor) {
+      return _i47.SyncCursor.fromJson(data) as T;
     }
-    if (t == _i48.UserPreference) {
-      return _i48.UserPreference.fromJson(data) as T;
+    if (t == _i48.Task) {
+      return _i48.Task.fromJson(data) as T;
     }
-    if (t == _i49.UserProfile) {
-      return _i49.UserProfile.fromJson(data) as T;
+    if (t == _i49.TaskDeltaPage) {
+      return _i49.TaskDeltaPage.fromJson(data) as T;
+    }
+    if (t == _i50.Team) {
+      return _i50.Team.fromJson(data) as T;
+    }
+    if (t == _i51.TeamMember) {
+      return _i51.TeamMember.fromJson(data) as T;
+    }
+    if (t == _i52.UserPreference) {
+      return _i52.UserPreference.fromJson(data) as T;
+    }
+    if (t == _i53.UserProfile) {
+      return _i53.UserProfile.fromJson(data) as T;
     }
     if (t == _i1.getType<_i2.Attachment?>()) {
       return (data != null ? _i2.Attachment.fromJson(data) : null) as T;
@@ -367,154 +387,176 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i1.getType<_i23.EquipmentAsset?>()) {
       return (data != null ? _i23.EquipmentAsset.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i24.FieldConfig?>()) {
-      return (data != null ? _i24.FieldConfig.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i25.InsightSnapshot?>()) {
-      return (data != null ? _i25.InsightSnapshot.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i26.IntakeRequest?>()) {
-      return (data != null ? _i26.IntakeRequest.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i27.ItemComment?>()) {
-      return (data != null ? _i27.ItemComment.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i28.ItemWatcher?>()) {
-      return (data != null ? _i28.ItemWatcher.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i29.MeetingAgenda?>()) {
-      return (data != null ? _i29.MeetingAgenda.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i30.MeetingItem?>()) {
-      return (data != null ? _i30.MeetingItem.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i31.MeetingItemNote?>()) {
-      return (data != null ? _i31.MeetingItemNote.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i32.MeetingNoteSource?>()) {
-      return (data != null ? _i32.MeetingNoteSource.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i33.Membership?>()) {
-      return (data != null ? _i33.Membership.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i34.OnboardingAssignment?>()) {
-      return (data != null ? _i34.OnboardingAssignment.fromJson(data) : null)
+    if (t == _i1.getType<_i24.MakerflowAuthException?>()) {
+      return (data != null ? _i24.MakerflowAuthException.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i35.OnboardingTemplate?>()) {
-      return (data != null ? _i35.OnboardingTemplate.fromJson(data) : null)
+    if (t == _i1.getType<_i25.MakerflowConflictException?>()) {
+      return (data != null
+              ? _i25.MakerflowConflictException.fromJson(data)
+              : null)
           as T;
     }
-    if (t == _i1.getType<_i36.Organization?>()) {
-      return (data != null ? _i36.Organization.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i26.MakerflowForbiddenException?>()) {
+      return (data != null
+              ? _i26.MakerflowForbiddenException.fromJson(data)
+              : null)
+          as T;
     }
-    if (t == _i1.getType<_i37.Partnership?>()) {
-      return (data != null ? _i37.Partnership.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i27.MakerflowNotFoundException?>()) {
+      return (data != null
+              ? _i27.MakerflowNotFoundException.fromJson(data)
+              : null)
+          as T;
     }
-    if (t == _i1.getType<_i38.PasswordReset?>()) {
-      return (data != null ? _i38.PasswordReset.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i28.FieldConfig?>()) {
+      return (data != null ? _i28.FieldConfig.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i39.Project?>()) {
-      return (data != null ? _i39.Project.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i29.InsightSnapshot?>()) {
+      return (data != null ? _i29.InsightSnapshot.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i40.ReportTemplate?>()) {
-      return (data != null ? _i40.ReportTemplate.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i30.IntakeRequest?>()) {
+      return (data != null ? _i30.IntakeRequest.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i41.RoleNavPreference?>()) {
-      return (data != null ? _i41.RoleNavPreference.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i31.ItemComment?>()) {
+      return (data != null ? _i31.ItemComment.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i42.Space?>()) {
-      return (data != null ? _i42.Space.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i32.ItemWatcher?>()) {
+      return (data != null ? _i32.ItemWatcher.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i43.SyncCursor?>()) {
-      return (data != null ? _i43.SyncCursor.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i33.MeetingAgenda?>()) {
+      return (data != null ? _i33.MeetingAgenda.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i44.Task?>()) {
-      return (data != null ? _i44.Task.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i34.MeetingItem?>()) {
+      return (data != null ? _i34.MeetingItem.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i45.TaskDeltaPage?>()) {
-      return (data != null ? _i45.TaskDeltaPage.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i35.MeetingItemNote?>()) {
+      return (data != null ? _i35.MeetingItemNote.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i46.Team?>()) {
-      return (data != null ? _i46.Team.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i36.MeetingNoteSource?>()) {
+      return (data != null ? _i36.MeetingNoteSource.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i47.TeamMember?>()) {
-      return (data != null ? _i47.TeamMember.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i37.Membership?>()) {
+      return (data != null ? _i37.Membership.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i48.UserPreference?>()) {
-      return (data != null ? _i48.UserPreference.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i38.OnboardingAssignment?>()) {
+      return (data != null ? _i38.OnboardingAssignment.fromJson(data) : null)
+          as T;
     }
-    if (t == _i1.getType<_i49.UserProfile?>()) {
-      return (data != null ? _i49.UserProfile.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i39.OnboardingTemplate?>()) {
+      return (data != null ? _i39.OnboardingTemplate.fromJson(data) : null)
+          as T;
     }
-    if (t == List<_i44.Task>) {
-      return (data as List).map((e) => deserialize<_i44.Task>(e)).toList() as T;
+    if (t == _i1.getType<_i40.Organization?>()) {
+      return (data != null ? _i40.Organization.fromJson(data) : null) as T;
     }
-    if (t == List<_i50.ItemComment>) {
+    if (t == _i1.getType<_i41.Partnership?>()) {
+      return (data != null ? _i41.Partnership.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i42.PasswordReset?>()) {
+      return (data != null ? _i42.PasswordReset.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i43.Project?>()) {
+      return (data != null ? _i43.Project.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i44.ReportTemplate?>()) {
+      return (data != null ? _i44.ReportTemplate.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i45.RoleNavPreference?>()) {
+      return (data != null ? _i45.RoleNavPreference.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i46.Space?>()) {
+      return (data != null ? _i46.Space.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i47.SyncCursor?>()) {
+      return (data != null ? _i47.SyncCursor.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i48.Task?>()) {
+      return (data != null ? _i48.Task.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i49.TaskDeltaPage?>()) {
+      return (data != null ? _i49.TaskDeltaPage.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i50.Team?>()) {
+      return (data != null ? _i50.Team.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i51.TeamMember?>()) {
+      return (data != null ? _i51.TeamMember.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i52.UserPreference?>()) {
+      return (data != null ? _i52.UserPreference.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i53.UserProfile?>()) {
+      return (data != null ? _i53.UserProfile.fromJson(data) : null) as T;
+    }
+    if (t == List<_i48.Task>) {
+      return (data as List).map((e) => deserialize<_i48.Task>(e)).toList() as T;
+    }
+    if (t == List<_i54.ItemComment>) {
       return (data as List)
-              .map((e) => deserialize<_i50.ItemComment>(e))
+              .map((e) => deserialize<_i54.ItemComment>(e))
               .toList()
           as T;
     }
-    if (t == List<_i51.Consumable>) {
-      return (data as List).map((e) => deserialize<_i51.Consumable>(e)).toList()
+    if (t == List<_i55.Consumable>) {
+      return (data as List).map((e) => deserialize<_i55.Consumable>(e)).toList()
           as T;
     }
-    if (t == List<_i52.EquipmentAsset>) {
+    if (t == List<_i56.EquipmentAsset>) {
       return (data as List)
-              .map((e) => deserialize<_i52.EquipmentAsset>(e))
+              .map((e) => deserialize<_i56.EquipmentAsset>(e))
               .toList()
           as T;
     }
-    if (t == List<_i53.IntakeRequest>) {
+    if (t == List<_i57.IntakeRequest>) {
       return (data as List)
-              .map((e) => deserialize<_i53.IntakeRequest>(e))
+              .map((e) => deserialize<_i57.IntakeRequest>(e))
               .toList()
           as T;
     }
-    if (t == List<_i54.MeetingAgenda>) {
+    if (t == List<_i58.MeetingAgenda>) {
       return (data as List)
-              .map((e) => deserialize<_i54.MeetingAgenda>(e))
+              .map((e) => deserialize<_i58.MeetingAgenda>(e))
               .toList()
           as T;
     }
-    if (t == List<_i55.MeetingItem>) {
+    if (t == List<_i59.MeetingItem>) {
       return (data as List)
-              .map((e) => deserialize<_i55.MeetingItem>(e))
+              .map((e) => deserialize<_i59.MeetingItem>(e))
               .toList()
           as T;
     }
-    if (t == List<_i56.OnboardingTemplate>) {
+    if (t == List<_i60.OnboardingTemplate>) {
       return (data as List)
-              .map((e) => deserialize<_i56.OnboardingTemplate>(e))
+              .map((e) => deserialize<_i60.OnboardingTemplate>(e))
               .toList()
           as T;
     }
-    if (t == List<_i57.Organization>) {
+    if (t == List<_i61.Organization>) {
       return (data as List)
-              .map((e) => deserialize<_i57.Organization>(e))
+              .map((e) => deserialize<_i61.Organization>(e))
               .toList()
           as T;
     }
-    if (t == List<_i58.Membership>) {
-      return (data as List).map((e) => deserialize<_i58.Membership>(e)).toList()
+    if (t == List<_i62.Membership>) {
+      return (data as List).map((e) => deserialize<_i62.Membership>(e)).toList()
           as T;
     }
-    if (t == List<_i59.Partnership>) {
+    if (t == List<_i63.Partnership>) {
       return (data as List)
-              .map((e) => deserialize<_i59.Partnership>(e))
+              .map((e) => deserialize<_i63.Partnership>(e))
               .toList()
           as T;
     }
-    if (t == List<_i60.Project>) {
-      return (data as List).map((e) => deserialize<_i60.Project>(e)).toList()
+    if (t == List<_i64.Project>) {
+      return (data as List).map((e) => deserialize<_i64.Project>(e)).toList()
           as T;
     }
-    if (t == List<_i61.Task>) {
-      return (data as List).map((e) => deserialize<_i61.Task>(e)).toList() as T;
+    if (t == List<_i65.Task>) {
+      return (data as List).map((e) => deserialize<_i65.Task>(e)).toList() as T;
     }
     try {
-      return _i62.Protocol().deserialize<T>(data, t);
+      return _i66.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     return super.deserialize<T>(data, t);
   }
@@ -543,32 +585,36 @@ class Protocol extends _i1.SerializationManager {
       _i21.TaskPriority => 'TaskPriority',
       _i22.TaskStatus => 'TaskStatus',
       _i23.EquipmentAsset => 'EquipmentAsset',
-      _i24.FieldConfig => 'FieldConfig',
-      _i25.InsightSnapshot => 'InsightSnapshot',
-      _i26.IntakeRequest => 'IntakeRequest',
-      _i27.ItemComment => 'ItemComment',
-      _i28.ItemWatcher => 'ItemWatcher',
-      _i29.MeetingAgenda => 'MeetingAgenda',
-      _i30.MeetingItem => 'MeetingItem',
-      _i31.MeetingItemNote => 'MeetingItemNote',
-      _i32.MeetingNoteSource => 'MeetingNoteSource',
-      _i33.Membership => 'Membership',
-      _i34.OnboardingAssignment => 'OnboardingAssignment',
-      _i35.OnboardingTemplate => 'OnboardingTemplate',
-      _i36.Organization => 'Organization',
-      _i37.Partnership => 'Partnership',
-      _i38.PasswordReset => 'PasswordReset',
-      _i39.Project => 'Project',
-      _i40.ReportTemplate => 'ReportTemplate',
-      _i41.RoleNavPreference => 'RoleNavPreference',
-      _i42.Space => 'Space',
-      _i43.SyncCursor => 'SyncCursor',
-      _i44.Task => 'Task',
-      _i45.TaskDeltaPage => 'TaskDeltaPage',
-      _i46.Team => 'Team',
-      _i47.TeamMember => 'TeamMember',
-      _i48.UserPreference => 'UserPreference',
-      _i49.UserProfile => 'UserProfile',
+      _i24.MakerflowAuthException => 'MakerflowAuthException',
+      _i25.MakerflowConflictException => 'MakerflowConflictException',
+      _i26.MakerflowForbiddenException => 'MakerflowForbiddenException',
+      _i27.MakerflowNotFoundException => 'MakerflowNotFoundException',
+      _i28.FieldConfig => 'FieldConfig',
+      _i29.InsightSnapshot => 'InsightSnapshot',
+      _i30.IntakeRequest => 'IntakeRequest',
+      _i31.ItemComment => 'ItemComment',
+      _i32.ItemWatcher => 'ItemWatcher',
+      _i33.MeetingAgenda => 'MeetingAgenda',
+      _i34.MeetingItem => 'MeetingItem',
+      _i35.MeetingItemNote => 'MeetingItemNote',
+      _i36.MeetingNoteSource => 'MeetingNoteSource',
+      _i37.Membership => 'Membership',
+      _i38.OnboardingAssignment => 'OnboardingAssignment',
+      _i39.OnboardingTemplate => 'OnboardingTemplate',
+      _i40.Organization => 'Organization',
+      _i41.Partnership => 'Partnership',
+      _i42.PasswordReset => 'PasswordReset',
+      _i43.Project => 'Project',
+      _i44.ReportTemplate => 'ReportTemplate',
+      _i45.RoleNavPreference => 'RoleNavPreference',
+      _i46.Space => 'Space',
+      _i47.SyncCursor => 'SyncCursor',
+      _i48.Task => 'Task',
+      _i49.TaskDeltaPage => 'TaskDeltaPage',
+      _i50.Team => 'Team',
+      _i51.TeamMember => 'TeamMember',
+      _i52.UserPreference => 'UserPreference',
+      _i53.UserProfile => 'UserProfile',
       _ => null,
     };
   }
@@ -627,60 +673,68 @@ class Protocol extends _i1.SerializationManager {
         return 'TaskStatus';
       case _i23.EquipmentAsset():
         return 'EquipmentAsset';
-      case _i24.FieldConfig():
+      case _i24.MakerflowAuthException():
+        return 'MakerflowAuthException';
+      case _i25.MakerflowConflictException():
+        return 'MakerflowConflictException';
+      case _i26.MakerflowForbiddenException():
+        return 'MakerflowForbiddenException';
+      case _i27.MakerflowNotFoundException():
+        return 'MakerflowNotFoundException';
+      case _i28.FieldConfig():
         return 'FieldConfig';
-      case _i25.InsightSnapshot():
+      case _i29.InsightSnapshot():
         return 'InsightSnapshot';
-      case _i26.IntakeRequest():
+      case _i30.IntakeRequest():
         return 'IntakeRequest';
-      case _i27.ItemComment():
+      case _i31.ItemComment():
         return 'ItemComment';
-      case _i28.ItemWatcher():
+      case _i32.ItemWatcher():
         return 'ItemWatcher';
-      case _i29.MeetingAgenda():
+      case _i33.MeetingAgenda():
         return 'MeetingAgenda';
-      case _i30.MeetingItem():
+      case _i34.MeetingItem():
         return 'MeetingItem';
-      case _i31.MeetingItemNote():
+      case _i35.MeetingItemNote():
         return 'MeetingItemNote';
-      case _i32.MeetingNoteSource():
+      case _i36.MeetingNoteSource():
         return 'MeetingNoteSource';
-      case _i33.Membership():
+      case _i37.Membership():
         return 'Membership';
-      case _i34.OnboardingAssignment():
+      case _i38.OnboardingAssignment():
         return 'OnboardingAssignment';
-      case _i35.OnboardingTemplate():
+      case _i39.OnboardingTemplate():
         return 'OnboardingTemplate';
-      case _i36.Organization():
+      case _i40.Organization():
         return 'Organization';
-      case _i37.Partnership():
+      case _i41.Partnership():
         return 'Partnership';
-      case _i38.PasswordReset():
+      case _i42.PasswordReset():
         return 'PasswordReset';
-      case _i39.Project():
+      case _i43.Project():
         return 'Project';
-      case _i40.ReportTemplate():
+      case _i44.ReportTemplate():
         return 'ReportTemplate';
-      case _i41.RoleNavPreference():
+      case _i45.RoleNavPreference():
         return 'RoleNavPreference';
-      case _i42.Space():
+      case _i46.Space():
         return 'Space';
-      case _i43.SyncCursor():
+      case _i47.SyncCursor():
         return 'SyncCursor';
-      case _i44.Task():
+      case _i48.Task():
         return 'Task';
-      case _i45.TaskDeltaPage():
+      case _i49.TaskDeltaPage():
         return 'TaskDeltaPage';
-      case _i46.Team():
+      case _i50.Team():
         return 'Team';
-      case _i47.TeamMember():
+      case _i51.TeamMember():
         return 'TeamMember';
-      case _i48.UserPreference():
+      case _i52.UserPreference():
         return 'UserPreference';
-      case _i49.UserProfile():
+      case _i53.UserProfile():
         return 'UserProfile';
     }
-    className = _i62.Protocol().getClassNameForObject(data);
+    className = _i66.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth.$className';
     }
@@ -759,87 +813,99 @@ class Protocol extends _i1.SerializationManager {
     if (dataClassName == 'EquipmentAsset') {
       return deserialize<_i23.EquipmentAsset>(data['data']);
     }
+    if (dataClassName == 'MakerflowAuthException') {
+      return deserialize<_i24.MakerflowAuthException>(data['data']);
+    }
+    if (dataClassName == 'MakerflowConflictException') {
+      return deserialize<_i25.MakerflowConflictException>(data['data']);
+    }
+    if (dataClassName == 'MakerflowForbiddenException') {
+      return deserialize<_i26.MakerflowForbiddenException>(data['data']);
+    }
+    if (dataClassName == 'MakerflowNotFoundException') {
+      return deserialize<_i27.MakerflowNotFoundException>(data['data']);
+    }
     if (dataClassName == 'FieldConfig') {
-      return deserialize<_i24.FieldConfig>(data['data']);
+      return deserialize<_i28.FieldConfig>(data['data']);
     }
     if (dataClassName == 'InsightSnapshot') {
-      return deserialize<_i25.InsightSnapshot>(data['data']);
+      return deserialize<_i29.InsightSnapshot>(data['data']);
     }
     if (dataClassName == 'IntakeRequest') {
-      return deserialize<_i26.IntakeRequest>(data['data']);
+      return deserialize<_i30.IntakeRequest>(data['data']);
     }
     if (dataClassName == 'ItemComment') {
-      return deserialize<_i27.ItemComment>(data['data']);
+      return deserialize<_i31.ItemComment>(data['data']);
     }
     if (dataClassName == 'ItemWatcher') {
-      return deserialize<_i28.ItemWatcher>(data['data']);
+      return deserialize<_i32.ItemWatcher>(data['data']);
     }
     if (dataClassName == 'MeetingAgenda') {
-      return deserialize<_i29.MeetingAgenda>(data['data']);
+      return deserialize<_i33.MeetingAgenda>(data['data']);
     }
     if (dataClassName == 'MeetingItem') {
-      return deserialize<_i30.MeetingItem>(data['data']);
+      return deserialize<_i34.MeetingItem>(data['data']);
     }
     if (dataClassName == 'MeetingItemNote') {
-      return deserialize<_i31.MeetingItemNote>(data['data']);
+      return deserialize<_i35.MeetingItemNote>(data['data']);
     }
     if (dataClassName == 'MeetingNoteSource') {
-      return deserialize<_i32.MeetingNoteSource>(data['data']);
+      return deserialize<_i36.MeetingNoteSource>(data['data']);
     }
     if (dataClassName == 'Membership') {
-      return deserialize<_i33.Membership>(data['data']);
+      return deserialize<_i37.Membership>(data['data']);
     }
     if (dataClassName == 'OnboardingAssignment') {
-      return deserialize<_i34.OnboardingAssignment>(data['data']);
+      return deserialize<_i38.OnboardingAssignment>(data['data']);
     }
     if (dataClassName == 'OnboardingTemplate') {
-      return deserialize<_i35.OnboardingTemplate>(data['data']);
+      return deserialize<_i39.OnboardingTemplate>(data['data']);
     }
     if (dataClassName == 'Organization') {
-      return deserialize<_i36.Organization>(data['data']);
+      return deserialize<_i40.Organization>(data['data']);
     }
     if (dataClassName == 'Partnership') {
-      return deserialize<_i37.Partnership>(data['data']);
+      return deserialize<_i41.Partnership>(data['data']);
     }
     if (dataClassName == 'PasswordReset') {
-      return deserialize<_i38.PasswordReset>(data['data']);
+      return deserialize<_i42.PasswordReset>(data['data']);
     }
     if (dataClassName == 'Project') {
-      return deserialize<_i39.Project>(data['data']);
+      return deserialize<_i43.Project>(data['data']);
     }
     if (dataClassName == 'ReportTemplate') {
-      return deserialize<_i40.ReportTemplate>(data['data']);
+      return deserialize<_i44.ReportTemplate>(data['data']);
     }
     if (dataClassName == 'RoleNavPreference') {
-      return deserialize<_i41.RoleNavPreference>(data['data']);
+      return deserialize<_i45.RoleNavPreference>(data['data']);
     }
     if (dataClassName == 'Space') {
-      return deserialize<_i42.Space>(data['data']);
+      return deserialize<_i46.Space>(data['data']);
     }
     if (dataClassName == 'SyncCursor') {
-      return deserialize<_i43.SyncCursor>(data['data']);
+      return deserialize<_i47.SyncCursor>(data['data']);
     }
     if (dataClassName == 'Task') {
-      return deserialize<_i44.Task>(data['data']);
+      return deserialize<_i48.Task>(data['data']);
     }
     if (dataClassName == 'TaskDeltaPage') {
-      return deserialize<_i45.TaskDeltaPage>(data['data']);
+      return deserialize<_i49.TaskDeltaPage>(data['data']);
     }
     if (dataClassName == 'Team') {
-      return deserialize<_i46.Team>(data['data']);
+      return deserialize<_i50.Team>(data['data']);
     }
     if (dataClassName == 'TeamMember') {
-      return deserialize<_i47.TeamMember>(data['data']);
+      return deserialize<_i51.TeamMember>(data['data']);
     }
     if (dataClassName == 'UserPreference') {
-      return deserialize<_i48.UserPreference>(data['data']);
+      return deserialize<_i52.UserPreference>(data['data']);
     }
     if (dataClassName == 'UserProfile') {
-      return deserialize<_i49.UserProfile>(data['data']);
+      return deserialize<_i53.UserProfile>(data['data']);
     }
     if (dataClassName.startsWith('serverpod_auth.')) {
       data['className'] = dataClassName.substring(15);
-      return _i62.Protocol().deserializeByClassName(data);
+      return _i66.Protocol().deserializeByClassName(data);
     }
     return super.deserializeByClassName(data);
   }
@@ -854,7 +920,7 @@ class Protocol extends _i1.SerializationManager {
       return null;
     }
     try {
-      return _i62.Protocol().mapRecordToJson(record);
+      return _i66.Protocol().mapRecordToJson(record);
     } catch (_) {}
     throw Exception('Unsupported record type ${record.runtimeType}');
   }

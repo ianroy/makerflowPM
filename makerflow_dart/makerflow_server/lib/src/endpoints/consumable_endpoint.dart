@@ -3,7 +3,6 @@ import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
 import '../business/audit.dart';
 import '../business/rbac.dart';
-import 'task_endpoint.dart' show MakerflowNotFoundException;
 
 /// Consumables — stock + reorder tracking. Reorder status is derived on save so
 /// the UI can show a non-color cue (WCAG 1.4.1).
@@ -32,7 +31,7 @@ class ConsumableEndpoint extends Endpoint {
     } else {
       final existing = await Consumable.db.findById(session, withStatus.id!);
       if (existing == null || existing.deletedAt != null) {
-        throw const MakerflowNotFoundException('Consumable not found.');
+        throw MakerflowNotFoundException(message: 'Consumable not found.');
       }
       saved = await Consumable.db.updateRow(
         session,

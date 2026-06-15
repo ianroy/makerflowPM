@@ -3,7 +3,6 @@ import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
 import '../business/audit.dart';
 import '../business/rbac.dart';
-import 'task_endpoint.dart' show MakerflowNotFoundException;
 
 /// Scored intake queue. Feature-flagged at the app layer (matches the legacy
 /// FEATURE_INTAKE_ENABLED). Items can convert into a project.
@@ -36,7 +35,7 @@ class IntakeEndpoint extends Endpoint {
     final ctx = await RbacGuard.requireRole(session, organizationId, MembershipRole.staff);
     final r = await IntakeRequest.db.findById(session, requestId);
     if (r == null || r.organizationId != organizationId || r.deletedAt != null) {
-      throw const MakerflowNotFoundException('Intake request not found.');
+      throw MakerflowNotFoundException(message: 'Intake request not found.');
     }
     final now = DateTime.now().toUtc();
     final project = await Project.db.insertRow(

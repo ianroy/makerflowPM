@@ -8,7 +8,12 @@ Authoritative per-card state for the Dart rebuild. Maps to the task cards in [`.
 > - App: `flutter analyze` clean · `flutter test` ✓ · `flutter build web` ✓ (2.7 MB; WASM dry-run ✓).
 > - Generated code (`makerflow_server/lib/src/generated/**`, `makerflow_client/lib/**`) and the first migration are committed.
 >
-> **Not yet run:** the server against live Postgres/Redis (Docker absent in the build env) and a Flutter↔server endpoint round-trip. The Flutter app still uses in-memory repositories until the generated client is wired in.
+> **Live run (2026-06-15):** stood up Postgres 17 (:8090) + Redis 8 (:8091) without Docker and exercised the real stack:
+> - `serverpod ... --role maintenance --apply-migrations` → migration applied, **56 tables** in Postgres.
+> - server booted (monolith); `GET /` → `200 OK` (built-in liveness); `POST /health{ready}` → `true` (live `Organization.db.count`).
+> - `POST /task{list}` unauthenticated → **`400` + typed `MakerflowAuthException`** (RBAC gate fires end-to-end; serializable exceptions verified — `fl-0-error-taxonomy` done).
+>
+> **Still using in-memory repositories** in the Flutter app until the generated `ServerpodTaskRepository` is wired in. Auth sign-in flow + role-matrix fixtures still to do.
 
 ## Legend
 `[x]` built · `[~]` partial / authored-not-verified · `[ ]` not started
@@ -91,9 +96,9 @@ Authoritative per-card state for the Dart rebuild. Maps to the task cards in [`.
 
 ## Immediate next steps (in order)
 
-1. ~~Install toolchain + first compile~~ — **done** (everything analyzes/builds; migration generated).
-2. Bring up Postgres + Redis (Docker or `brew install postgresql@16 redis`), `dart bin/main.dart --apply-migrations`, run the server, and verify a Flutter↔server round-trip.
+1. ~~Install toolchain + first compile~~ — **done**.
+2. ~~Live DB: apply migration + boot server + round-trip~~ — **done** (56 tables; `health.ready` → true; RBAC negative → 400 typed).
 3. Close `fl-0-a11y-web-spike` (the gate): run the AT matrix on `/spike` against `flutter run -d chrome`; decide Flutter Web vs server-rendered fallback.
-4. Finish `fl-0-auth-rbac-tenancy`: real sign-in, org switch wired to live auth, fill the role-matrix test fixtures (serverpod_test).
-5. Swap in-memory repositories → `Serverpod*` impls wrapping the generated client.
-6. Re-add `/healthz` on the 3.x Relic API (`fl-0-health-route`).
+4. Finish `fl-0-auth-rbac-tenancy`: real sign-in (serverpod_auth email/password), org switch wired to live auth, fill the role-matrix test fixtures (serverpod_test).
+5. Swap in-memory repositories → `Serverpod*` impls wrapping the generated client (then the Flutter app talks to the live server).
+6. Map typed exceptions to the Flutter error surface + a11y announce (client side of `fl-0-error-taxonomy`).
