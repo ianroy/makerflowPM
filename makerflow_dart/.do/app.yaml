@@ -1,0 +1,74 @@
+# DigitalOcean App Platform spec for the MakerFlow PM Dart rebuild
+# (Serverpod server). Deploy:
+#   doctl apps create --spec makerflow_dart/.do/app.yaml
+#   doctl apps update <APP_ID> --spec makerflow_dart/.do/app.yaml
+# or connect the repo in the DO dashboard (deploys on push to main).
+#
+# This is SEPARATE from the Python app's /.do/app.yaml at the repo root — the
+# two products deploy independently (rebuild is "new deployments only").
+name: makerflow-dart
+region: nyc
+
+services:
+  - name: web
+    # Build the Serverpod image from the monorepo root context.
+    dockerfile_path: makerflow_dart/makerflow_server/Dockerfile
+    source_dir: makerflow_dart
+    github:
+      repo: ianroy/makerflowPM
+      branch: main
+      deploy_on_push: true
+    http_port: 8080
+    instance_count: 1
+    instance_size_slug: basic-xs
+    health_check:
+      # Serverpod's API server answers GET / with 200 OK (built-in liveness).
+      http_path: /
+      initial_delay_seconds: 45
+      period_seconds: 10
+      timeout_seconds: 5
+      failure_threshold: 3
+    envs:
+      - key: SERVERPOD_RUN_MODE
+        value: production
+      # --- PostgreSQL (bound from the managed DB below) ---
+      - key: DATABASE_HOST
+        value: ${makerflow-db.HOSTNAME}
+      - key: DATABASE_PORT
+        value: ${makerflow-db.PORT}
+      - key: DATABASE_NAME
+        value: ${makerflow-db.DATABASE}
+      - key: DATABASE_USER
+        value: ${makerflow-db.USERNAME}
+      - key: DATABASE_PASSWORD
+        value: ${makerflow-db.PASSWORD}
+        type: SECRET
+      - key: DATABASE_REQUIRE_SSL
+        value: "true"
+      # --- Redis / Valkey (bound from the managed cache below) ---
+      - key: REDIS_HOST
+        value: ${makerflow-redis.HOSTNAME}
+      - key: REDIS_PORT
+        value: ${makerflow-redis.PORT}
+      - key: REDIS_USER
+        value: ${makerflow-redis.USERNAME}
+      - key: REDIS_PASSWORD
+        value: ${makerflow-redis.PASSWORD}
+        type: SECRET
+      - key: REDIS_REQUIRE_SSL
+        value: "true"
+      # --- App ---
+      - key: PUBLIC_HOST
+        value: ${APP_DOMAIN}
+      - key: SERVICE_SECRET
+        value: REPLACE_WITH_64_CHAR_SECRET   # set as an encrypted secret in DO
+        type: SECRET
+
+databases:
+  - name: makerflow-db
+    engine: PG
+    version: "16"
+    production: false        # flip to true (+ a sized cluster) for production
+  - name: makerflow-redis
+    engine: REDIS
+    production: false

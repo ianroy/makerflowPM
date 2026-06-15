@@ -384,7 +384,7 @@ The Dart rebuild is built to ship from GitHub across all six targets plus the se
 | **Android** | `flutter build appbundle` in Actions → upload to **Play Console** (internal track) via Fastlane; attach the APK to a **GitHub Release** for sideload testing. |
 | **iOS** | `flutter build ipa` on a macOS runner (signing via Fastlane match) → **TestFlight**. |
 | **macOS / Windows / Linux** | `flutter build {macos,windows,linux}` on matching runners → notarized `.dmg` / signed MSIX / Flatpak-Snap-AppImage → **GitHub Releases**. |
-| **Server** | Build the Serverpod Docker image in Actions → push to **GitHub Container Registry (GHCR)** → a deploy job ships it to your host (DigitalOcean, etc.). |
+| **Server** | **DigitalOcean App Platform** (the required target) builds [`makerflow_dart/makerflow_server/Dockerfile`](makerflow_dart/makerflow_server/Dockerfile) on push, with DO **Managed PostgreSQL + Redis** — spec: [`makerflow_dart/.do/app.yaml`](makerflow_dart/.do/app.yaml). `doctl apps create --spec makerflow_dart/.do/app.yaml`, or connect the repo in the DO dashboard. |
 
 Move [`makerflow_dart/.github/workflows/`](makerflow_dart/.github/workflows/) to the repo-root `.github/workflows/` so GitHub picks the workflows up. Per-platform store/signing requirements (privacy manifests, entitlements, notarization) are in [`FLUTTER_REBUILD_PLAN.md` Appendix K](FLUTTER_REBUILD_PLAN.md#k-platform--store-compliance).
 
