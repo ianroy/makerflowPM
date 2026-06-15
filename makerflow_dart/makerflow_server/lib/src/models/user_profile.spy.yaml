@@ -1,0 +1,16 @@
+### Profile extension keyed to a serverpod_auth UserInfo. serverpod_auth owns
+### the auth record (email, hash, scopes); this holds MakerFlow profile fields.
+class: UserProfile
+table: user_profile
+fields:
+  userInfoId: int          # serverpod_auth UserInfo id
+  displayName: String?
+  title: String?
+  avatarAttachmentId: int?
+  isActive: bool, default=true
+  createdAt: DateTime
+  updatedAt: DateTime
+indexes:
+  user_profile_unique_idx:
+    fields: userInfoId
+    unique: true

@@ -1,0 +1,15 @@
+### Role-based onboarding checklist. itemsJson holds the ordered steps.
+class: OnboardingTemplate
+table: onboarding_template
+fields:
+  organizationId: int, relation(parent=organization)
+  name: String
+  forRole: MembershipRole?
+  itemsJson: String         # serialized list of checklist steps
+  createdAt: DateTime
+  updatedAt: DateTime
+  deletedAt: DateTime?
+  deletedByUserInfoId: int?
+indexes:
+  onboarding_template_org_idx:
+    fields: organizationId

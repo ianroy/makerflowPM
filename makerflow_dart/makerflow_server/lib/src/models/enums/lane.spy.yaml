@@ -1,0 +1,9 @@
+# Portfolio lanes a project sits in (mirrors the legacy LANES constant).
+enum: Lane
+serialized: byName
+values:
+  - intake
+  - discovery
+  - build
+  - operate
+  - sunset

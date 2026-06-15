@@ -1,0 +1,12 @@
+### Timeline entry (edit/comment) on a meeting item.
+class: MeetingItemUpdate
+table: meeting_item_update
+fields:
+  organizationId: int, relation(parent=organization)
+  itemId: int, relation(parent=meeting_item)
+  body: String
+  createdAt: DateTime
+  createdByUserInfoId: int?
+indexes:
+  meeting_item_update_item_idx:
+    fields: organizationId, itemId

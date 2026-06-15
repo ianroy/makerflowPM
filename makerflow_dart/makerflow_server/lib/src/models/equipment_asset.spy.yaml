@@ -1,0 +1,25 @@
+### Trackable equipment with maintenance + certification state.
+class: EquipmentAsset
+table: equipment_asset
+fields:
+  organizationId: int, relation(parent=organization)
+  name: String
+  assetTag: String?
+  status: EquipmentStatus, default='operational'
+  spaceId: int?
+  certificationRequired: bool, default=false
+  lastMaintenanceAt: DateTime?
+  nextMaintenanceAt: DateTime?
+  notes: String?
+  clientUuid: String?
+  version: int, default=1
+  createdAt: DateTime
+  updatedAt: DateTime
+  createdByUserInfoId: int?
+  deletedAt: DateTime?
+  deletedByUserInfoId: int?
+indexes:
+  equipment_asset_org_idx:
+    fields: organizationId
+  equipment_asset_status_idx:
+    fields: organizationId, status

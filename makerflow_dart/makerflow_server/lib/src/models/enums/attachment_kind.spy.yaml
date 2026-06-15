@@ -1,0 +1,7 @@
+enum: AttachmentKind
+serialized: byName
+values:
+  - image
+  - document
+  - spreadsheet
+  - other

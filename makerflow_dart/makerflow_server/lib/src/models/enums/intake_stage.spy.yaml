@@ -1,0 +1,9 @@
+enum: IntakeStage
+serialized: byName
+values:
+  - submitted
+  - triaged
+  - scored
+  - accepted
+  - declined
+  - converted

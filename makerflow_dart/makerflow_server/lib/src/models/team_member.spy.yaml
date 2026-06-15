@@ -1,0 +1,14 @@
+### user × team join.
+class: TeamMember
+table: team_member
+fields:
+  organizationId: int, relation(parent=organization)
+  teamId: int, relation(parent=team)
+  userInfoId: int
+  createdAt: DateTime
+indexes:
+  team_member_unique_idx:
+    fields: teamId, userInfoId
+    unique: true
+  team_member_org_idx:
+    fields: organizationId

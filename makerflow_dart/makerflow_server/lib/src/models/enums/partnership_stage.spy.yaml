@@ -1,0 +1,9 @@
+enum: PartnershipStage
+serialized: byName
+values:
+  - prospect
+  - contacted
+  - negotiating
+  - active
+  - dormant
+  - ended

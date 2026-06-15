@@ -1,0 +1,49 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:makerflow_design/makerflow_design.dart';
+
+import '../../state/providers.dart';
+import '../shell/app_shell.dart';
+
+class ConsumablesScreen extends ConsumerWidget {
+  const ConsumablesScreen({super.key});
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = MakerflowTheme.of(context).colors;
+    return AppShell(
+      routePath: '/consumables',
+      title: 'Consumables',
+      child: AsyncList(
+        value: ref.watch(consumablesProvider),
+        itemBuilder: (context, k) => MfCard(
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(k.name, style: TextStyle(color: c.text, fontWeight: FontWeight.w700)),
+                    Text(
+                      '${k.quantityOnHand.toStringAsFixed(0)}${k.unit != null ? ' ${k.unit}' : ''} '
+                      '· reorder at ${k.reorderPoint.toStringAsFixed(0)}',
+                      style: TextStyle(color: c.muted, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              StatusBadge(status: _statusToken(k.status)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _statusToken(String s) => switch (s) {
+        'inStock' => 'done',
+        'low' => 'inProgress',
+        'reorder' => 'inProgress',
+        'outOfStock' => 'blocked',
+        _ => 'todo',
+      };
+}

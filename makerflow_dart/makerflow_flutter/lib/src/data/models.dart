@@ -38,12 +38,7 @@ class TaskVm {
       );
 }
 
-class ProjectVm {
-  ProjectVm({required this.id, required this.name, required this.status});
-  final int id;
-  final String name;
-  final String status;
-}
+// ProjectVm moved to feature_models.dart (richer: adds `lane`).
 
 /// Ordered kanban columns. Single source for both drag and keyboard moves.
 const kanbanColumns = <String>[

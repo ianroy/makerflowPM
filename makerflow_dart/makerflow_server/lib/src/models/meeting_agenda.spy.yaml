@@ -1,0 +1,19 @@
+### Tactical meeting agenda. Items hang off it (meeting_item).
+class: MeetingAgenda
+table: meeting_agenda
+fields:
+  organizationId: int, relation(parent=organization)
+  title: String
+  meetingAt: DateTime?
+  status: String, default='draft'   # draft | active | closed
+  ownerUserInfoId: int?
+  teamId: int?
+  spaceId: int?
+  createdAt: DateTime
+  updatedAt: DateTime
+  createdByUserInfoId: int?
+  deletedAt: DateTime?
+  deletedByUserInfoId: int?
+indexes:
+  meeting_agenda_org_idx:
+    fields: organizationId

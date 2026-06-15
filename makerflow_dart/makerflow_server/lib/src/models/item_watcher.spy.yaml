@@ -1,0 +1,15 @@
+### Follow/subscribe on any entity. Drives push fan-out (fl-5-push).
+class: ItemWatcher
+table: item_watcher
+fields:
+  organizationId: int, relation(parent=organization)
+  entityType: String
+  entityId: int
+  userInfoId: int
+  createdAt: DateTime
+indexes:
+  item_watcher_unique_idx:
+    fields: organizationId, entityType, entityId, userInfoId
+    unique: true
+  item_watcher_entity_idx:
+    fields: organizationId, entityType, entityId

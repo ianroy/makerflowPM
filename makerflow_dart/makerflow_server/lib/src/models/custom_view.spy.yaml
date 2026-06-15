@@ -1,0 +1,19 @@
+### Saved filter/column set (per user, optionally shared). filtersJson and
+### columnsJson hold serialized config (the legacy custom_views payload).
+class: CustomView
+table: custom_view
+fields:
+  organizationId: int, relation(parent=organization)
+  ownerUserInfoId: int
+  name: String
+  entityType: String        # which list this view applies to
+  filtersJson: String
+  columnsJson: String
+  isShared: bool, default=false
+  createdAt: DateTime
+  updatedAt: DateTime
+indexes:
+  custom_view_org_idx:
+    fields: organizationId
+  custom_view_owner_idx:
+    fields: organizationId, ownerUserInfoId

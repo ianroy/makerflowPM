@@ -1,0 +1,17 @@
+### Imported/synced schedule record (Google Calendar or ICS import).
+class: CalendarEvent
+table: calendar_event
+fields:
+  organizationId: int, relation(parent=organization)
+  title: String
+  startAt: DateTime
+  endAt: DateTime?
+  source: String, default='manual'   # manual | gcal | ics
+  externalId: String?
+  createdAt: DateTime
+  updatedAt: DateTime
+indexes:
+  calendar_event_org_idx:
+    fields: organizationId
+  calendar_event_external_idx:
+    fields: organizationId, externalId

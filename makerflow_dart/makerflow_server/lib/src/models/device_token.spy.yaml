@@ -1,0 +1,15 @@
+### Push registry per user/device (fl-5-push). platform drives FCM vs APNs.
+class: DeviceToken
+table: device_token
+fields:
+  userInfoId: int
+  token: String
+  platform: String          # ios | android | web | macos | windows | linux
+  createdAt: DateTime
+  lastSeenAt: DateTime?
+indexes:
+  device_token_unique_idx:
+    fields: token
+    unique: true
+  device_token_user_idx:
+    fields: userInfoId

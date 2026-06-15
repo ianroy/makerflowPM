@@ -587,6 +587,8 @@ Mobile/desktop add **fixed program costs** independent of traffic: Apple Develop
 
 Schema in [§0.4](#04-task-card-schema); legend/personas/scales in [§0.5](#05-status-legend-personas-scales). IDs use the prefix `fl-` (Flutter rebuild) so they never collide with the Python roadmap. **30 cards across 8 phases.**
 
+> **Build progress (2026-06-15, batch 2).** A large authoring pass advanced many cards from `backlog`/`in_progress`. On disk now: the **full parity data model** (35 models + 11 enums), the **cross-cutting layer** (cursor pagination, structured-logging, Redis-backed realtime channels, serializable-exception spec), and **endpoints across every domain** (org/membership, collab + streaming activity, meeting + convert, equipment, consumable, partnership, intake + convert, onboarding, trash restore/purge, realtime, sync pull + cursor) — plus the **Flutter app shell** (org switcher + nav), four feature screens, repositories, and a role-matrix test scaffold. **Authored to convention; not compiled** (no toolchain in the authoring env). Authoritative per-card state: [`makerflow_dart/BUILD_STATUS.md`](makerflow_dart/BUILD_STATUS.md). Statuses below are updated to `[~] in_progress` where code was authored but remains unverified (codegen + analyze + tests pending).
+
 ### Phase 0 — Foundations
 
 > **Build progress (2026-06-15):** a walking skeleton is on disk under [`makerflow_dart/`](makerflow_dart/) — see [`makerflow_dart/BUILD_STATUS.md`](makerflow_dart/BUILD_STATUS.md). Authored without a local toolchain (not yet compiled). Statuses below reflect that partial state.
@@ -803,7 +805,7 @@ A seed routine that creates a default org, an owner admin (rotate-on-first-login
 
 #### fl-1-projects-tasks — Projects + tasks (kanban/list/calendar)
 
-- **Status:** [~] in_progress — Project/Task models + endpoints (full security contract + optimistic version) and a keyboard-accessible kanban (drag + keyboard move + live-region announce) built on a repository seam; list/calendar views, projects screen, and live-client wiring remain
+- **Status:** [~] in_progress — Project/Task models + endpoints (full security contract + optimistic version), keyboard-accessible kanban, and a projects list screen built on the repository seam; task list/calendar views + live-client wiring remain
 - **Agent Persona:** serverpod-backend + flutter-ui
 - **Priority:** P0
 - **Complexity:** XL
@@ -830,7 +832,7 @@ Projects board with lanes; tasks with three view modes (kanban / list / calendar
 
 #### fl-1-realtime-infra — Streaming endpoints + Redis pub/sub foundation
 
-- **Status:** [ ] backlog
+- **Status:** [~] in_progress — `ChangeEvent` model + `Channels` (Redis pub/sub via session.messages) + `RealtimeEndpoint.subscribe` (org-scoped, auth-gated) authored; reconnect-from-cursor + load test pending
 - **Agent Persona:** serverpod-backend
 - **Priority:** P1
 - **Complexity:** L
@@ -904,7 +906,7 @@ Stand up `flutter_localizations` + ARB from [Appendix J](#j-internationalization
 
 #### fl-1-collab — Comments, watchers, activity stream
 
-- **Status:** [ ] backlog
+- **Status:** [~] in_progress — `ItemComment`/`ItemWatcher` models + `CollabEndpoint` (comments, watch/unwatch, `activityStream` over the realtime channel, publishes on comment) authored; client live-region wiring pending
 - **Agent Persona:** serverpod-backend + flutter-ui
 - **Priority:** P1
 - **Complexity:** L
@@ -954,7 +956,7 @@ Saved filters/columns per user (`customView`) and per-org custom fields (`fieldC
 
 #### fl-2-meetings — Meetings & agendas
 
-- **Status:** [ ] backlog
+- **Status:** [~] in_progress — `MeetingAgenda`/`MeetingItem`/`MeetingItemUpdate` models + `MeetingEndpoint` (agendas, items, saveAgenda/saveItem, `convertItemToTask`) authored; Flutter agenda detail UI pending (list screen exists)
 - **Agent Persona:** serverpod-backend + flutter-ui
 - **Priority:** P1
 - **Complexity:** XL
@@ -978,7 +980,7 @@ Agendas with parent/child items, item updates timeline, file attachments, and **
 
 #### fl-2-inventory — Equipment, consumables, partnerships, intake
 
-- **Status:** [ ] backlog
+- **Status:** [~] in_progress — all four models + endpoints authored (equipment, consumable w/ derived reorder status, partnership, intake + `convertToProject`); Flutter list screens for equipment + consumables exist; partnerships/intake screens + attachment fields pending
 - **Agent Persona:** serverpod-backend + flutter-ui
 - **Priority:** P2
 - **Complexity:** XL
@@ -1002,7 +1004,7 @@ Equipment (maintenance/certification), consumables (stock/reorder), partnerships
 
 #### fl-2-pagination-perf — Cursor pagination + list performance
 
-- **Status:** [ ] backlog
+- **Status:** [~] in_progress — `Cursor`/`Page`/`normalizeLimit` helper authored and used by `SyncEndpoint`; rolling it across all `list` endpoints + client infinite-scroll pending
 - **Agent Persona:** serverpod-backend + flutter-ui
 - **Priority:** P2
 - **Complexity:** M
@@ -1028,7 +1030,7 @@ Apply the keyset/cursor pagination convention ([Appendix H](#h-performance--scal
 
 #### fl-3-onboarding — Onboarding templates + assignments
 
-- **Status:** [ ] backlog
+- **Status:** [~] in_progress — `OnboardingTemplate`/`OnboardingAssignment` models + `OnboardingEndpoint` (templates, assign, self-or-manager `setState`) authored; Flutter UI pending
 - **Agent Persona:** serverpod-backend + flutter-ui
 - **Priority:** P2
 - **Complexity:** L
@@ -1127,7 +1129,7 @@ CSV import/export (portability contract), ICS + PDF import (Dart libs), SMTP ema
 
 #### fl-4-observability — Structured logs, request IDs, error tracking
 
-- **Status:** [ ] backlog
+- **Status:** [~] in_progress — `Obs` structured-JSON logger with PII redaction authored; request-id propagation, Insights wiring, and the error-tracker hook pending
 - **Agent Persona:** devops-dart
 - **Priority:** P1
 - **Complexity:** M
@@ -1154,7 +1156,7 @@ Implement [Appendix I](#i-observability): single-line JSON logs with a `requestI
 
 #### fl-5-offline-sync — Offline-first cache + sync engine
 
-- **Status:** [ ] backlog
+- **Status:** [~] in_progress — server side started: `SyncCursor`/`TaskDeltaPage` models + `SyncEndpoint` (keyset `pullTasks` with tombstones, `ackCursor`); client Drift cache + mutation queue + conflict reconciler pending
 - **Agent Persona:** flutter-platform + serverpod-backend
 - **Priority:** P1
 - **Complexity:** XL
@@ -1573,6 +1575,7 @@ Append-only. One line per completed-or-deferred task, in execution order.
 
 - `2026-06-15` — `fl-plan-bootstrap` — Authored this plan: 4 decisions of record (Serverpod / 6 platforms / greenfield / parity+native), target-architecture diagram (`docs/diagrams/11-flutter-target-architecture.svg`), Python→Dart translation, data-model + RBAC + tenancy mapping, parity matrix, native-feature designs, Flutter-Web accessibility risk analysis + Phase-0 gate, monorepo layout, infra/deploy, risks, and 21 phased task cards across 8 phases.
 - `2026-06-15` — `fl-skeleton` — Built the Phase 0 + Phase 1 walking skeleton under `makerflow_dart/` (28 files): Melos workspace + 5 packages; Serverpod server (org/membership/project/task/audit models + enums, RBAC/tenancy/audit guards, project/task/health endpoints, serverpod_auth bootstrap, unit test); `makerflow_design` (ported tokens, ThemeData, MfCard, non-color StatusBadge); Flutter app (router, Riverpod, login, dashboard, keyboard-accessible kanban on a repository seam, smoke test); docker-compose, CI workflow, monorepo README + BUILD_STATUS. Authored without a local toolchain — not yet compiled; `fl-0-a11y-web-spike` gate still unstarted.
+- `2026-06-15` — `fl-batch2-build` — **Large authoring pass (delegated "build it all").** Decision: keep the web-a11y gate open but non-blocking and build the platform-agnostic core (it serves all six targets). Authored the full parity data model (35 models + 11 enums incl. ChangeEvent/Attachment/DeviceToken/SyncCursor/TaskDeltaPage), the cross-cutting layer (cursor pagination, structured logging w/ redaction, Redis-backed realtime channels, serializable-exception spec), and endpoints across every domain (org/membership w/ owner-protection, collab + streaming activity, meeting + convert-to-task, equipment, consumable w/ derived reorder, partnership, intake + convert-to-project, onboarding, trash restore/purge, realtime, sync pull+cursor) + a role-matrix test scaffold. Extended the Flutter app: app shell (org switcher + responsive nav), projects/equipment/consumables/meetings screens, repositories + providers. Advanced ~10 cards to `[~] in_progress`. **Not compiled** (no toolchain) — needs `melos bootstrap` + `serverpod generate` + analyze/test to verify.
 - `2026-06-15` — `fl-0-a11y-web-spike` — **Executed via §0.3 (top-ready P0).** Built the AT test fixture (route `/spike`, four highest-risk surfaces) + the WCAG 2.1 AA report instrument. Ended `[ ] blocked`: the empirical screen-reader/keyboard pass + the go/fallback decision are a human + toolchain dependency that cannot be produced headlessly (and must not be fabricated — it's the R1 gate). Unblock steps recorded on the card. Next ready work: resume `fl-0-auth-rbac-tenancy` / `fl-1-projects-tasks` (both `in_progress`).
 - `2026-06-15` — `fl-plan-selfcontained` — Made the plan fully self-contained: embedded a Flutter-specific recursive regeneration prompt (§0.2) + execution prompt (§0.3), in-file task-card schema (§0.4), status legend / personas / scales (§0.5), and a resumability + context-window protocol (§0.6). Removed cross-file delegation for the loop. Authored companion onboarding guide `Flutter_ProductSpec.md` and updated `README.md` for the Flutter/Dart pivot (two-codebases framing + GitHub deploy for all six targets).
 - `2026-06-15` — `fl-plan-deepen` — Deepened the plan: full 39-table data-model mapping (+ ID/relation/pagination/polymorphic conventions, enum inventory); 10 new task cards (error-taxonomy, state-conventions, seed-data, realtime-infra, testing-harness, i18n, pagination-perf, observability, store-compliance, security-hardening) → 30 cards across 8 phases; new personas (`qa-automation-dart`, `security-reviewer`); risks R8–R10; infra cost sizing; and a 13-part deep-dive appendix (A endpoint map · B auth · C realtime/offline-sync · D errors · E state/nav · F testing · G security · H performance · I observability · J i18n · K store compliance · L cost/effort · M parity checklist).

@@ -1,0 +1,14 @@
+### Grouping of people within an organization.
+class: Team
+table: team
+fields:
+  organizationId: int, relation(parent=organization)
+  name: String
+  description: String?
+  createdAt: DateTime
+  updatedAt: DateTime
+  deletedAt: DateTime?
+  deletedByUserInfoId: int?
+indexes:
+  team_org_idx:
+    fields: organizationId

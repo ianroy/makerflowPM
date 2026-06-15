@@ -1,0 +1,14 @@
+### Outbound email log (parity with legacy email_messages).
+class: EmailMessage
+table: email_message
+fields:
+  organizationId: int?
+  toAddress: String
+  subject: String
+  status: String, default='queued'   # queued | sent | failed
+  error: String?
+  sentAt: DateTime?
+  createdAt: DateTime
+indexes:
+  email_message_org_idx:
+    fields: organizationId

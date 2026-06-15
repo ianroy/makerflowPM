@@ -1,0 +1,22 @@
+### External/internal relationship pipeline.
+class: Partnership
+table: partnership
+fields:
+  organizationId: int, relation(parent=organization)
+  name: String
+  stage: PartnershipStage, default='prospect'
+  contactName: String?
+  contactEmail: String?
+  health: String?           # green | yellow | red (non-color label retained)
+  nextFollowUpAt: DateTime?
+  notes: String?
+  createdAt: DateTime
+  updatedAt: DateTime
+  createdByUserInfoId: int?
+  deletedAt: DateTime?
+  deletedByUserInfoId: int?
+indexes:
+  partnership_org_idx:
+    fields: organizationId
+  partnership_stage_idx:
+    fields: organizationId, stage

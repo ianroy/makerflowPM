@@ -1,0 +1,7 @@
+### Wire type for SyncEndpoint.pullTasks. Serverpod needs concrete serializable
+### page types (no generics over the wire), so each synced entity gets one.
+### `tasks` includes soft-deleted rows as tombstones (deletedAt != null).
+class: TaskDeltaPage
+fields:
+  tasks: List<Task>
+  nextCursor: String?

@@ -1,0 +1,16 @@
+### Saved report configuration (per org, visibility-scoped).
+class: ReportTemplate
+table: report_template
+fields:
+  organizationId: int, relation(parent=organization)
+  name: String
+  configJson: String
+  visibility: String, default='org'   # private | team | org
+  ownerUserInfoId: int?
+  createdAt: DateTime
+  updatedAt: DateTime
+  deletedAt: DateTime?
+  deletedByUserInfoId: int?
+indexes:
+  report_template_org_idx:
+    fields: organizationId

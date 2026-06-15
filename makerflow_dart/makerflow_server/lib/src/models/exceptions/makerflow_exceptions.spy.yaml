@@ -1,0 +1,30 @@
+# Serverpod serializable exceptions (Appendix D). Defining them as models means
+# the generated client receives TYPED errors, not opaque strings, so the Flutter
+# error surface (Appendix E) can map each to a message + a11y announce.
+#
+# Serverpod treats a model file with `exception:` (instead of `class:`) as a
+# throwable that crosses the wire. One concept per file in real Serverpod; this
+# single file documents the set — split per-file when wiring codegen.
+#
+#   exception: ForbiddenException      # 403 — under-privileged or cross-org
+#   fields:
+#     message: String
+#     requiredRole: String?
+#
+#   exception: ConflictException       # 409 — stale version (offline reconcile)
+#   fields:
+#     message: String
+#     currentVersion: int?
+#
+#   exception: NotFoundException       # 404
+#   fields:
+#     message: String
+#
+#   exception: ValidationException     # 422 — per-field form errors (WCAG 3.3.1)
+#   fields:
+#     message: String
+#     fieldErrors: Map<String, String>
+#
+# The hand-written throw sites currently live in business/auth_context.dart and
+# endpoints/task_endpoint.dart; migrate them onto these generated types in
+# fl-0-error-taxonomy once codegen runs.

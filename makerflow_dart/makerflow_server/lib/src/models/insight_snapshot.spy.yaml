@@ -1,0 +1,12 @@
+### Point-in-time aggregate seeded by the reports module.
+class: InsightSnapshot
+table: insight_snapshot
+fields:
+  organizationId: int, relation(parent=organization)
+  metricKey: String
+  value: double
+  capturedAt: DateTime
+  dimensionsJson: String?
+indexes:
+  insight_snapshot_org_idx:
+    fields: organizationId, metricKey, capturedAt

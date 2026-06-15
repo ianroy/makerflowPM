@@ -1,0 +1,14 @@
+### Physical location within an organization.
+class: Space
+table: space
+fields:
+  organizationId: int, relation(parent=organization)
+  name: String
+  description: String?
+  createdAt: DateTime
+  updatedAt: DateTime
+  deletedAt: DateTime?
+  deletedByUserInfoId: int?
+indexes:
+  space_org_idx:
+    fields: organizationId

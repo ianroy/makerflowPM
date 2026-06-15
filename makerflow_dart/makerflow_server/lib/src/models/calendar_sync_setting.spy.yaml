@@ -1,0 +1,16 @@
+### Per-user Google Calendar OAuth + sync config. Secrets are encrypted at
+### rest (see Appendix G); never log token fields.
+class: CalendarSyncSetting
+table: calendar_sync_setting
+fields:
+  organizationId: int, relation(parent=organization)
+  userInfoId: int
+  calendarId: String, default='primary'
+  refreshTokenEnc: String?
+  enabled: bool, default=false
+  lastSyncedAt: DateTime?
+  updatedAt: DateTime
+indexes:
+  calendar_sync_setting_unique_idx:
+    fields: organizationId, userInfoId
+    unique: true

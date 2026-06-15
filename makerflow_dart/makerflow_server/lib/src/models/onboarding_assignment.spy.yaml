@@ -1,0 +1,18 @@
+### A template assigned to a person, with progress + completion.
+class: OnboardingAssignment
+table: onboarding_assignment
+fields:
+  organizationId: int, relation(parent=organization)
+  templateId: int, relation(parent=onboarding_template)
+  assigneeUserInfoId: int
+  state: OnboardingState, default='notStarted'
+  progressJson: String?      # per-step completion
+  dueAt: DateTime?
+  completedAt: DateTime?
+  createdAt: DateTime
+  updatedAt: DateTime
+indexes:
+  onboarding_assignment_org_idx:
+    fields: organizationId
+  onboarding_assignment_assignee_idx:
+    fields: organizationId, assigneeUserInfoId
