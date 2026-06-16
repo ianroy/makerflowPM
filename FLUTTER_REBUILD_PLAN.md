@@ -673,7 +673,7 @@ Port the token system from [`ProductSpec.md` §12](ProductSpec.md#12-design-syst
 
 #### fl-0-auth-rbac-tenancy — serverpod_auth + RBAC + tenancy + audit + soft-delete
 
-- **Status:** [~] in_progress — server contract done + verified live (RBAC/tenancy/audit/soft-delete; serializable exceptions); **client sign-in wired** (`SessionController` + `MakerflowKeyManager` + login screen → `client.modules.auth.email.authenticate`), an **authenticated round-trip is proven** (signed-in `task.list` returns the 6 seeded tasks, `tool/auth_smoke.dart`), and the **role-matrix is now proven by a live serverpod_test integration suite** (6 tests, green against the `test`-mode DB; see `test/integration/role_matrix_test.dart`). Remaining: persist the session (flutter_secure_storage), org-switch wired to live memberships
+- **Status:** [~] in_progress — server contract done + verified live (RBAC/tenancy/audit/soft-delete; serializable exceptions); **client sign-in wired** (`SessionController` + `MakerflowKeyManager` + login screen → `client.modules.auth.email.authenticate`), an **authenticated round-trip is proven** (signed-in `task.list` returns the 6 seeded tasks, `tool/auth_smoke.dart`), the **role-matrix is now proven by a live serverpod_test integration suite** (6 tests, green against the `test`-mode DB; see `test/integration/role_matrix_test.dart`), and the **org switcher now reads live memberships** (`ServerpodOrgRepository` → `org.listMine`, membership-scoping proven by `feature_reads_test.dart`; the switcher already drives `activeOrgIdProvider`). Remaining: persist the session (flutter_secure_storage); default the active org to the first membership instead of a hardcoded id
 - **Agent Persona:** serverpod-backend
 - **Priority:** P0
 - **Complexity:** L
