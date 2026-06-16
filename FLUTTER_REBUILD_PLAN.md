@@ -673,7 +673,7 @@ Port the token system from [`ProductSpec.md` §12](ProductSpec.md#12-design-syst
 
 #### fl-0-auth-rbac-tenancy — serverpod_auth + RBAC + tenancy + audit + soft-delete
 
-- **Status:** [~] in_progress — server contract done + verified live (RBAC/tenancy/audit/soft-delete; serializable exceptions); **client sign-in wired** (`SessionController` + `MakerflowKeyManager` + login screen → `client.modules.auth.email.authenticate`), and an **authenticated round-trip is proven** (signed-in `task.list` returns the 6 seeded tasks, `tool/auth_smoke.dart`). Remaining: persist the session (flutter_secure_storage), org-switch wired to live memberships, full role-matrix serverpod_test fixtures
+- **Status:** [~] in_progress — server contract done + verified live (RBAC/tenancy/audit/soft-delete; serializable exceptions); **client sign-in wired** (`SessionController` + `MakerflowKeyManager` + login screen → `client.modules.auth.email.authenticate`), an **authenticated round-trip is proven** (signed-in `task.list` returns the 6 seeded tasks, `tool/auth_smoke.dart`), and the **role-matrix is now proven by a live serverpod_test integration suite** (6 tests, green against the `test`-mode DB; see `test/integration/role_matrix_test.dart`). Remaining: persist the session (flutter_secure_storage), org-switch wired to live memberships
 - **Agent Persona:** serverpod-backend
 - **Priority:** P0
 - **Complexity:** L
@@ -689,12 +689,13 @@ Stand up `serverpod_auth` (email/password), the `MembershipRole` enum + rank, th
 
 - [ ] Email/password auth: register, login, reset; tokens in secure storage on client
 - [ ] `Membership` with role; org switch; `workspaceAdmin` pinned to one org; `isSuperuser` crosses orgs
-- [ ] `requireRole` guard rejects under-privileged + cross-org access (unit-tested)
-- [ ] Every mutation writes an `auditLog` row via the interceptor
-- [ ] Soft-delete sets `deletedAt`/`deletedByUserId`; default reads exclude deleted
-- [ ] Tests cover the role matrix from [`docs/SECURITY.md`](docs/SECURITY.md)
+- [x] `requireRole` guard rejects under-privileged + cross-org access (integration-tested: viewer→Forbidden, unauth→Auth, cross-org→Forbidden)
+- [x] Every mutation writes an `auditLog` row via the interceptor (integration-tested: create → one org-scoped `AuditLog` row w/ actor + payload hash)
+- [x] Soft-delete sets `deletedAt`/`deletedByUserId`; default reads exclude deleted (integration-tested: soft-deleted task drops out of `list`, surfaces in trash, restores)
+- [x] Tests cover the role matrix from [`docs/SECURITY.md`](docs/SECURITY.md) — `test/integration/role_matrix_test.dart` (staff/manager allow, viewer/unauth/cross-org/owner-grant deny) + `contract_test.dart` (audit, soft-delete, optimistic-concurrency conflict, tenant-scoped reads)
 
-**Agent Decisions (append-only, verbose):** _(empty)_
+**Agent Decisions (append-only, verbose):**
+- `2026-06-16` — Closed the role-matrix gap. Built a live serverpod_test suite (`test/integration/role_matrix_test.dart`, 6 cases) over the `test`-mode DB with rollback-per-test. **Two generator gotchas fixed:** (1) `serverpod generate` was silently *skipping* test-tools regeneration because `server_test_tools_path` was absent from `config/generator.yaml` — without it the harness file freezes; (2) the frozen file had baked `isDatabaseEnabled: false` (the CLI emits `literalBool(isFeatureEnabled(database))` at generation time, and it had been generated before the DB feature was effective) plus only the `realtime` endpoint wrapper. Adding the path key + regenerating produced `isDatabaseEnabled: true` and all 14 endpoint wrappers. **Test design:** rather than depend on the generated `endpoints.*` wrappers, the suite instantiates the endpoint classes and calls them with a built `Session` carrying `AuthenticationOverride.authenticationInfo('$userInfoId', {})` — exercises the real `requireRole`→tenancy→throw path. Result: 6/6 green; full server suite 8/8 (2 unit + 6 integration); `dart analyze` clean.
 
 ---
 
@@ -881,7 +882,7 @@ Stand up the realtime substrate from [Appendix C](#c-realtime--offline-sync-arch
 
 #### fl-1-testing-harness — Test pyramid scaffold
 
-- **Status:** [~] in_progress — one server unit test + one Flutter widget test exist; need serverpod_test integration harness, golden tests, E2E, and the role-matrix gate
+- **Status:** [~] in_progress — server unit test + Flutter widget test + a **live serverpod_test integration harness** (role-matrix, 6 cases, green over the `test`-mode DB with rollback-per-test; `dart_test.yaml` tags it `integration`). Still need golden tests + an E2E happy path
 - **Agent Persona:** qa-automation-dart
 - **Priority:** P1
 - **Complexity:** M
@@ -894,13 +895,14 @@ Stand up the realtime substrate from [Appendix C](#c-realtime--offline-sync-arch
 **Spec (human-editable):**
 Implement the strategy in [Appendix F](#f-testing-strategy): unit (business guards), serverpod_test endpoint tests against ephemeral Postgres, the **role-matrix test** (port of `scripts/comprehensive_feature_security_test.py`), Flutter widget + golden tests, and an `integration_test`/Patrol E2E happy path. Wire all into CI.
 
-- [ ] serverpod_test boots the server + ephemeral DB; endpoint tests green
-- [ ] Role-matrix test asserts the full RBAC table from `docs/SECURITY.md`
+- [x] serverpod_test boots the server + DB; endpoint tests green (`withServerpod`, rollback-per-test, `test`-mode `makerflow_test` DB)
+- [x] Role-matrix test asserts the RBAC table from `docs/SECURITY.md` (`test/integration/role_matrix_test.dart`)
 - [ ] Golden tests lock the design-system widgets (both themes)
 - [ ] One E2E flow (login → create task → move on kanban) runs in CI
 - [ ] Coverage targets documented; CI fails below threshold
 
-**Agent Decisions (append-only, verbose):** _(empty)_
+**Agent Decisions (append-only, verbose):**
+- `2026-06-16` — Stood up the integration tier. Added `config/test.yaml` (`test` run mode → `makerflow_test` on :8090, redis off) and `dart_test.yaml` (declares the `integration` tag so `dart test -x integration` / `-t integration` split unit vs DB-backed tests). Brought up the `test` DB and applied migrations (56 tables). First green integration suite = the role-matrix (see `fl-0-auth-rbac-tenancy` for the generator fix that unblocked the test tools). Pattern established for the remaining endpoint suites.
 
 ---
 
@@ -1599,6 +1601,7 @@ Native features (camera, push, biometric) are the review-risk drivers (R8) — l
 
 Append-only. One line per completed-or-deferred task, in execution order.
 
+- `2026-06-16` — `fl-integration-harness` — **Proved the RBAC + tenancy contract with a live serverpod_test integration suite.** Added `config/test.yaml` (a dedicated `test` run mode → `makerflow_test` on :8090, redis off) and `dart_test.yaml` (declares the `integration` tag → CI can split fast unit tests from DB-backed ones). Wrote `test/integration/role_matrix_test.dart` — 6 `withServerpod` cases with rollback-per-test: staff/manager **allow** (create + list), viewer/unauthenticated/cross-org/`workspaceAdmin`-grants-owner all **deny** with the right typed exception (`MakerflowForbiddenException`/`MakerflowAuthException`). **Diagnosed and fixed why the generated test tools were broken** (the blocker from last session): `serverpod generate` had been *skipping* test-tools regeneration entirely because `server_test_tools_path` was missing from `config/generator.yaml`, so a stale file persisted that (a) froze `isDatabaseEnabled: false` — the CLI bakes `literalBool(isFeatureEnabled(database))` at generation time and it predated the DB feature — and (b) contained only the `realtime` endpoint wrapper. Adding the path key + regenerating produced `isDatabaseEnabled: true` and all **14** endpoint wrappers. To avoid coupling the tests to the generated wrappers, the suites call the endpoint classes directly with a built `Session` carrying `AuthenticationOverride.authenticationInfo`, exercising the real `requireRole`→tenancy→throw path. **Then proved the rest of the contract** in `test/integration/contract_test.dart` (5 cases): every create writes one org-scoped `AuditLog` row (actor + payload hash); soft-delete drops a task out of `list` but it survives in the trash queue and restores; a stale-version `update` throws `MakerflowConflictException`; reads are tenant-scoped (each member sees only their org); mutating a soft-deleted row throws `MakerflowNotFoundException`. Found and fixed a parallelism bug — `dart test` runs files concurrently and the two per-file Serverpod boots collided on the `config/test.yaml` ports, so set `concurrency: 1` in `dart_test.yaml`. **Results:** integration 11/11; full server suite **13/13** (2 unit + 11 integration); server `dart analyze` clean (tidied the two `tool/` smoke scripts); generated client analyzes clean after `pub get`. Closes the audit + soft-delete + role-matrix DOD items on `fl-0-auth-rbac-tenancy`. Postgres left running for follow-on suites; nothing in the app/client packages changed.
 - `2026-06-15` — `fl-auth-client + fl-deploy-dryrun` — **Wired real sign-in into the app and proved an authenticated round-trip + a production deploy dry-run.** **Authenticated E2E** (`tool/auth_smoke.dart`): signed in as the seeded owner via `client.modules.auth.email.authenticate` → stored the session key (`wrapAsBearerAuthHeaderValue`) → `task.list(1)` returned the **6 seeded tasks** with real titles/statuses through the RBAC gate (found the header-format gap: raw `keyId:key` → 400; Bearer-wrapped → works). **Flutter sign-in wired**: `MakerflowKeyManager` (in the authenticated client), a `SessionController` (`session.dart`) calling email auth + storing the key, the login screen now signs in for real (busy state, error surface + `sendAnnouncement`), and router/dashboard read `sessionProvider`. Live mode via `--dart-define=MAKERFLOW_LIVE=true`; in-memory stub otherwise. `flutter analyze` clean · test ✓. **Deploy dry-run (D5)**: ran the actual Dockerfile build output (`dart compile exe`) through the real `entrypoint.sh` in `runMode: production`, rendering `production.yaml` from env, applying migrations, and serving — `GET /` 200 + `health.ready` true. `.do/app.yaml` validated as well-formed (web service + managed PG + Redis). Could not push to a live DO account (no `doctl`/token). DB/server/staging cleaned up.
 - `2026-06-15` — `fl-0-seed-data + fl-client-wiring` — **Seeded live data and wired/proved the generated client end-to-end.** `fl-0-seed-data`: `business/seed.dart` + `bin/seed.dart` create a default org, an **owner login via serverpod_auth** (`admin@makerflow.local`, superuser scope, owner membership) + UserProfile, a sample project, 6 tasks, equipment + consumable. Ran against live Postgres → verified by `psql` (org=1, owner membership, project=1, task=6, serverpod_user_info=1); idempotent re-run + clean exit confirmed. **Generated client proven**: fixed two gaps that only surfaced on use — the hand-made `makerflow_client` barrel didn't export the generated `Client`, and `makerflow_client` lacked the `serverpod_auth_client` dep (the server uses the auth module). `tool/client_smoke.dart` then ran through the typed client: `health.ready → true` and `task.list` (no auth) → a **deserialized typed `MakerflowAuthException`**. **Wired into Flutter**: `serverpod_flutter` + `makerflow_client` deps, `serverpodClientProvider`, `ServerpodTaskRepository` (generated `Task`→`TaskVm`), switched on via `--dart-define=MAKERFLOW_LIVE=true` (defaults to in-memory so the app runs serverless). `flutter analyze` clean · widget test ✓ · `flutter build web` ✓ (2.69 MB). Removed a stale `flutter create` default test. Git reconciled after PRs #3/#4 merged; recovered the DO-deploy commit onto a fresh branch.
 - `2026-06-15` — `fl-do-deploy` — **Made the rebuild deploy on DigitalOcean (D5).** Authored the Serverpod [`Dockerfile`](makerflow_dart/makerflow_server/Dockerfile) (multi-stage: `dart compile exe` → debian-slim runtime), [`deploy/entrypoint.sh`](makerflow_dart/makerflow_server/deploy/entrypoint.sh) (renders `config/<mode>.yaml` + `passwords.yaml` from DO managed-DB bindings + secrets, applies migrations, serves), `.dockerignore`, and the App Platform spec [`makerflow_dart/.do/app.yaml`](makerflow_dart/.do/app.yaml) (web service from the Dockerfile, deploy-on-push, DO **Managed PostgreSQL + Redis**, health check `GET /`). Verified `dart compile exe` (the image's build step) → 15.8 MB native server binary; `sh -n` on the entrypoint passes. Could not run the live DO deploy (no `doctl`/credentials here) — one `doctl apps create --spec` (or connecting the repo) ships it. Added D5 to decisions; updated §11 + fl-7.
@@ -1615,4 +1618,4 @@ Append-only. One line per completed-or-deferred task, in execution order.
 
 ---
 
-_Last updated: 2026-06-15. This plan governs a greenfield Dart codebase and does not modify the existing Python app. Reconcile with [`FEATUREROADMAP_workplan.md`](FEATUREROADMAP_workplan.md) at each phase boundary; security/parity fixes to the Python app continue independently until the Dart build reaches M3._
+_Last updated: 2026-06-16. This plan governs a greenfield Dart codebase and does not modify the existing Python app. Reconcile with [`FEATUREROADMAP_workplan.md`](FEATUREROADMAP_workplan.md) at each phase boundary; security/parity fixes to the Python app continue independently until the Dart build reaches M3._

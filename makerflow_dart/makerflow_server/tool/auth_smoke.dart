@@ -1,3 +1,8 @@
+// One-shot proof script: uses the generated client's only exposed auth seam
+// (the deprecated AuthenticationKeyManager), same rationale as
+// makerflow_flutter/lib/src/data/api_client.dart. serverpod_client arrives
+// transitively via makerflow_client.
+// ignore_for_file: deprecated_member_use, depend_on_referenced_packages
 import 'package:makerflow_client/makerflow_client.dart';
 import 'package:serverpod_client/serverpod_client.dart';
 

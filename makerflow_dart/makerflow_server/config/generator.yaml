@@ -5,5 +5,11 @@ type: server
 
 client_package_path: ../makerflow_client
 
+# Regenerate the serverpod_test harness (withServerpod/TestEndpoints) into this
+# path. WITHOUT this key, `serverpod generate` skips the test tools entirely —
+# leaving a stale file that froze `isDatabaseEnabled: false` and only the
+# endpoints that existed when it was last written.
+server_test_tools_path: test/integration/test_tools
+
 features:
   database: true

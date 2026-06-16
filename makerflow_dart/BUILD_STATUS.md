@@ -2,8 +2,8 @@
 
 Authoritative per-card state for the Dart rebuild. Maps to the task cards in [`../FLUTTER_REBUILD_PLAN.md`](../FLUTTER_REBUILD_PLAN.md).
 
-> **Compiles + green (2026-06-15).** Run on Dart 3.12.2 / Flutter 3.44.2 / Serverpod 3.4.10:
-> - Server: `serverpod generate` ✓ · `dart analyze` clean · `dart test` 2/2 ✓ · `serverpod create-migration` ✓ (112 tables).
+> **Compiles + green (2026-06-16).** Run on Dart 3.12.2 / Flutter 3.44.2 / Serverpod 3.4.10:
+> - Server: `serverpod generate` ✓ · `dart analyze` clean · `dart test` **13/13 ✓ (2 unit + 11 live integration)** · `serverpod create-migration` ✓ (112 tables).
 > - Design: `flutter analyze` clean.
 > - App: `flutter analyze` clean · `flutter test` ✓ · `flutter build web` ✓ (2.7 MB; WASM dry-run ✓).
 > - Generated code (`makerflow_server/lib/src/generated/**`, `makerflow_client/lib/**`) and the first migration are committed.
@@ -23,7 +23,12 @@ Authoritative per-card state for the Dart rebuild. Maps to the task cards in [`.
 > - **Flutter sign-in wired**: `MakerflowKeyManager` + `SessionController` + a real login screen (`--dart-define=MAKERFLOW_LIVE=true`); analyze/test/web-build green.
 > - **Production deploy dry-run**: `dart compile exe` output run through the real `entrypoint.sh` in `runMode: production` (env-rendered config, migrations applied, `GET /` 200 + `health.ready` true). `.do/app.yaml` validated.
 >
-> **Remaining:** push to a live DO account (needs `doctl` + token), persist the session, org-switch wired to live memberships, role-matrix serverpod_test fixtures, offline/push/camera/biometric.
+> **Live integration suite (2026-06-16):** 11 `withServerpod` cases, green (rollback-per-test, against `makerflow_test` on :8090). Added `config/test.yaml` (dedicated `test` run mode) + `dart_test.yaml` (declares the `integration` tag; `concurrency: 1` so the per-file Serverpod boots don't collide on ports).
+> - `test/integration/role_matrix_test.dart` (6) — RBAC: staff/manager allow; viewer/unauthenticated/cross-org/`workspaceAdmin`-grants-owner deny with typed exceptions.
+> - `test/integration/contract_test.dart` (5) — the rest of `docs/SECURITY.md`: every create writes one org-scoped `AuditLog` row; soft-delete drops out of `list` but restores via trash; stale-version `update` → `MakerflowConflictException`; reads are tenant-scoped; mutating a soft-deleted row → `MakerflowNotFoundException`.
+> - Fixed the generated test-tools blocker: `server_test_tools_path` was missing from `config/generator.yaml`, so `serverpod generate` skipped test-tools regen, freezing a stale file (`isDatabaseEnabled: false`, only the `realtime` wrapper). Added the key → regen produced `isDatabaseEnabled: true` + all 14 endpoint wrappers.
+>
+> **Remaining:** push to a live DO account (needs `doctl` + token), persist the session, org-switch wired to live memberships, more live feature repositories (projects/equipment/consumables/meetings), offline/push/camera/biometric.
 
 ## Legend
 `[x]` built · `[~]` partial / authored-not-verified · `[ ]` not started
@@ -34,7 +39,7 @@ Authoritative per-card state for the Dart rebuild. Maps to the task cards in [`.
 |---|---|---|
 | `fl-0-monorepo-scaffold` | `[~]` | Melos workspace, 5 packages, docker-compose, config, entrypoint. Needs `serverpod create` alignment + codegen. |
 | `fl-0-design-tokens` | `[x]` | Tokens (dark+light), ThemeData + ThemeExtension, `MfCard`, non-color `StatusBadge`. Font bundling TODO. |
-| `fl-0-auth-rbac-tenancy` | `[~]` | RBAC guard, AuthContext, tenancy guards, audit interceptor, soft-delete pattern + `OrgEndpoint` (membership mgmt w/ owner-protection). Real serverpod_auth sign-in flow + org-switch UI wired to live auth + full role-matrix tests remain. |
+| `fl-0-auth-rbac-tenancy` | `[~]` | RBAC guard, AuthContext, tenancy guards, audit interceptor, soft-delete pattern + `OrgEndpoint` (membership mgmt w/ owner-protection). Real serverpod_auth sign-in proven; **role-matrix proven by a live 6-case integration suite**. Org-switch UI wired to live memberships + session persistence remain. |
 | `fl-0-a11y-web-spike` | `[~]` | **GATE — blocked on human AT pass.** Fixture (`/spike`) + report instrument built; needs NVDA/VoiceOver/keyboard run + decision. |
 | `fl-0-ci-pipelines` | `[~]` | `dart-ci.yml` authored (analyze/test/build + ephemeral PG/Redis + codegen step). axe-core web gate TODO. |
 | `fl-0-error-taxonomy` | `[~]` | Exception types in code + serializable-exception spec (`models/exceptions/`); pagination envelope (`Cursor`/`Page`) authored. Client error-surface + migration onto generated exceptions TODO. |
@@ -49,7 +54,7 @@ Authoritative per-card state for the Dart rebuild. Maps to the task cards in [`.
 | `fl-1-realtime-infra` | `[~]` | `ChangeEvent` model + `Channels` (Redis pub/sub) + `RealtimeEndpoint`. Reconnect-from-cursor + load test TODO. |
 | `fl-1-collab` | `[~]` | `ItemComment`/`ItemWatcher` + `CollabEndpoint` (comments, watch, `activityStream`). Client live-region wiring TODO. |
 | `fl-1-views-fields` | `[~]` | `CustomView`/`FieldConfig` models authored; endpoints + dynamic field UI TODO. |
-| `fl-1-testing-harness` | `[~]` | Role-matrix test scaffold + RBAC unit test + kanban widget test. serverpod_test fixtures + golden + E2E TODO. |
+| `fl-1-testing-harness` | `[~]` | **Live serverpod_test integration harness (role-matrix, 6 cases, green)** + RBAC unit test + kanban widget test; `dart_test.yaml` tags integration tests. Golden + E2E TODO. |
 | `fl-1-i18n-scaffold` | `[ ]` | Not started. |
 
 ## Phase 2 — Operations

@@ -1,5 +1,4 @@
 import 'package:makerflow_client/makerflow_client.dart';
-import 'package:serverpod_client/serverpod_client.dart';
 
 /// End-to-end smoke of the GENERATED client against a running server.
 /// Proves the typed client + wire protocol work (not just curl).

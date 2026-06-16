@@ -1,0 +1,29 @@
+# Serverpod `test` run mode — used by serverpod_test (withServerpod) for
+# integration tests. Points at a dedicated makerflow_test database so test
+# rollbacks never touch dev data. Ports mirror docker-compose.yaml.
+apiServer:
+  port: 8080
+  publicHost: localhost
+  publicPort: 8080
+  publicScheme: http
+
+insightsServer:
+  port: 8081
+  publicHost: localhost
+  publicPort: 8081
+  publicScheme: http
+
+webServer:
+  port: 8082
+  publicHost: localhost
+  publicPort: 8082
+  publicScheme: http
+
+database:
+  host: localhost
+  port: 8090
+  name: makerflow_test
+  user: postgres
+
+redis:
+  enabled: false
