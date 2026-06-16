@@ -8,6 +8,7 @@ import '../data/task_repository.dart';
 import '../data/serverpod_task_repository.dart';
 import '../data/api_client.dart';
 import '../data/feature_repositories.dart';
+import '../data/serverpod_feature_repositories.dart';
 import 'session.dart';
 import '../features/auth/login_screen.dart';
 import '../features/dashboard/dashboard_screen.dart';
@@ -31,11 +32,21 @@ final activeOrgIdProvider = StateProvider<int>((_) => 1);
 final taskRepositoryProvider = Provider<TaskRepository>((ref) => useLiveBackend
     ? ServerpodTaskRepository(ref.watch(serverpodClientProvider))
     : InMemoryTaskRepository());
-final orgRepositoryProvider = Provider<OrgRepository>((_) => InMemoryOrgRepository());
-final projectRepositoryProvider = Provider<ProjectRepository>((_) => InMemoryProjectRepository());
-final equipmentRepositoryProvider = Provider<EquipmentRepository>((_) => InMemoryEquipmentRepository());
-final consumableRepositoryProvider = Provider<ConsumableRepository>((_) => InMemoryConsumableRepository());
-final meetingRepositoryProvider = Provider<MeetingRepository>((_) => InMemoryMeetingRepository());
+final orgRepositoryProvider = Provider<OrgRepository>((ref) => useLiveBackend
+    ? ServerpodOrgRepository(ref.watch(serverpodClientProvider))
+    : InMemoryOrgRepository());
+final projectRepositoryProvider = Provider<ProjectRepository>((ref) => useLiveBackend
+    ? ServerpodProjectRepository(ref.watch(serverpodClientProvider))
+    : InMemoryProjectRepository());
+final equipmentRepositoryProvider = Provider<EquipmentRepository>((ref) => useLiveBackend
+    ? ServerpodEquipmentRepository(ref.watch(serverpodClientProvider))
+    : InMemoryEquipmentRepository());
+final consumableRepositoryProvider = Provider<ConsumableRepository>((ref) => useLiveBackend
+    ? ServerpodConsumableRepository(ref.watch(serverpodClientProvider))
+    : InMemoryConsumableRepository());
+final meetingRepositoryProvider = Provider<MeetingRepository>((ref) => useLiveBackend
+    ? ServerpodMeetingRepository(ref.watch(serverpodClientProvider))
+    : InMemoryMeetingRepository());
 
 // --- Reads, all scoped to the active org ---
 final orgsProvider = FutureProvider<List<OrgVm>>((ref) => ref.watch(orgRepositoryProvider).listMine());

@@ -3,7 +3,7 @@
 Authoritative per-card state for the Dart rebuild. Maps to the task cards in [`../FLUTTER_REBUILD_PLAN.md`](../FLUTTER_REBUILD_PLAN.md).
 
 > **Compiles + green (2026-06-16).** Run on Dart 3.12.2 / Flutter 3.44.2 / Serverpod 3.4.10:
-> - Server: `serverpod generate` ✓ · `dart analyze` clean · `dart test` **13/13 ✓ (2 unit + 11 live integration)** · `serverpod create-migration` ✓ (112 tables).
+> - Server: `serverpod generate` ✓ · `dart analyze` clean · `dart test` **19/19 ✓ (2 unit + 17 live integration)** · `serverpod create-migration` ✓ (112 tables).
 > - Design: `flutter analyze` clean.
 > - App: `flutter analyze` clean · `flutter test` ✓ · `flutter build web` ✓ (2.7 MB; WASM dry-run ✓).
 > - Generated code (`makerflow_server/lib/src/generated/**`, `makerflow_client/lib/**`) and the first migration are committed.
@@ -26,9 +26,12 @@ Authoritative per-card state for the Dart rebuild. Maps to the task cards in [`.
 > **Live integration suite (2026-06-16):** 11 `withServerpod` cases, green (rollback-per-test, against `makerflow_test` on :8090). Added `config/test.yaml` (dedicated `test` run mode) + `dart_test.yaml` (declares the `integration` tag; `concurrency: 1` so the per-file Serverpod boots don't collide on ports).
 > - `test/integration/role_matrix_test.dart` (6) — RBAC: staff/manager allow; viewer/unauthenticated/cross-org/`workspaceAdmin`-grants-owner deny with typed exceptions.
 > - `test/integration/contract_test.dart` (5) — the rest of `docs/SECURITY.md`: every create writes one org-scoped `AuditLog` row; soft-delete drops out of `list` but restores via trash; stale-version `update` → `MakerflowConflictException`; reads are tenant-scoped; mutating a soft-deleted row → `MakerflowNotFoundException`.
+> - `test/integration/feature_reads_test.dart` (6) — the read paths the Flutter `Serverpod*Repository` impls call: `org.listMine` (membership-scoped), `project`/`equipment`/`consumable`/`meeting` list endpoints return org-scoped rows; unauthenticated read rejected.
 > - Fixed the generated test-tools blocker: `server_test_tools_path` was missing from `config/generator.yaml`, so `serverpod generate` skipped test-tools regen, freezing a stale file (`isDatabaseEnabled: false`, only the `realtime` wrapper). Added the key → regen produced `isDatabaseEnabled: true` + all 14 endpoint wrappers.
 >
-> **Remaining:** push to a live DO account (needs `doctl` + token), persist the session, org-switch wired to live memberships, more live feature repositories (projects/equipment/consumables/meetings), offline/push/camera/biometric.
+> **Live Flutter feature repositories (2026-06-16):** added `Serverpod{Org,Project,Equipment,Consumable,Meeting}Repository` (`makerflow_flutter/lib/src/data/serverpod_feature_repositories.dart`) wrapping the generated client, wired behind `--dart-define=MAKERFLOW_LIVE=true` in `state/providers.dart` (default stays in-memory). Client mappers type-checked by `flutter analyze` (clean); server read-paths proven by `feature_reads_test.dart`; `flutter test` ✓ · `flutter build web` ✓ (WASM dry-run ✓). The `Task` repo's runtime round-trip is already proven (`tool/auth_smoke.dart`).
+>
+> **Remaining:** push to a live DO account (needs `doctl` + token), persist the session, org-switch wired to live memberships, equipment space-name resolution (Space join), write paths for feature repos, offline/push/camera/biometric.
 
 ## Legend
 `[x]` built · `[~]` partial / authored-not-verified · `[ ]` not started
@@ -50,7 +53,7 @@ Authoritative per-card state for the Dart rebuild. Maps to the task cards in [`.
 
 | Task | State | Notes |
 |---|---|---|
-| `fl-1-projects-tasks` | `[~]` | Project/Task models + endpoints (security contract + optimistic version) · keyboard-accessible kanban · projects list screen. Task list/calendar views + live client TODO. |
+| `fl-1-projects-tasks` | `[~]` | Project/Task models + endpoints (security contract + optimistic version, **integration-tested**) · keyboard-accessible kanban · projects list screen · **live `ServerpodTaskRepository` + `ServerpodProjectRepository`**. Task list/calendar views + write paths TODO. |
 | `fl-1-realtime-infra` | `[~]` | `ChangeEvent` model + `Channels` (Redis pub/sub) + `RealtimeEndpoint`. Reconnect-from-cursor + load test TODO. |
 | `fl-1-collab` | `[~]` | `ItemComment`/`ItemWatcher` + `CollabEndpoint` (comments, watch, `activityStream`). Client live-region wiring TODO. |
 | `fl-1-views-fields` | `[~]` | `CustomView`/`FieldConfig` models authored; endpoints + dynamic field UI TODO. |
@@ -61,8 +64,8 @@ Authoritative per-card state for the Dart rebuild. Maps to the task cards in [`.
 
 | Task | State | Notes |
 |---|---|---|
-| `fl-2-meetings` | `[~]` | Agenda/item/update models + `MeetingEndpoint` (incl. `convertItemToTask`) + meetings list screen. Agenda detail UI TODO. |
-| `fl-2-inventory` | `[~]` | Equipment/Consumable/Partnership/Intake models + endpoints (consumable derives reorder status; intake `convertToProject`) + equipment & consumables screens. Partnerships/intake screens + attachments TODO. |
+| `fl-2-meetings` | `[~]` | Agenda/item/update models + `MeetingEndpoint` (incl. `convertItemToTask`) + meetings list screen + **live `ServerpodMeetingRepository`** (agendas read proven). Agenda detail UI TODO. |
+| `fl-2-inventory` | `[~]` | Equipment/Consumable/Partnership/Intake models + endpoints (consumable derives reorder status; intake `convertToProject`) + equipment & consumables screens + **live `ServerpodEquipmentRepository` + `ServerpodConsumableRepository`** (reads proven). Partnerships/intake screens + attachments TODO. |
 | `fl-2-pagination-perf` | `[~]` | Cursor helper authored + used by sync. Roll across all lists + client infinite-scroll TODO. |
 
 ## Phase 3 — People & analytics
@@ -107,7 +110,7 @@ Authoritative per-card state for the Dart rebuild. Maps to the task cards in [`.
 - **Models:** 35 (`lib/src/models/*.spy.yaml`) + 11 enums (`lib/src/models/enums/`).
 - **Endpoints:** task, project, health, org, collab, equipment, consumable, meeting, partnership, intake, onboarding, trash, realtime, sync.
 - **Business:** auth_context, rbac, tenancy, audit, pagination, observability, channels.
-- **Flutter:** app shell (org switcher + nav), dashboard, login, kanban, projects, equipment, consumables, meetings, a11y spike; repositories + Riverpod providers.
+- **Flutter:** app shell (org switcher + nav), dashboard, login, kanban, projects, equipment, consumables, meetings, a11y spike; repository seam with both in-memory and **live `Serverpod*Repository`** impls (task + org + project + equipment + consumable + meeting) selected by `MAKERFLOW_LIVE` + Riverpod providers.
 
 ## Immediate next steps (in order)
 
