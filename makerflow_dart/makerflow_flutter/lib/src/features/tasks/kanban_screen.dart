@@ -6,6 +6,7 @@ import 'package:makerflow_design/makerflow_design.dart';
 
 import '../../data/models.dart';
 import '../../state/providers.dart';
+import 'new_task_dialog.dart';
 
 /// Kanban board with TWO equally-capable move mechanisms:
 ///   • pointer drag-and-drop (Draggable / DragTarget) for mouse + touch, and
@@ -32,6 +33,11 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
     final repo = ref.read(taskRepositoryProvider);
     await repo.move(task.id, toStatus, task.sortOrder);
     ref.invalidate(tasksProvider);
+  }
+
+  Future<void> _openNewTask() async {
+    final created = await showNewTaskDialog(context);
+    if (created != null) ref.invalidate(tasksProvider); // dialog announced success
   }
 
   void _onCardKey(KeyEvent e, TaskVm task, int columnIndex) {
@@ -88,6 +94,12 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Tasks')),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openNewTask,
+        tooltip: 'New task',
+        icon: const Icon(Icons.add),
+        label: const Text('New task'),
+      ),
       body: tasksAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Failed to load: $e')),

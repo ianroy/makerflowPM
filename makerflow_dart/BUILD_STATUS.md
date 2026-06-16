@@ -29,6 +29,8 @@ Authoritative per-card state for the Dart rebuild. Maps to the task cards in [`.
 > - `test/integration/feature_reads_test.dart` (6) — the read paths the Flutter `Serverpod*Repository` impls call: `org.listMine` (membership-scoped), `project`/`equipment`/`consumable`/`meeting` list endpoints return org-scoped rows; unauthenticated read rejected.
 > - Fixed the generated test-tools blocker: `server_test_tools_path` was missing from `config/generator.yaml`, so `serverpod generate` skipped test-tools regen, freezing a stale file (`isDatabaseEnabled: false`, only the `realtime` wrapper). Added the key → regen produced `isDatabaseEnabled: true` + all 14 endpoint wrappers.
 >
+> **Task create write-path (2026-06-16):** `TaskRepository.create` (in-memory + live `client.task.create`) behind an accessible "New task" dialog (`features/tasks/new_task_dialog.dart`: focus-trapped `AlertDialog`, labelled fields, required-field validation, busy state, typed-error surface + live-region announce) launched from a kanban FAB. `flutter test` 2/2 (new widget test covers empty-submit validation → create → card on board); analyze + web build green. Server `task.create` already integration-tested (`staff CAN create`).
+>
 > **Live Flutter feature repositories (2026-06-16):** added `Serverpod{Org,Project,Equipment,Consumable,Meeting}Repository` (`makerflow_flutter/lib/src/data/serverpod_feature_repositories.dart`) wrapping the generated client, wired behind `--dart-define=MAKERFLOW_LIVE=true` in `state/providers.dart` (default stays in-memory). Client mappers type-checked by `flutter analyze` (clean); server read-paths proven by `feature_reads_test.dart`; `flutter test` ✓ · `flutter build web` ✓ (WASM dry-run ✓). The `Task` repo's runtime round-trip is already proven (`tool/auth_smoke.dart`).
 >
 > **Remaining:** push to a live DO account (needs `doctl` + token), persist the session (flutter_secure_storage), default active org to the first membership (the switcher already reads live memberships), equipment space-name resolution (Space join), write paths for feature repos, offline/push/camera/biometric.
@@ -53,7 +55,7 @@ Authoritative per-card state for the Dart rebuild. Maps to the task cards in [`.
 
 | Task | State | Notes |
 |---|---|---|
-| `fl-1-projects-tasks` | `[~]` | Project/Task models + endpoints (security contract + optimistic version, **integration-tested**) · keyboard-accessible kanban · projects list screen · **live `ServerpodTaskRepository` + `ServerpodProjectRepository`**. Task list/calendar views + write paths TODO. |
+| `fl-1-projects-tasks` | `[~]` | Project/Task models + endpoints (security contract + optimistic version, **integration-tested**) · keyboard-accessible kanban · projects list screen · **live `ServerpodTaskRepository` + `ServerpodProjectRepository`** · **task create write-path** (accessible "New task" dialog, widget-tested). Task list/calendar views + edit write-path TODO. |
 | `fl-1-realtime-infra` | `[~]` | `ChangeEvent` model + `Channels` (Redis pub/sub) + `RealtimeEndpoint`. Reconnect-from-cursor + load test TODO. |
 | `fl-1-collab` | `[~]` | `ItemComment`/`ItemWatcher` + `CollabEndpoint` (comments, watch, `activityStream`). Client live-region wiring TODO. |
 | `fl-1-views-fields` | `[~]` | `CustomView`/`FieldConfig` models authored; endpoints + dynamic field UI TODO. |

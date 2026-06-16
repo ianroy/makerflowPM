@@ -2,13 +2,23 @@ import 'models.dart';
 
 /// Repository seam between the UI and the backend.
 ///
-/// [InMemoryTaskRepository] lets the Flutter UI run TODAY, before the Serverpod
-/// client is generated. The production implementation — [ServerpodTaskRepository]
-/// (stubbed below) — wraps `client.task.*` from the generated `makerflow_client`
-/// and is dropped in by flipping the provider in state/providers.dart.
+/// [InMemoryTaskRepository] lets the Flutter UI run with no server. The live
+/// implementation is [ServerpodTaskRepository] (serverpod_task_repository.dart),
+/// which wraps `client.task.*` from the generated `makerflow_client`; it's
+/// selected in state/providers.dart when `--dart-define=MAKERFLOW_LIVE=true`.
 abstract class TaskRepository {
   Future<List<TaskVm>> list(int organizationId, {int? projectId});
   Future<TaskVm> move(int taskId, String toStatus, double toSortOrder);
+
+  /// Create a task. Returns the persisted row (with its server-assigned id).
+  /// Server enforces staff+; the UI surfaces the typed failure.
+  Future<TaskVm> create({
+    required int organizationId,
+    required String title,
+    required String status,
+    required String priority,
+    int? projectId,
+  });
 }
 
 class InMemoryTaskRepository implements TaskRepository {
@@ -35,23 +45,25 @@ class InMemoryTaskRepository implements TaskRepository {
     );
     return _tasks[i];
   }
-}
 
-/// Production implementation — wraps the generated Serverpod client.
-/// Uncomment the makerflow_client dependency in pubspec.yaml, run
-/// `serverpod generate`, then implement against `client.task.*`.
-///
-/// class ServerpodTaskRepository implements TaskRepository {
-///   ServerpodTaskRepository(this.client);
-///   final Client client;
-///   @override
-///   Future<List<TaskVm>> list(int orgId, {int? projectId}) async {
-///     final rows = await client.task.list(orgId, projectId: projectId);
-///     return rows.map(_toVm).toList();
-///   }
-///   @override
-///   Future<TaskVm> move(int id, String status, double order) async {
-///     final row = await client.task.move(id, TaskStatus.values.byName(status), order);
-///     return _toVm(row);
-///   }
-/// }
+  @override
+  Future<TaskVm> create({
+    required int organizationId,
+    required String title,
+    required String status,
+    required String priority,
+    int? projectId,
+  }) async {
+    final nextId = _tasks.fold<int>(0, (m, t) => t.id > m ? t.id : m) + 1;
+    final created = TaskVm(
+      id: nextId,
+      organizationId: organizationId,
+      title: title,
+      status: status,
+      priority: priority,
+      projectId: projectId,
+    );
+    _tasks.add(created);
+    return created;
+  }
+}

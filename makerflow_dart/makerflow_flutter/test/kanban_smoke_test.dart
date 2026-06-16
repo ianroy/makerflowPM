@@ -27,4 +27,37 @@ void main() {
     expect(find.text('In progress'), findsWidgets);
     expect(find.text('Done'), findsWidgets);
   });
+
+  testWidgets('New-task dialog creates a task and it appears on the board',
+      (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: MakerflowThemeBuilder.dark(),
+          home: const KanbanScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Open the dialog from the FAB.
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    expect(find.text('New task'), findsWidgets); // dialog title
+
+    // Submitting empty surfaces the required-field error (no task created).
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+    expect(find.text('Title is required'), findsOneWidget);
+
+    // Fill the title and create.
+    await tester.enterText(
+        find.byType(TextFormField), 'Calibrate the 3D printer');
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+
+    // Dialog closed and the new card is on the board.
+    expect(find.text('Title is required'), findsNothing);
+    expect(find.text('Calibrate the 3D printer'), findsOneWidget);
+  });
 }

@@ -24,6 +24,30 @@ class ServerpodTaskRepository implements TaskRepository {
     return _toVm(row);
   }
 
+  @override
+  Future<TaskVm> create({
+    required int organizationId,
+    required String title,
+    required String status,
+    required String priority,
+    int? projectId,
+  }) async {
+    // The server stamps version/timestamps/createdBy; these are placeholders.
+    final now = DateTime.now().toUtc();
+    final row = await _client.task.create(api.Task(
+      organizationId: organizationId,
+      title: title,
+      status: api.TaskStatus.values.byName(status),
+      priority: api.TaskPriority.values.byName(priority),
+      projectId: projectId,
+      sortOrder: 0,
+      version: 1,
+      createdAt: now,
+      updatedAt: now,
+    ));
+    return _toVm(row);
+  }
+
   TaskVm _toVm(api.Task t) => TaskVm(
         id: t.id ?? 0,
         organizationId: t.organizationId,
