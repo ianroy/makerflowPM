@@ -19,6 +19,9 @@ dependencies:
     path: ../makerflow_client
   serverpod_client: 3.4.10
   serverpod_flutter: 3.4.10
+  # Persists the serverpod_auth session key across launches. Has a built-in web
+  # implementation (Web Crypto + localStorage), so it keeps all six targets.
+  flutter_secure_storage: ^9.2.2
 
 dev_dependencies:
   flutter_test:

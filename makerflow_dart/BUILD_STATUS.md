@@ -35,7 +35,9 @@ Authoritative per-card state for the Dart rebuild. Maps to the task cards in [`.
 >
 > **Live Flutter feature repositories (2026-06-16):** added `Serverpod{Org,Project,Equipment,Consumable,Meeting}Repository` (`makerflow_flutter/lib/src/data/serverpod_feature_repositories.dart`) wrapping the generated client, wired behind `--dart-define=MAKERFLOW_LIVE=true` in `state/providers.dart` (default stays in-memory). Client mappers type-checked by `flutter analyze` (clean); server read-paths proven by `feature_reads_test.dart`; `flutter test` ✓ · `flutter build web` ✓ (WASM dry-run ✓). The `Task` repo's runtime round-trip is already proven (`tool/auth_smoke.dart`).
 >
-> **Remaining:** push to a live DO account (needs `doctl` + token), persist the session (flutter_secure_storage), default active org to the first membership (the switcher already reads live memberships), equipment space-name resolution (Space join), write paths for feature repos, offline/push/camera/biometric.
+> **Auth polish (2026-06-25):** session persistence via `flutter_secure_storage` (native Keychain/Keystore + web Crypto/localStorage; `flutter build web` verified) + a startup `restore()` gate in `main.dart` (no login flash); the org switcher now also defaults the active org to the caller's first membership (`ref.listen(orgsProvider)`), not a hardcoded id.
+>
+> **Remaining:** push to a live DO account (needs `doctl` + token), password-reset flow, equipment space-name resolution (Space join), write paths for the other feature repos, offline/push/camera/biometric.
 
 ## Legend
 `[x]` built · `[~]` partial / authored-not-verified · `[ ]` not started

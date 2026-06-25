@@ -23,6 +23,18 @@ class SessionController extends Notifier<SessionState> {
   @override
   SessionState build() => const SessionState();
 
+  /// Restore a persisted session on startup: if the key manager still holds a
+  /// stored session key, treat the user as signed in (the client reuses the
+  /// same key). Called once before the router is built (see main.dart) so there
+  /// is no login-screen flash. Stub mode has nothing to restore.
+  Future<void> restore() async {
+    if (!useLiveBackend) return;
+    final key = await ref.read(keyManagerProvider).get();
+    if (key != null && key.isNotEmpty) {
+      state = const SessionState(isSignedIn: true);
+    }
+  }
+
   Future<bool> signIn(String email, String password) async {
     if (!useLiveBackend) {
       state = SessionState(isSignedIn: true, email: email);
@@ -54,3 +66,8 @@ class SessionController extends Notifier<SessionState> {
 
 final sessionProvider =
     NotifierProvider<SessionController, SessionState>(SessionController.new);
+
+/// Runs once at startup to restore a persisted session before the router is
+/// built. The app gates its first frame on this (main.dart).
+final sessionBootstrapProvider =
+    FutureProvider<void>((ref) => ref.read(sessionProvider.notifier).restore());

@@ -82,6 +82,19 @@ class _OrgSwitcher extends ConsumerWidget {
     final c = MakerflowTheme.of(context).colors;
     final orgs = ref.watch(orgsProvider);
     final activeId = ref.watch(activeOrgIdProvider);
+
+    // When memberships load and the active org isn't one of them (e.g. the
+    // initial default before sign-in resolved), land on the first membership so
+    // every org-scoped read targets a real org. ref.listen defers the state
+    // write out of build.
+    ref.listen(orgsProvider, (_, next) {
+      final list = next.valueOrNull;
+      if (list != null &&
+          list.isNotEmpty &&
+          !list.any((o) => o.id == ref.read(activeOrgIdProvider))) {
+        ref.read(activeOrgIdProvider.notifier).state = list.first.id;
+      }
+    });
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       child: orgs.when(
