@@ -50,7 +50,24 @@ redis:
   requireSsl: ${REDIS_REQUIRE_SSL:-true}
 EOF
 
-# Apply pending migrations on boot, then serve (single-instance monolith).
-# For multi-instance, run migrations once via a separate `--role maintenance`
-# job and drop --apply-migrations here.
-exec /app/server --mode "$mode" --apply-migrations --role monolith
+# Dispatch on the first arg. DigitalOcean starts the container with no args, so
+# the default ("serve") is what runs in normal operation; `seed` is for a manual
+# one-off via the console. Config is rendered above either way, so seeding works
+# whether invoked through this entrypoint or by calling /app/server directly.
+case "${1:-serve}" in
+  serve)
+    # Apply pending migrations on boot, then serve (single-instance monolith).
+    # For multi-instance, run migrations once via a separate `--role maintenance`
+    # job and drop --apply-migrations here.
+    exec /app/server --mode "$mode" --apply-migrations --role monolith
+    ;;
+  seed)
+    # One-off: create the first org + owner + sample data, then exit. Idempotent.
+    # Does not start the HTTP servers, so it is safe alongside a running monolith.
+    exec /app/server --mode "$mode" --seed
+    ;;
+  *)
+    echo "entrypoint: unknown command '$1' (expected: serve | seed)" >&2
+    exit 64
+    ;;
+esac

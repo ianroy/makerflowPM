@@ -86,21 +86,27 @@ brings the schema up (56 tables), then `SERVERPOD ... started`.
 
 ## 6. Seed the first org + owner (once)
 
-The image doesn't auto-seed. Run the seed once against the managed DB — easiest
-via a one-off console:
+The image doesn't auto-seed (the serve path never touches the seed). After the
+service is up (step 5 — migrations applied), run the seed once against the
+managed DB via a one-off console. It's **idempotent** (a no-op if the `default`
+org already exists) and does **not** start the HTTP servers, so it's safe to run
+inside the already-serving `web` instance:
 
 ```sh
 doctl apps console "$APP_ID" web
-# in the console:
-/app/server --mode production --role maintenance   # ensures migrations
-# then run the seed logic (bin/seed.dart is compiled into the build stage only;
-# for production, create the owner via the dashboard DB or add a seed subcommand)
+# in the console, either:
+/app/server --mode production --seed     # config was already rendered on boot
+# …or, to (re)render config from the injected env first (more robust):
+/app/entrypoint.sh seed
 ```
 
-> **Note:** `bin/seed.dart` runs in the *build* stage, not the runtime image. For
-> production, either (a) add a `--seed` flag to the server entrypoint, or (b)
-> connect to the managed DB and run the seed once. Tracked as a follow-up; the
-> seed logic itself is proven (`makerflow_server/bin/seed.dart`).
+This creates the default org, the owner login `admin@makerflow.local`
+(password `ChangeMeMeow!2026` — **rotate immediately**), a sample project, six
+tasks, and one equipment + consumable row. Re-running prints
+`seed: "default" already exists — skipping` and changes nothing.
+
+> The same path runs in dev as `dart run bin/seed.dart`; `bin/seed.dart` and the
+> runtime `--seed` flag share one `runSeed` bootstrap in `makerflow_server/lib/server.dart`.
 
 ## 7. Point the Flutter client at the deployment
 

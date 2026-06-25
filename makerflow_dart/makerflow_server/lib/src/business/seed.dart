@@ -5,7 +5,10 @@ import '../generated/protocol.dart';
 
 /// Demo/first-run seed (fl-0-seed-data) — the Dart analog of the legacy
 /// `scripts/load_sample_data.py`. Idempotent: a no-op if the default org
-/// already exists. Run via `dart bin/seed.dart`. NEVER auto-run in production.
+/// already exists. Run on-demand in dev via `dart run bin/seed.dart` and in a
+/// deployed container via `server --mode production --seed` (both go through
+/// `runSeed` in `../../server.dart`). Never auto-run on boot — the serve path
+/// does not touch it.
 class Seed {
   static const orgSlug = 'default';
   static const adminEmail = 'admin@makerflow.local';
