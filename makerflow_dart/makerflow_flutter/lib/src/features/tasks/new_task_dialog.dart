@@ -108,6 +108,40 @@ class _TaskDialogState extends ConsumerState<_TaskDialog> {
     }
   }
 
+  Future<void> _deleteTask() async {
+    final e = widget.existing!;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete task?'),
+        content: Text('"${e.title}" will move to Trash — you can restore it there.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref.read(taskRepositoryProvider).softDelete(e.id);
+      if (mounted) {
+        _announce('Deleted task ${e.title}. It is in Trash.');
+        Navigator.of(context).pop(e); // non-null → caller refreshes the board
+      }
+    } catch (err) {
+      final msg = _friendly(err);
+      setState(() {
+        _error = msg;
+        _busy = false;
+      });
+      if (mounted) _announce('Could not delete task. $msg');
+    }
+  }
+
   /// Prefer a server-provided message when present; fall back to a generic one.
   static String _friendly(Object e) {
     final s = e.toString();
@@ -183,6 +217,13 @@ class _TaskDialogState extends ConsumerState<_TaskDialog> {
         ),
       ),
       actions: [
+        if (_isEdit)
+          TextButton(
+            onPressed: _busy ? null : _deleteTask,
+            style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error),
+            child: const Text('Delete'),
+          ),
         TextButton(
           onPressed: _busy ? null : () => Navigator.of(context).pop(),
           child: const Text('Cancel'),

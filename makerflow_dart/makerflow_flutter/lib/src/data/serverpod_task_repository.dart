@@ -74,6 +74,9 @@ class ServerpodTaskRepository implements TaskRepository {
     return _toVm(row);
   }
 
+  @override
+  Future<void> softDelete(int taskId) => _client.task.softDelete(taskId);
+
   TaskVm _toVm(api.Task t) => TaskVm(
         id: t.id ?? 0,
         organizationId: t.organizationId,

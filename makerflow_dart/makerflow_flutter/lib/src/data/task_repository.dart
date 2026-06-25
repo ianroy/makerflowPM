@@ -33,6 +33,9 @@ abstract class TaskRepository {
     required double sortOrder,
     int? projectId,
   });
+
+  /// Soft-delete: the task leaves the board but is restorable from the trash.
+  Future<void> softDelete(int taskId);
 }
 
 class InMemoryTaskRepository implements TaskRepository {
@@ -107,4 +110,24 @@ class InMemoryTaskRepository implements TaskRepository {
     _tasks[i] = updated;
     return updated;
   }
+
+  @override
+  Future<void> softDelete(int taskId) async {
+    final i = _tasks.indexWhere((t) => t.id == taskId);
+    if (i >= 0) _deleted.add(_tasks.removeAt(i));
+  }
+
+  // --- trash store (shared with InMemoryTrashRepository via the same instance,
+  // so soft-delete in the stub coordinates like the live DB does) ---
+  final List<TaskVm> _deleted = [];
+
+  List<TaskVm> deletedFor(int organizationId) =>
+      _deleted.where((t) => t.organizationId == organizationId).toList();
+
+  void restore(int taskId) {
+    final i = _deleted.indexWhere((t) => t.id == taskId);
+    if (i >= 0) _tasks.add(_deleted.removeAt(i));
+  }
+
+  void purge(int taskId) => _deleted.removeWhere((t) => t.id == taskId);
 }

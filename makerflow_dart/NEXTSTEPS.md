@@ -32,7 +32,7 @@ A real URL on managed Postgres.
 | Task | Effort | Notes |
 |---|---|---|
 | ~~M1.1 Edit paths for equipment/consumables/meetings~~ ✅ | M | done — create/edit dialogs, tap-to-edit, non-destructive fetch-merge |
-| M1.2 Delete + Trash UI | M | `TrashEndpoint` (restore/purge) exists |
+| ~~M1.2 Delete + Trash UI~~ ✅ | M | done — soft-delete from edit dialog + `/trash` screen (restore/purge), shared in-memory store |
 | M1.3 Task list + calendar views | M | kanban exists |
 | M1.4 Project create/edit + project→task linkage | M | `ProjectEndpoint` exists |
 | M1.5 Detail screens: meeting agenda (convert-to-task), intake→project, partnerships | L | endpoints exist |

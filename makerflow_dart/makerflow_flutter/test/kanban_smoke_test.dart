@@ -88,4 +88,30 @@ void main() {
     expect(find.text('Restock 6mm plywood'), findsOneWidget);
     expect(find.text('Restock 3mm plywood'), findsNothing);
   });
+
+  testWidgets('Edit dialog deletes a task off the board', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: MakerflowThemeBuilder.dark(),
+          home: const KanbanScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Restock 3mm plywood'), findsOneWidget); // backlog (leftmost, visible)
+
+    await tester.tap(find.text('Restock 3mm plywood')); // tap → edit dialog
+    await tester.pumpAndSettle();
+    expect(find.text('Edit task'), findsOneWidget);
+
+    await tester.tap(find.text('Delete')); // dialog's Delete → confirm
+    await tester.pumpAndSettle();
+    expect(find.text('Delete task?'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete')); // confirm
+    await tester.pumpAndSettle();
+
+    expect(find.text('Restock 3mm plywood'), findsNothing); // off the board
+  });
 }
