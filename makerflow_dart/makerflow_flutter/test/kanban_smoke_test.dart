@@ -114,4 +114,22 @@ void main() {
 
     expect(find.text('Restock 3mm plywood'), findsNothing); // off the board
   });
+
+  testWidgets('Toggling to List view shows tasks grouped by status', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: MakerflowThemeBuilder.dark(),
+          home: const KanbanScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('List')); // SegmentedButton segment
+    await tester.pumpAndSettle();
+
+    expect(find.text('Laser cutter monthly PM'), findsOneWidget); // a seeded task
+    expect(find.text('To do'), findsWidgets); // a status group header
+  });
 }

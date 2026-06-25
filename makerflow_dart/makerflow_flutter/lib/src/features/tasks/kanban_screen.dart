@@ -20,11 +20,14 @@ class KanbanScreen extends ConsumerStatefulWidget {
   ConsumerState<KanbanScreen> createState() => _KanbanScreenState();
 }
 
+enum _TasksView { kanban, list }
+
 class _KanbanScreenState extends ConsumerState<KanbanScreen> {
   // Keyboard-move state: the task currently "picked up", and the candidate
   // target column index while moving.
   int? _grabbedTaskId;
   int? _targetColumn;
+  _TasksView _view = _TasksView.kanban;
 
   void _announce(String msg) =>
       SemanticsService.sendAnnouncement(View.of(context), msg, TextDirection.ltr);
@@ -100,7 +103,29 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
     final tasksAsync = ref.watch(tasksProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Tasks')),
+      appBar: AppBar(
+        title: const Text('Tasks'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: SegmentedButton<_TasksView>(
+              showSelectedIcon: false,
+              segments: const [
+                ButtonSegment(
+                    value: _TasksView.kanban,
+                    icon: Icon(Icons.view_kanban_outlined),
+                    label: Text('Board')),
+                ButtonSegment(
+                    value: _TasksView.list,
+                    icon: Icon(Icons.view_list_outlined),
+                    label: Text('List')),
+              ],
+              selected: {_view},
+              onSelectionChanged: (s) => setState(() => _view = s.first),
+            ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openNewTask,
         tooltip: 'New task',
@@ -110,34 +135,95 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
       body: tasksAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Failed to load: $e')),
-        data: (tasks) {
-          final byColumn = {
-            for (final col in kanbanColumns)
-              col: tasks.where((t) => t.status == col).toList()
-          };
-          return SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (var ci = 0; ci < kanbanColumns.length; ci++)
-                  _Column(
-                    status: kanbanColumns[ci],
-                    label: _label(kanbanColumns[ci]),
-                    tasks: byColumn[kanbanColumns[ci]]!,
-                    isMoveTarget: _grabbedTaskId != null && _targetColumn == ci,
-                    grabbedTaskId: _grabbedTaskId,
-                    colors: c,
-                    onAcceptDrop: (task) => _commitMove(task, kanbanColumns[ci]),
-                    onCardKey: (e, task) => _onCardKey(e, task, ci),
-                    onEdit: _openEditTask,
-                  ),
-              ],
-            ),
-          );
-        },
+        data: (tasks) => _view == _TasksView.list
+            ? _TaskListView(tasks: tasks, colors: c, onEdit: _openEditTask)
+            : _board(tasks, c),
       ),
+    );
+  }
+
+  Widget _board(List<TaskVm> tasks, MakerflowColors c) {
+    final byColumn = {
+      for (final col in kanbanColumns) col: tasks.where((t) => t.status == col).toList()
+    };
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var ci = 0; ci < kanbanColumns.length; ci++)
+            _Column(
+              status: kanbanColumns[ci],
+              label: _label(kanbanColumns[ci]),
+              tasks: byColumn[kanbanColumns[ci]]!,
+              isMoveTarget: _grabbedTaskId != null && _targetColumn == ci,
+              grabbedTaskId: _grabbedTaskId,
+              colors: c,
+              onAcceptDrop: (task) => _commitMove(task, kanbanColumns[ci]),
+              onCardKey: (e, task) => _onCardKey(e, task, ci),
+              onEdit: _openEditTask,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A flat, grouped-by-status list of tasks — an accessible alternative to the
+/// board (WCAG 1.3.1 grouping via headers). Tapping a row opens the edit dialog.
+class _TaskListView extends StatelessWidget {
+  const _TaskListView({required this.tasks, required this.colors, required this.onEdit});
+  final List<TaskVm> tasks;
+  final MakerflowColors colors;
+  final ValueChanged<TaskVm> onEdit;
+
+  static String _label(String s) => switch (s) {
+        'inProgress' => 'In progress',
+        'inReview' => 'In review',
+        'todo' => 'To do',
+        _ => '${s[0].toUpperCase()}${s.substring(1)}',
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        for (final col in kanbanColumns)
+          if (tasks.any((t) => t.status == col)) ...[
+            Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 4, left: 4),
+              child: Semantics(
+                header: true,
+                child: Text(_label(col),
+                    style: TextStyle(color: colors.muted, fontWeight: FontWeight.w700)),
+              ),
+            ),
+            for (final t in tasks.where((t) => t.status == col))
+              Semantics(
+                button: true,
+                label: 'Edit ${t.title}',
+                child: InkWell(
+                  onTap: () => onEdit(t),
+                  borderRadius: BorderRadius.circular(16),
+                  child: MfCard(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(t.title,
+                              style: TextStyle(color: colors.text, fontWeight: FontWeight.w600)),
+                        ),
+                        Text(t.priority, style: TextStyle(color: colors.muted, fontSize: 12)),
+                        const SizedBox(width: 12),
+                        StatusBadge(status: t.status),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+          ],
+      ],
     );
   }
 }
