@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 772" font-family="Avenir Next, Segoe UI, system-ui, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">MakerFlow PM Dart rebuild — milestone roadmap</title>
+  <desc id="d">Seven sequenced milestones from a live deployment (M0) and finishing the interactive CRUD core (M1) — both actionable now — through realtime/collab (M2), the accessibility gate plus CI (M3, needs a human screen-reader pass), native offline/push/camera (M4), integrations and analytics (M5), and release readiness (M6). M0's live deploy and M3's AT pass are blocked on the owner.</desc>
+
+  <rect width="920" height="772" rx="20" fill="#0e141f"/>
+
+  <!-- header -->
+  <text x="44" y="52" fill="#eaf2ff" font-size="26" font-weight="700">Dart rebuild — roadmap to v1</text>
+  <text x="44" y="78" fill="#8aa0bb" font-size="14">You are here: live-tested PM + ops core · deploy-ready · PR #6 open</text>
+
+  <!-- timeline spine -->
+  <line x1="64" y1="120" x2="64" y2="694" stroke="#243044" stroke-width="2"/>
+
+  <!-- milestone cards -->
+  <!-- each: dot, shadow, card, id, title, effort pill, note -->
+  <g>
+    <!-- M0 -->
+    <circle cx="64" cy="142" r="7" fill="#21d1aa"/>
+    <rect x="92" y="116" width="784" height="64" rx="14" fill="#16202f"/>
+    <rect x="92" y="116" width="4" height="64" rx="2" fill="#21d1aa"/>
+    <text x="116" y="146" fill="#4db0ff" font-size="17" font-weight="700">M0 · Go live</text>
+    <text x="116" y="167" fill="#8aa0bb" font-size="13">A real URL on managed Postgres — unblocks everything</text>
+    <rect x="700" y="130" width="156" height="22" rx="11" fill="#101826" stroke="#243044"/>
+    <text x="778" y="145" fill="#cdebe2" font-size="11" text-anchor="middle">~1–2 days · needs token</text>
+
+    <!-- M1 -->
+    <circle cx="64" cy="226" r="7" fill="#21d1aa"/>
+    <rect x="92" y="200" width="784" height="64" rx="14" fill="#16202f"/>
+    <rect x="92" y="200" width="4" height="64" rx="2" fill="#21d1aa"/>
+    <text x="116" y="230" fill="#4db0ff" font-size="17" font-weight="700">M1 · Interactive core (CRUD)</text>
+    <text x="116" y="251" fill="#8aa0bb" font-size="13">Edit/delete + trash · list/calendar · projects · detail screens</text>
+    <rect x="700" y="214" width="156" height="22" rx="11" fill="#101826" stroke="#243044"/>
+    <text x="778" y="229" fill="#cdebe2" font-size="11" text-anchor="middle">~1 wk · start now</text>
+
+    <!-- M2 -->
+    <circle cx="64" cy="310" r="7" fill="#4db0ff"/>
+    <rect x="92" y="284" width="784" height="64" rx="14" fill="#16202f"/>
+    <rect x="92" y="284" width="4" height="64" rx="2" fill="#4db0ff"/>
+    <text x="116" y="314" fill="#4db0ff" font-size="17" font-weight="700">M2 · Realtime + collaboration</text>
+    <text x="116" y="335" fill="#8aa0bb" font-size="13">Live board updates · comments + activity · watchers</text>
+    <rect x="724" y="298" width="132" height="22" rx="11" fill="#101826" stroke="#243044"/>
+    <text x="790" y="313" fill="#bcd6f5" font-size="11" text-anchor="middle">~1 wk · infra ready</text>
+
+    <!-- M3 -->
+    <circle cx="64" cy="394" r="7" fill="#ffbe55"/>
+    <rect x="92" y="368" width="784" height="64" rx="14" fill="#1d1c1a"/>
+    <rect x="92" y="368" width="4" height="64" rx="2" fill="#ffbe55"/>
+    <text x="116" y="398" fill="#ffbe55" font-size="17" font-weight="700">M3 · A11y gate (R1) + CI</text>
+    <text x="116" y="419" fill="#a99a7e" font-size="13">Run the screen-reader/keyboard spike · gate CI · goldens + E2E</text>
+    <rect x="700" y="382" width="156" height="22" rx="11" fill="#241f16" stroke="#3a3322"/>
+    <text x="778" y="397" fill="#ffd591" font-size="11" text-anchor="middle">~1 wk · human AT pass</text>
+
+    <!-- M4 -->
+    <circle cx="64" cy="478" r="7" fill="#4db0ff"/>
+    <rect x="92" y="452" width="784" height="64" rx="14" fill="#16202f"/>
+    <rect x="92" y="452" width="4" height="64" rx="2" fill="#4db0ff"/>
+    <text x="116" y="482" fill="#4db0ff" font-size="17" font-weight="700">M4 · Native superpowers</text>
+    <text x="116" y="503" fill="#8aa0bb" font-size="13">Offline-sync · push (FCM/APNs) · camera + biometric</text>
+    <rect x="736" y="466" width="120" height="22" rx="11" fill="#101826" stroke="#243044"/>
+    <text x="796" y="481" fill="#bcd6f5" font-size="11" text-anchor="middle">~2–3 wk</text>
+
+    <!-- M5 -->
+    <circle cx="64" cy="562" r="7" fill="#4db0ff"/>
+    <rect x="92" y="536" width="784" height="64" rx="14" fill="#16202f"/>
+    <rect x="92" y="536" width="4" height="64" rx="2" fill="#4db0ff"/>
+    <text x="116" y="566" fill="#4db0ff" font-size="17" font-weight="700">M5 · Integrations + analytics</text>
+    <text x="116" y="587" fill="#8aa0bb" font-size="13">Calendar · CSV/ICS/PDF + mail · onboarding · reports · i18n</text>
+    <rect x="736" y="550" width="120" height="22" rx="11" fill="#101826" stroke="#243044"/>
+    <text x="796" y="565" fill="#bcd6f5" font-size="11" text-anchor="middle">~2–3 wk</text>
+
+    <!-- M6 -->
+    <circle cx="64" cy="646" r="7" fill="#4db0ff"/>
+    <rect x="92" y="620" width="784" height="64" rx="14" fill="#16202f"/>
+    <rect x="92" y="620" width="4" height="64" rx="2" fill="#4db0ff"/>
+    <text x="116" y="650" fill="#4db0ff" font-size="17" font-weight="700">M6 · Release readiness</text>
+    <text x="116" y="671" fill="#8aa0bb" font-size="13">VPAT · store compliance · per-platform release pipelines</text>
+    <rect x="736" y="634" width="120" height="22" rx="11" fill="#101826" stroke="#243044"/>
+    <text x="796" y="649" fill="#bcd6f5" font-size="11" text-anchor="middle">~2 wk</text>
+  </g>
+
+  <!-- legend -->
+  <g>
+    <circle cx="52" cy="730" r="6" fill="#21d1aa"/>
+    <text x="64" y="734" fill="#8aa0bb" font-size="12">Buildable now</text>
+    <circle cx="190" cy="730" r="6" fill="#ffbe55"/>
+    <text x="202" y="734" fill="#8aa0bb" font-size="12">Needs the owner (token / AT pass)</text>
+    <circle cx="430" cy="730" r="6" fill="#4db0ff"/>
+    <text x="442" y="734" fill="#8aa0bb" font-size="12">Sequenced after the core</text>
+  </g>
+</svg>
