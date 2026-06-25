@@ -2,7 +2,12 @@
 # (Serverpod server). Deploy:
 #   doctl apps create --spec makerflow_dart/.do/app.yaml
 #   doctl apps update <APP_ID> --spec makerflow_dart/.do/app.yaml
-# or connect the repo in the DO dashboard (deploys on push to main).
+# or connect the repo in the DO dashboard.
+#
+# Deploys from `staging` — that's where the Dart rebuild (and these deploy
+# assets) live; `main` is ~10 commits behind and predates the Dockerfile/spec.
+# For a production cutover, merge staging -> main and flip `branch` to main.
+# See DEPLOY.md for the full runbook.
 #
 # This is SEPARATE from the Python app's /.do/app.yaml at the repo root — the
 # two products deploy independently (rebuild is "new deployments only").
@@ -16,7 +21,7 @@ services:
     source_dir: makerflow_dart
     github:
       repo: ianroy/makerflowPM
-      branch: main
+      branch: staging
       deploy_on_push: true
     http_port: 8080
     instance_count: 1

@@ -37,7 +37,9 @@ Authoritative per-card state for the Dart rebuild. Maps to the task cards in [`.
 >
 > **Auth polish (2026-06-25):** session persistence via `flutter_secure_storage` (native Keychain/Keystore + web Crypto/localStorage; `flutter build web` verified) + a startup `restore()` gate in `main.dart` (no login flash); the org switcher now also defaults the active org to the caller's first membership (`ref.listen(orgsProvider)`), not a hardcoded id.
 >
-> **Remaining:** push to a live DO account (needs `doctl` + token), password-reset flow, equipment space-name resolution (Space join), write paths for the other feature repos, offline/push/camera/biometric.
+> **Deploy readiness (2026-06-25):** all DO assets re-validated on current code — `dart compile exe` ✓ (15 MB), `.do/app.yaml` valid + bindings correct, `entrypoint.sh` `sh -n` ✓, migrations present. Spec repointed from `main` → **`staging`** (main is 10 commits behind and predates the Dockerfile/spec). Full runbook in [`DEPLOY.md`](DEPLOY.md). Only the live `doctl apps create` needs the user's token.
+>
+> **Remaining:** run the live DO deploy (needs `doctl` + token; see `DEPLOY.md`), production seed path (add a `--seed` server flag), password-reset flow, equipment space-name resolution (Space join), write paths for the other feature repos, offline/push/camera/biometric.
 
 ## Legend
 `[x]` built · `[~]` partial / authored-not-verified · `[ ]` not started
