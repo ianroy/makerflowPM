@@ -5,16 +5,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models.dart';
 import '../../state/providers.dart';
 
-/// Accessible "New task" dialog. Creates a task in the active org via the
+/// Accessible create/edit task dialog. Writes to the active org via the
 /// repository (in-memory or live Serverpod). A Material [AlertDialog] gives us
 /// the focus-trap + return-focus behavior (WCAG 2.4.3 / 2.1.2); fields are
 /// labelled (3.3.2) and validated with identified errors (3.3.1); the typed
-/// failure is surfaced inline and announced (4.1.3).
+/// failure — including the optimistic-concurrency conflict on edit — is
+/// surfaced inline and announced (4.1.3).
 ///
-/// Returns the created [TaskVm] (so the caller can refresh + announce) or null
+/// Returns the written [TaskVm] (so the caller can refresh + announce) or null
 /// if cancelled.
 Future<TaskVm?> showNewTaskDialog(BuildContext context) =>
-    showDialog<TaskVm>(context: context, builder: (_) => const _NewTaskDialog());
+    showDialog<TaskVm>(context: context, builder: (_) => const _TaskDialog());
+
+Future<TaskVm?> showEditTaskDialog(BuildContext context, TaskVm task) =>
+    showDialog<TaskVm>(
+        context: context, builder: (_) => _TaskDialog(existing: task));
 
 const _priorities = ['low', 'medium', 'high', 'urgent'];
 
@@ -27,19 +32,26 @@ String _statusLabel(String s) => switch (s) {
 
 String _cap(String s) => '${s[0].toUpperCase()}${s.substring(1)}';
 
-class _NewTaskDialog extends ConsumerStatefulWidget {
-  const _NewTaskDialog();
+class _TaskDialog extends ConsumerStatefulWidget {
+  const _TaskDialog({this.existing});
+
+  /// When non-null the dialog edits this task; otherwise it creates a new one.
+  final TaskVm? existing;
+
   @override
-  ConsumerState<_NewTaskDialog> createState() => _NewTaskDialogState();
+  ConsumerState<_TaskDialog> createState() => _TaskDialogState();
 }
 
-class _NewTaskDialogState extends ConsumerState<_NewTaskDialog> {
+class _TaskDialogState extends ConsumerState<_TaskDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  String _status = 'todo';
-  String _priority = 'medium';
+  late final TextEditingController _titleController =
+      TextEditingController(text: widget.existing?.title ?? '');
+  late String _status = widget.existing?.status ?? 'todo';
+  late String _priority = widget.existing?.priority ?? 'medium';
   bool _busy = false;
   String? _error;
+
+  bool get _isEdit => widget.existing != null;
 
   @override
   void dispose() {
@@ -60,21 +72,37 @@ class _NewTaskDialogState extends ConsumerState<_NewTaskDialog> {
       _error = null;
     });
     try {
-      final orgId = ref.read(activeOrgIdProvider);
-      final created = await ref.read(taskRepositoryProvider).create(
-            organizationId: orgId,
-            title: _titleController.text.trim(),
-            status: _status,
-            priority: _priority,
-          );
-      _announce('Created task ${created.title}.');
-      if (mounted) Navigator.of(context).pop(created);
+      final repo = ref.read(taskRepositoryProvider);
+      final title = _titleController.text.trim();
+      final TaskVm written;
+      if (_isEdit) {
+        final e = widget.existing!;
+        written = await repo.update(
+          id: e.id,
+          version: e.version,
+          organizationId: e.organizationId,
+          title: title,
+          status: _status,
+          priority: _priority,
+          sortOrder: e.sortOrder,
+          projectId: e.projectId,
+        );
+      } else {
+        written = await repo.create(
+          organizationId: ref.read(activeOrgIdProvider),
+          title: title,
+          status: _status,
+          priority: _priority,
+        );
+      }
+      _announce('${_isEdit ? 'Updated' : 'Created'} task ${written.title}.');
+      if (mounted) Navigator.of(context).pop(written);
     } catch (e) {
-      // Typed server failures (e.g. MakerflowForbiddenException) deserialize
-      // here; show the message and announce it assertively.
+      // Typed server failures (e.g. MakerflowConflictException on a stale edit)
+      // deserialize here; show the message and announce it.
       final msg = _friendly(e);
       setState(() => _error = msg);
-      _announce('Could not create task. $msg');
+      _announce('Could not save task. $msg');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -91,7 +119,7 @@ class _NewTaskDialogState extends ConsumerState<_NewTaskDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('New task'),
+      title: Text(_isEdit ? 'Edit task' : 'New task'),
       content: Form(
         key: _formKey,
         child: SizedBox(
@@ -166,7 +194,7 @@ class _NewTaskDialogState extends ConsumerState<_NewTaskDialog> {
                   width: 18,
                   height: 18,
                   child: CircularProgressIndicator(strokeWidth: 2))
-              : const Text('Create'),
+              : Text(_isEdit ? 'Save' : 'Create'),
         ),
       ],
     );

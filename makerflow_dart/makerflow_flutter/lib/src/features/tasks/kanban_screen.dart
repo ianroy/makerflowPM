@@ -40,6 +40,11 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
     if (created != null) ref.invalidate(tasksProvider); // dialog announced success
   }
 
+  Future<void> _openEditTask(TaskVm task) async {
+    final updated = await showEditTaskDialog(context, task);
+    if (updated != null) ref.invalidate(tasksProvider); // dialog announced success
+  }
+
   void _onCardKey(KeyEvent e, TaskVm task, int columnIndex) {
     if (e is! KeyDownEvent) return;
     final key = e.logicalKey;
@@ -52,6 +57,8 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
         });
         _announce(
             'Picked up ${task.title}. Use left and right arrows to choose a column, Enter to drop, Escape to cancel.');
+      } else if (key == LogicalKeyboardKey.keyE) {
+        _openEditTask(task); // edit without entering the move flow
       }
       return;
     }
@@ -124,6 +131,7 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
                     colors: c,
                     onAcceptDrop: (task) => _commitMove(task, kanbanColumns[ci]),
                     onCardKey: (e, task) => _onCardKey(e, task, ci),
+                    onEdit: _openEditTask,
                   ),
               ],
             ),
@@ -144,6 +152,7 @@ class _Column extends StatelessWidget {
     required this.colors,
     required this.onAcceptDrop,
     required this.onCardKey,
+    required this.onEdit,
   });
 
   final String status;
@@ -154,6 +163,7 @@ class _Column extends StatelessWidget {
   final MakerflowColors colors;
   final ValueChanged<TaskVm> onAcceptDrop;
   final void Function(KeyEvent, TaskVm) onCardKey;
+  final ValueChanged<TaskVm> onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -198,6 +208,7 @@ class _Column extends StatelessWidget {
                     task: task,
                     grabbed: grabbedTaskId == task.id,
                     onKey: (e) => onCardKey(e, task),
+                    onEdit: () => onEdit(task),
                   ),
                 if (tasks.isEmpty)
                   Padding(
@@ -214,10 +225,16 @@ class _Column extends StatelessWidget {
 }
 
 class _Card extends StatelessWidget {
-  const _Card({required this.task, required this.grabbed, required this.onKey});
+  const _Card({
+    required this.task,
+    required this.grabbed,
+    required this.onKey,
+    required this.onEdit,
+  });
   final TaskVm task;
   final bool grabbed;
   final ValueChanged<KeyEvent> onKey;
+  final VoidCallback onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -233,7 +250,11 @@ class _Card extends StatelessWidget {
           button: true,
           label:
               '${task.title}, ${task.priority} priority${grabbed ? ', picked up' : ''}. '
-              'Press Enter to ${grabbed ? 'drop' : 'pick up and move'}.',
+              'Press Enter to ${grabbed ? 'drop' : 'pick up and move'}'
+              '${grabbed ? '' : ', or E to edit'}.',
+          customSemanticsActions: grabbed
+              ? null
+              : {const CustomSemanticsAction(label: 'Edit'): onEdit},
           child: Container(
             margin: const EdgeInsets.symmetric(vertical: 4),
             padding: const EdgeInsets.all(10),
@@ -271,12 +292,18 @@ class _Card extends StatelessWidget {
       }),
     );
 
-    // Pointer drag for mouse/touch users; keyboard path is independent.
-    return Draggable<TaskVm>(
-      data: task,
-      feedback: Opacity(opacity: 0.9, child: SizedBox(width: 260, child: card)),
-      childWhenDragging: Opacity(opacity: 0.4, child: card),
-      child: card,
+    // Pointer: tap to edit, drag to move (tap vs pan resolve in the gesture
+    // arena, so they don't conflict). Keyboard/AT paths are independent
+    // (Enter = move, E / "Edit" action = edit).
+    return GestureDetector(
+      onTap: onEdit,
+      child: Draggable<TaskVm>(
+        data: task,
+        feedback:
+            Opacity(opacity: 0.9, child: SizedBox(width: 260, child: card)),
+        childWhenDragging: Opacity(opacity: 0.4, child: card),
+        child: card,
+      ),
     );
   }
 }

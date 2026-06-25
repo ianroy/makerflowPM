@@ -60,4 +60,32 @@ void main() {
     expect(find.text('Title is required'), findsNothing);
     expect(find.text('Calibrate the 3D printer'), findsOneWidget);
   });
+
+  testWidgets('Tapping a card edits it and the board reflects the change',
+      (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: MakerflowThemeBuilder.dark(),
+          home: const KanbanScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Tap a seeded card to open the edit dialog (pre-filled).
+    await tester.tap(find.text('Restock 3mm plywood'));
+    await tester.pumpAndSettle();
+    expect(find.text('Edit task'), findsOneWidget);
+
+    // Change the title and save.
+    await tester.enterText(
+        find.byType(TextFormField), 'Restock 6mm plywood');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    // Board shows the edited title; the old one is gone.
+    expect(find.text('Restock 6mm plywood'), findsOneWidget);
+    expect(find.text('Restock 3mm plywood'), findsNothing);
+  });
 }

@@ -19,6 +19,20 @@ abstract class TaskRepository {
     required String priority,
     int? projectId,
   });
+
+  /// Edit a task. [version] is the row the edit is based on — the server
+  /// rejects a stale version with a conflict (optimistic concurrency, R5).
+  /// [sortOrder] is passed through unchanged so an edit never reorders the card.
+  Future<TaskVm> update({
+    required int id,
+    required int version,
+    required int organizationId,
+    required String title,
+    required String status,
+    required String priority,
+    required double sortOrder,
+    int? projectId,
+  });
 }
 
 class InMemoryTaskRepository implements TaskRepository {
@@ -65,5 +79,32 @@ class InMemoryTaskRepository implements TaskRepository {
     );
     _tasks.add(created);
     return created;
+  }
+
+  @override
+  Future<TaskVm> update({
+    required int id,
+    required int version,
+    required int organizationId,
+    required String title,
+    required String status,
+    required String priority,
+    required double sortOrder,
+    int? projectId,
+  }) async {
+    final i = _tasks.indexWhere((t) => t.id == id);
+    final updated = TaskVm(
+      id: id,
+      organizationId: organizationId,
+      title: title,
+      status: status,
+      priority: priority,
+      projectId: projectId ?? _tasks[i].projectId,
+      assigneeName: _tasks[i].assigneeName,
+      sortOrder: sortOrder,
+      version: version + 1,
+    );
+    _tasks[i] = updated;
+    return updated;
   }
 }
