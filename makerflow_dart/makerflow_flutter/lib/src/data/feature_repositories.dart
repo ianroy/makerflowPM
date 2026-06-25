@@ -36,6 +36,12 @@ abstract class EquipmentRepository {
     required String name,
     required String status,
   });
+  Future<EquipmentVm> update({
+    required int id,
+    required int orgId,
+    required String name,
+    required String status,
+  });
 }
 
 class InMemoryEquipmentRepository implements EquipmentRepository {
@@ -58,11 +64,32 @@ class InMemoryEquipmentRepository implements EquipmentRepository {
     _items.add(created);
     return created;
   }
+
+  @override
+  Future<EquipmentVm> update({
+    required int id,
+    required int orgId,
+    required String name,
+    required String status,
+  }) async {
+    final i = _items.indexWhere((e) => e.id == id);
+    final updated = EquipmentVm(id: id, name: name, status: status, space: _items[i].space);
+    _items[i] = updated;
+    return updated;
+  }
 }
 
 abstract class ConsumableRepository {
   Future<List<ConsumableVm>> list(int orgId);
   Future<ConsumableVm> create({
+    required int orgId,
+    required String name,
+    required double quantityOnHand,
+    required double reorderPoint,
+    String? unit,
+  });
+  Future<ConsumableVm> update({
+    required int id,
     required int orgId,
     required String name,
     required double quantityOnHand,
@@ -105,11 +132,43 @@ class InMemoryConsumableRepository implements ConsumableRepository {
     _items.add(created);
     return created;
   }
+
+  @override
+  Future<ConsumableVm> update({
+    required int id,
+    required int orgId,
+    required String name,
+    required double quantityOnHand,
+    required double reorderPoint,
+    String? unit,
+  }) async {
+    final i = _items.indexWhere((e) => e.id == id);
+    final updated = ConsumableVm(
+      id: id,
+      name: name,
+      status: quantityOnHand <= 0
+          ? 'outOfStock'
+          : quantityOnHand <= reorderPoint
+              ? 'reorder'
+              : 'inStock',
+      quantityOnHand: quantityOnHand,
+      reorderPoint: reorderPoint,
+      unit: unit,
+    );
+    _items[i] = updated;
+    return updated;
+  }
 }
 
 abstract class MeetingRepository {
   Future<List<MeetingVm>> list(int orgId);
   Future<MeetingVm> create({
+    required int orgId,
+    required String title,
+    required String status,
+  });
+  Future<MeetingVm> update({
+    required int id,
     required int orgId,
     required String title,
     required String status,
@@ -134,6 +193,19 @@ class InMemoryMeetingRepository implements MeetingRepository {
     final created = MeetingVm(id: _nextId(_items.map((e) => e.id)), title: title, status: status);
     _items.add(created);
     return created;
+  }
+
+  @override
+  Future<MeetingVm> update({
+    required int id,
+    required int orgId,
+    required String title,
+    required String status,
+  }) async {
+    final i = _items.indexWhere((e) => e.id == id);
+    final updated = MeetingVm(id: id, title: title, status: status, meetingAt: _items[i].meetingAt);
+    _items[i] = updated;
+    return updated;
   }
 }
 

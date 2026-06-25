@@ -59,21 +59,17 @@ class ServerpodTaskRepository implements TaskRepository {
     required double sortOrder,
     int? projectId,
   }) async {
-    // Send id + base version so the server's optimistic-concurrency check runs;
-    // organizationId/createdAt are preserved server-side (tenancy can't move).
-    // sortOrder is echoed back unchanged (the server keeps incoming.sortOrder).
-    final now = DateTime.now().toUtc();
-    final row = await _client.task.update(api.Task(
-      id: id,
-      organizationId: organizationId,
+    // Fetch-merge: start from the current row so the edit preserves fields the
+    // VM doesn't carry (description, dueAt, assignee, sortOrder, clientUuid…),
+    // then override `version` with the caller's base version so the server's
+    // optimistic-concurrency check still fires on a stale edit.
+    final existing =
+        (await _client.task.list(organizationId)).firstWhere((t) => t.id == id);
+    final row = await _client.task.update(existing.copyWith(
       title: title,
       status: api.TaskStatus.values.byName(status),
       priority: api.TaskPriority.values.byName(priority),
-      projectId: projectId,
-      sortOrder: sortOrder,
       version: version,
-      createdAt: now,
-      updatedAt: now,
     ));
     return _toVm(row);
   }

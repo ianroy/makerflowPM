@@ -31,7 +31,7 @@ A real URL on managed Postgres.
 ## M1 — Finish the interactive core · ~1 wk (no blockers)
 | Task | Effort | Notes |
 |---|---|---|
-| M1.1 Edit paths for equipment/consumables/meetings | M | mirror the task edit dialog |
+| ~~M1.1 Edit paths for equipment/consumables/meetings~~ ✅ | M | done — create/edit dialogs, tap-to-edit, non-destructive fetch-merge |
 | M1.2 Delete + Trash UI | M | `TrashEndpoint` (restore/purge) exists |
 | M1.3 Task list + calendar views | M | kanban exists |
 | M1.4 Project create/edit + project→task linkage | M | `ProjectEndpoint` exists |

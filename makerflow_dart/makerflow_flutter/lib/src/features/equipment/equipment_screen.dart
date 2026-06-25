@@ -25,21 +25,32 @@ class EquipmentScreen extends ConsumerWidget {
       ),
       child: AsyncList(
         value: ref.watch(equipmentProvider),
-        itemBuilder: (context, e) => MfCard(
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(e.name, style: TextStyle(color: c.text, fontWeight: FontWeight.w700)),
-                    if (e.space != null)
-                      Text(e.space!, style: TextStyle(color: c.muted, fontSize: 12)),
-                  ],
-                ),
+        itemBuilder: (context, e) => Semantics(
+          button: true,
+          label: 'Edit ${e.name}',
+          child: InkWell(
+            onTap: () async {
+              final updated = await showEditEquipmentDialog(context, e);
+              if (updated != null) ref.invalidate(equipmentProvider);
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: MfCard(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(e.name, style: TextStyle(color: c.text, fontWeight: FontWeight.w700)),
+                        if (e.space != null)
+                          Text(e.space!, style: TextStyle(color: c.muted, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                  StatusBadge(status: _statusToken(e.status)),
+                ],
               ),
-              StatusBadge(status: _statusToken(e.status)),
-            ],
+            ),
           ),
         ),
       ),

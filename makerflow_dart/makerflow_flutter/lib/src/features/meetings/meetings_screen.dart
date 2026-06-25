@@ -25,14 +25,25 @@ class MeetingsScreen extends ConsumerWidget {
       ),
       child: AsyncList(
         value: ref.watch(meetingsProvider),
-        itemBuilder: (context, m) => MfCard(
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(m.title, style: TextStyle(color: c.text, fontWeight: FontWeight.w700)),
+        itemBuilder: (context, m) => Semantics(
+          button: true,
+          label: 'Edit ${m.title}',
+          child: InkWell(
+            onTap: () async {
+              final updated = await showEditMeetingDialog(context, m);
+              if (updated != null) ref.invalidate(meetingsProvider);
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: MfCard(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(m.title, style: TextStyle(color: c.text, fontWeight: FontWeight.w700)),
+                  ),
+                  StatusBadge(status: _statusToken(m.status)),
+                ],
               ),
-              StatusBadge(status: _statusToken(m.status)),
-            ],
+            ),
           ),
         ),
       ),

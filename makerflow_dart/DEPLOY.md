@@ -6,7 +6,8 @@ prepared and verified; this runbook is the exact sequence to take it live.
 
 > **Status (2026-06-25):** spec valid, `dart compile exe` (the image build step)
 > green on current code, `entrypoint.sh` syntax-checked, migrations present in
-> the image, all five packages resolve. The only thing that needs you is a
+> the image, all five packages resolve, and the production **`--seed` path is
+> verified** against a local PG (see step 6). The only thing that needs you is a
 > DigitalOcean account + API token — the steps below are otherwise copy-paste.
 
 ---
@@ -134,6 +135,8 @@ and drop `--apply-migrations` from the entrypoint).
 |---|---|
 | `dart compile exe` (image build) | ✅ green on current code (15 MB binary) |
 | `entrypoint.sh` renders config + serves in production mode | ✅ dry-run verified (prior session) |
+| `entrypoint.sh` `serve`/`seed` dispatch | ✅ `sh -n` + traced both paths to a stub server |
 | Spec is valid YAML, correct bindings | ✅ |
-| Migrations present + apply (56 tables) | ✅ (locally) |
+| Migrations present + apply (56 tables) | ✅ (locally, via the compiled binary) |
+| `--seed` creates org + owner + sample data, idempotent | ✅ compiled binary vs. local PG, **ports 8080–82 occupied** (proves no bind) |
 | Live `doctl apps create` + managed PG/Redis | ⏳ needs your token |

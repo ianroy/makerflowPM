@@ -55,4 +55,21 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Acrylic sheet'), findsOneWidget);
   });
+
+  testWidgets('Tapping an equipment card edits it', (tester) async {
+    await tester.pumpWidget(_host(const EquipmentScreen()));
+    await tester.pumpAndSettle();
+
+    // Tap a seeded card → edit dialog (pre-filled).
+    await tester.tap(find.text('Glowforge laser'));
+    await tester.pumpAndSettle();
+    expect(find.text('Edit equipment'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextFormField), 'Glowforge Pro');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Glowforge Pro'), findsOneWidget);
+    expect(find.text('Glowforge laser'), findsNothing);
+  });
 }

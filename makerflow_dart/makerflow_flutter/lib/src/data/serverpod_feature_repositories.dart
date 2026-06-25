@@ -79,6 +79,24 @@ class ServerpodEquipmentRepository implements EquipmentRepository {
     return EquipmentVm(
         id: saved.id ?? 0, name: saved.name, status: saved.status.name, space: null);
   }
+
+  @override
+  Future<EquipmentVm> update({
+    required int id,
+    required int orgId,
+    required String name,
+    required String status,
+  }) async {
+    // Fetch-merge so an edit preserves server-only fields the VM doesn't carry
+    // (assetTag, spaceId, certification, maintenance dates, notes).
+    final existing = (await _client.equipment.list(orgId)).firstWhere((e) => e.id == id);
+    final saved = await _client.equipment.save(existing.copyWith(
+      name: name,
+      status: api.EquipmentStatus.values.byName(status),
+    ));
+    return EquipmentVm(
+        id: saved.id ?? 0, name: saved.name, status: saved.status.name, space: null);
+  }
 }
 
 class ServerpodConsumableRepository implements ConsumableRepository {
@@ -130,6 +148,33 @@ class ServerpodConsumableRepository implements ConsumableRepository {
       unit: saved.unit,
     );
   }
+
+  @override
+  Future<ConsumableVm> update({
+    required int id,
+    required int orgId,
+    required String name,
+    required double quantityOnHand,
+    required double reorderPoint,
+    String? unit,
+  }) async {
+    // Fetch-merge (preserves spaceId/category); the server re-derives status.
+    final existing = (await _client.consumable.list(orgId)).firstWhere((c) => c.id == id);
+    final saved = await _client.consumable.save(existing.copyWith(
+      name: name,
+      quantityOnHand: quantityOnHand,
+      reorderPoint: reorderPoint,
+      unit: unit,
+    ));
+    return ConsumableVm(
+      id: saved.id ?? 0,
+      name: saved.name,
+      status: saved.status.name,
+      quantityOnHand: saved.quantityOnHand,
+      reorderPoint: saved.reorderPoint,
+      unit: saved.unit,
+    );
+  }
 }
 
 class ServerpodMeetingRepository implements MeetingRepository {
@@ -163,6 +208,23 @@ class ServerpodMeetingRepository implements MeetingRepository {
       createdAt: now,
       updatedAt: now,
     ));
+    return MeetingVm(
+        id: saved.id ?? 0,
+        title: saved.title,
+        status: saved.status,
+        meetingAt: saved.meetingAt);
+  }
+
+  @override
+  Future<MeetingVm> update({
+    required int id,
+    required int orgId,
+    required String title,
+    required String status,
+  }) async {
+    // Fetch-merge so an edit keeps meetingAt/owner/team/space.
+    final existing = (await _client.meeting.agendas(orgId)).firstWhere((m) => m.id == id);
+    final saved = await _client.meeting.saveAgenda(existing.copyWith(title: title, status: status));
     return MeetingVm(
         id: saved.id ?? 0,
         title: saved.title,

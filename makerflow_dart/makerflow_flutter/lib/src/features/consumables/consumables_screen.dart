@@ -25,24 +25,35 @@ class ConsumablesScreen extends ConsumerWidget {
       ),
       child: AsyncList(
         value: ref.watch(consumablesProvider),
-        itemBuilder: (context, k) => MfCard(
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(k.name, style: TextStyle(color: c.text, fontWeight: FontWeight.w700)),
-                    Text(
-                      '${k.quantityOnHand.toStringAsFixed(0)}${k.unit != null ? ' ${k.unit}' : ''} '
-                      '· reorder at ${k.reorderPoint.toStringAsFixed(0)}',
-                      style: TextStyle(color: c.muted, fontSize: 12),
+        itemBuilder: (context, k) => Semantics(
+          button: true,
+          label: 'Edit ${k.name}',
+          child: InkWell(
+            onTap: () async {
+              final updated = await showEditConsumableDialog(context, k);
+              if (updated != null) ref.invalidate(consumablesProvider);
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: MfCard(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(k.name, style: TextStyle(color: c.text, fontWeight: FontWeight.w700)),
+                        Text(
+                          '${k.quantityOnHand.toStringAsFixed(0)}${k.unit != null ? ' ${k.unit}' : ''} '
+                          '· reorder at ${k.reorderPoint.toStringAsFixed(0)}',
+                          style: TextStyle(color: c.muted, fontSize: 12),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  StatusBadge(status: _statusToken(k.status)),
+                ],
               ),
-              StatusBadge(status: _statusToken(k.status)),
-            ],
+            ),
           ),
         ),
       ),

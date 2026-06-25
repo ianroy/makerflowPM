@@ -39,7 +39,11 @@ Authoritative per-card state for the Dart rebuild. Maps to the task cards in [`.
 >
 > **Deploy readiness (2026-06-25):** all DO assets re-validated on current code — `dart compile exe` ✓ (15 MB), `.do/app.yaml` valid + bindings correct, `entrypoint.sh` `sh -n` ✓, migrations present. Spec repointed from `main` → **`staging`** (main is 10 commits behind and predates the Dockerfile/spec). Full runbook in [`DEPLOY.md`](DEPLOY.md). Only the live `doctl apps create` needs the user's token.
 >
-> **Remaining:** run the live DO deploy (needs `doctl` + token; see `DEPLOY.md`), production seed path (add a `--seed` server flag), password-reset flow, equipment space-name resolution (Space join), write paths for the other feature repos, offline/push/camera/biometric.
+> **Production seed path (2026-06-25):** added a `--seed` flag to the server entrypoint so the *runtime* image can seed the managed DB (previously `bin/seed.dart` ran only in the Docker build stage). `bin/seed.dart` and `--seed` now share one `runSeed` bootstrap (`lib/server.dart`) that constructs Serverpod and calls `createSession()` **without `pod.start()`** — the constructor already starts the DB pool, so a session is available without binding the HTTP ports (8080–82) or connecting Redis, making it safe to run inside the already-serving container (`doctl apps console web` → `/app/server --mode production --seed`, or `/app/entrypoint.sh seed`). `entrypoint.sh` gained a `serve`/`seed` dispatch (default serves; DO's no-arg start is unaffected). **Verified:** `dart compile exe` ✓; the compiled binary applied migrations (56 tables) then seeded the default org + owner login (`admin@makerflow.local`, `["superuser"]`) + project + 6 tasks + equipment/consumable against a local PG (:8090) **with 8080–82 occupied** (proving no port bind); a second run is a no-op (idempotent, counts unchanged); `entrypoint.sh` `sh -n` + dispatch traced; `dart analyze` clean. `DEPLOY.md` step 6 updated.
+>
+> **Ops-feature edit paths + non-destructive edits (2026-06-25):** equipment/consumable/meeting now have create **and** edit (one create/edit dialog each; tap a list card to edit; `flutter test` 6/6). Edits are **fetch-merge** in the live repos — read the current row, `copyWith` the edited fields, save — so they preserve server-only fields the thin VMs don't carry (assetTag, spaceId, maintenance dates, meetingAt, …). Same fix applied to the **task** edit (fetches the row, overrides `version` with the caller's base so optimistic-concurrency still fires). One known limit: clearing an optional field (e.g. consumable unit) is a no-op via copyWith.
+>
+> **Remaining:** run the live DO deploy (needs `doctl` + token; see `DEPLOY.md`), password-reset flow, equipment space-name resolution (Space join), a `getById`/`getOne` endpoint to avoid the list round-trip in fetch-merge edits, offline/push/camera/biometric.
 
 ## Legend
 `[x]` built · `[~]` partial / authored-not-verified · `[ ]` not started
@@ -72,8 +76,8 @@ Authoritative per-card state for the Dart rebuild. Maps to the task cards in [`.
 
 | Task | State | Notes |
 |---|---|---|
-| `fl-2-meetings` | `[~]` | Agenda/item/update models + `MeetingEndpoint` (incl. `convertItemToTask`) + meetings list screen + **live `ServerpodMeetingRepository` with a create write-path** ("New meeting" dialog → `saveAgenda`). Agenda detail UI + edit TODO. |
-| `fl-2-inventory` | `[~]` | Equipment/Consumable/Partnership/Intake models + endpoints (consumable derives reorder status; intake `convertToProject`) + equipment & consumables screens + **live repos with create write-paths** (accessible "New equipment"/"New consumable" dialogs, widget-tested; consumable numeric validation). Partnerships/intake screens + edit paths + attachments TODO. |
+| `fl-2-meetings` | `[~]` | Agenda/item/update models + `MeetingEndpoint` (incl. `convertItemToTask`) + meetings list screen + **live `ServerpodMeetingRepository` with create + edit** ("New meeting" / tap-to-edit → `saveAgenda`, fetch-merge). Agenda detail UI TODO. |
+| `fl-2-inventory` | `[~]` | Equipment/Consumable/Partnership/Intake models + endpoints (consumable derives reorder status; intake `convertToProject`) + equipment & consumables screens + **live repos with create + edit write-paths** (accessible create/edit dialogs, tap-to-edit cards, widget-tested; consumable numeric validation; **non-destructive fetch-merge edits**). Partnerships/intake screens + attachments TODO. |
 | `fl-2-pagination-perf` | `[~]` | Cursor helper authored + used by sync. Roll across all lists + client infinite-scroll TODO. |
 
 ## Phase 3 — People & analytics

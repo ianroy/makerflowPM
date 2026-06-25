@@ -5,21 +5,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/feature_models.dart';
 import '../../state/providers.dart';
 
-/// Accessible "create" dialogs for the operations features (equipment,
+/// Accessible create/edit dialogs for the operations features (equipment,
 /// consumables, meetings). Same contract as the task dialog: a Material
 /// AlertDialog (focus-trap + return-focus), labelled fields, required-field
 /// validation with an identified error, a busy state, and a typed-error surface
-/// that announces via a live region. Each returns the created VM (so the caller
-/// can refresh + the dialog announces success) or null if cancelled.
+/// that announces via a live region. Each returns the written VM (so the caller
+/// can refresh + the dialog announces) or null if cancelled. Pass `existing` to
+/// edit; omit it to create. Live edits are non-destructive (fetch-merge in the
+/// repositories), so a dialog only needs to know the fields it shows.
 
 Future<EquipmentVm?> showNewEquipmentDialog(BuildContext context) =>
-    showDialog<EquipmentVm>(context: context, builder: (_) => const _NewEquipmentDialog());
+    showDialog<EquipmentVm>(context: context, builder: (_) => const _EquipmentDialog());
+Future<EquipmentVm?> showEditEquipmentDialog(BuildContext context, EquipmentVm e) =>
+    showDialog<EquipmentVm>(context: context, builder: (_) => _EquipmentDialog(existing: e));
 
 Future<ConsumableVm?> showNewConsumableDialog(BuildContext context) =>
-    showDialog<ConsumableVm>(context: context, builder: (_) => const _NewConsumableDialog());
+    showDialog<ConsumableVm>(context: context, builder: (_) => const _ConsumableDialog());
+Future<ConsumableVm?> showEditConsumableDialog(BuildContext context, ConsumableVm c) =>
+    showDialog<ConsumableVm>(context: context, builder: (_) => _ConsumableDialog(existing: c));
 
 Future<MeetingVm?> showNewMeetingDialog(BuildContext context) =>
-    showDialog<MeetingVm>(context: context, builder: (_) => const _NewMeetingDialog());
+    showDialog<MeetingVm>(context: context, builder: (_) => const _MeetingDialog());
+Future<MeetingVm?> showEditMeetingDialog(BuildContext context, MeetingVm m) =>
+    showDialog<MeetingVm>(context: context, builder: (_) => _MeetingDialog(existing: m));
 
 // --- shared helpers ---
 
@@ -48,6 +56,19 @@ Widget _errorRow(BuildContext context, String msg) => Padding(
 
 String _cap(String s) => '${s[0].toUpperCase()}${s.substring(1)}';
 
+List<Widget> _actions(BuildContext context, bool busy, VoidCallback submit, String label) => [
+      TextButton(
+        onPressed: busy ? null : () => Navigator.of(context).pop(),
+        child: const Text('Cancel'),
+      ),
+      FilledButton(
+        onPressed: busy ? null : submit,
+        child: busy
+            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+            : Text(label),
+      ),
+    ];
+
 // --- Equipment ---
 
 const _equipmentStatuses = [
@@ -65,18 +86,20 @@ String _equipmentStatusLabel(String s) => switch (s) {
       _ => _cap(s),
     };
 
-class _NewEquipmentDialog extends ConsumerStatefulWidget {
-  const _NewEquipmentDialog();
+class _EquipmentDialog extends ConsumerStatefulWidget {
+  const _EquipmentDialog({this.existing});
+  final EquipmentVm? existing;
   @override
-  ConsumerState<_NewEquipmentDialog> createState() => _NewEquipmentDialogState();
+  ConsumerState<_EquipmentDialog> createState() => _EquipmentDialogState();
 }
 
-class _NewEquipmentDialogState extends ConsumerState<_NewEquipmentDialog> {
+class _EquipmentDialogState extends ConsumerState<_EquipmentDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _name = TextEditingController();
-  String _status = 'operational';
+  late final _name = TextEditingController(text: widget.existing?.name ?? '');
+  late String _status = widget.existing?.status ?? 'operational';
   bool _busy = false;
   String? _error;
+  bool get _isEdit => widget.existing != null;
 
   @override
   void dispose() {
@@ -91,19 +114,19 @@ class _NewEquipmentDialogState extends ConsumerState<_NewEquipmentDialog> {
       _error = null;
     });
     try {
-      final created = await ref.read(equipmentRepositoryProvider).create(
-            orgId: ref.read(activeOrgIdProvider),
-            name: _name.text.trim(),
-            status: _status,
-          );
+      final repo = ref.read(equipmentRepositoryProvider);
+      final orgId = ref.read(activeOrgIdProvider);
+      final saved = _isEdit
+          ? await repo.update(id: widget.existing!.id, orgId: orgId, name: _name.text.trim(), status: _status)
+          : await repo.create(orgId: orgId, name: _name.text.trim(), status: _status);
       if (mounted) {
-        _announce(context, 'Added equipment ${created.name}.');
-        Navigator.of(context).pop(created);
+        _announce(context, '${_isEdit ? 'Updated' : 'Added'} equipment ${saved.name}.');
+        Navigator.of(context).pop(saved);
       }
     } catch (e) {
       final msg = _friendly(e);
       setState(() => _error = msg);
-      if (mounted) _announce(context, 'Could not add equipment. $msg');
+      if (mounted) _announce(context, 'Could not save equipment. $msg');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -112,7 +135,7 @@ class _NewEquipmentDialogState extends ConsumerState<_NewEquipmentDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('New equipment'),
+      title: Text(_isEdit ? 'Edit equipment' : 'New equipment'),
       content: Form(
         key: _formKey,
         child: SizedBox(
@@ -140,27 +163,31 @@ class _NewEquipmentDialogState extends ConsumerState<_NewEquipmentDialog> {
           ]),
         ),
       ),
-      actions: _actions(context, _busy, _submit),
+      actions: _actions(context, _busy, _submit, _isEdit ? 'Save' : 'Create'),
     );
   }
 }
 
 // --- Consumable ---
 
-class _NewConsumableDialog extends ConsumerStatefulWidget {
-  const _NewConsumableDialog();
+class _ConsumableDialog extends ConsumerStatefulWidget {
+  const _ConsumableDialog({this.existing});
+  final ConsumableVm? existing;
   @override
-  ConsumerState<_NewConsumableDialog> createState() => _NewConsumableDialogState();
+  ConsumerState<_ConsumableDialog> createState() => _ConsumableDialogState();
 }
 
-class _NewConsumableDialogState extends ConsumerState<_NewConsumableDialog> {
+class _ConsumableDialogState extends ConsumerState<_ConsumableDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _name = TextEditingController();
-  final _unit = TextEditingController();
-  final _qty = TextEditingController(text: '0');
-  final _reorder = TextEditingController(text: '0');
+  late final _name = TextEditingController(text: widget.existing?.name ?? '');
+  late final _unit = TextEditingController(text: widget.existing?.unit ?? '');
+  late final _qty =
+      TextEditingController(text: (widget.existing?.quantityOnHand ?? 0).toStringAsFixed(0));
+  late final _reorder =
+      TextEditingController(text: (widget.existing?.reorderPoint ?? 0).toStringAsFixed(0));
   bool _busy = false;
   String? _error;
+  bool get _isEdit => widget.existing != null;
 
   @override
   void dispose() {
@@ -183,21 +210,31 @@ class _NewConsumableDialogState extends ConsumerState<_NewConsumableDialog> {
       _error = null;
     });
     try {
-      final created = await ref.read(consumableRepositoryProvider).create(
-            orgId: ref.read(activeOrgIdProvider),
-            name: _name.text.trim(),
-            quantityOnHand: double.parse(_qty.text.trim()),
-            reorderPoint: double.parse(_reorder.text.trim()),
-            unit: _unit.text.trim().isEmpty ? null : _unit.text.trim(),
-          );
+      final repo = ref.read(consumableRepositoryProvider);
+      final orgId = ref.read(activeOrgIdProvider);
+      final unit = _unit.text.trim().isEmpty ? null : _unit.text.trim();
+      final saved = _isEdit
+          ? await repo.update(
+              id: widget.existing!.id,
+              orgId: orgId,
+              name: _name.text.trim(),
+              quantityOnHand: double.parse(_qty.text.trim()),
+              reorderPoint: double.parse(_reorder.text.trim()),
+              unit: unit)
+          : await repo.create(
+              orgId: orgId,
+              name: _name.text.trim(),
+              quantityOnHand: double.parse(_qty.text.trim()),
+              reorderPoint: double.parse(_reorder.text.trim()),
+              unit: unit);
       if (mounted) {
-        _announce(context, 'Added consumable ${created.name}.');
-        Navigator.of(context).pop(created);
+        _announce(context, '${_isEdit ? 'Updated' : 'Added'} consumable ${saved.name}.');
+        Navigator.of(context).pop(saved);
       }
     } catch (e) {
       final msg = _friendly(e);
       setState(() => _error = msg);
-      if (mounted) _announce(context, 'Could not add consumable. $msg');
+      if (mounted) _announce(context, 'Could not save consumable. $msg');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -206,7 +243,7 @@ class _NewConsumableDialogState extends ConsumerState<_NewConsumableDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('New consumable'),
+      title: Text(_isEdit ? 'Edit consumable' : 'New consumable'),
       content: Form(
         key: _formKey,
         child: SizedBox(
@@ -252,7 +289,7 @@ class _NewConsumableDialogState extends ConsumerState<_NewConsumableDialog> {
           ]),
         ),
       ),
-      actions: _actions(context, _busy, _submit),
+      actions: _actions(context, _busy, _submit, _isEdit ? 'Save' : 'Create'),
     );
   }
 }
@@ -261,18 +298,20 @@ class _NewConsumableDialogState extends ConsumerState<_NewConsumableDialog> {
 
 const _meetingStatuses = ['draft', 'active', 'closed'];
 
-class _NewMeetingDialog extends ConsumerStatefulWidget {
-  const _NewMeetingDialog();
+class _MeetingDialog extends ConsumerStatefulWidget {
+  const _MeetingDialog({this.existing});
+  final MeetingVm? existing;
   @override
-  ConsumerState<_NewMeetingDialog> createState() => _NewMeetingDialogState();
+  ConsumerState<_MeetingDialog> createState() => _MeetingDialogState();
 }
 
-class _NewMeetingDialogState extends ConsumerState<_NewMeetingDialog> {
+class _MeetingDialogState extends ConsumerState<_MeetingDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _title = TextEditingController();
-  String _status = 'draft';
+  late final _title = TextEditingController(text: widget.existing?.title ?? '');
+  late String _status = widget.existing?.status ?? 'draft';
   bool _busy = false;
   String? _error;
+  bool get _isEdit => widget.existing != null;
 
   @override
   void dispose() {
@@ -287,19 +326,19 @@ class _NewMeetingDialogState extends ConsumerState<_NewMeetingDialog> {
       _error = null;
     });
     try {
-      final created = await ref.read(meetingRepositoryProvider).create(
-            orgId: ref.read(activeOrgIdProvider),
-            title: _title.text.trim(),
-            status: _status,
-          );
+      final repo = ref.read(meetingRepositoryProvider);
+      final orgId = ref.read(activeOrgIdProvider);
+      final saved = _isEdit
+          ? await repo.update(id: widget.existing!.id, orgId: orgId, title: _title.text.trim(), status: _status)
+          : await repo.create(orgId: orgId, title: _title.text.trim(), status: _status);
       if (mounted) {
-        _announce(context, 'Added meeting ${created.title}.');
-        Navigator.of(context).pop(created);
+        _announce(context, '${_isEdit ? 'Updated' : 'Added'} meeting ${saved.title}.');
+        Navigator.of(context).pop(saved);
       }
     } catch (e) {
       final msg = _friendly(e);
       setState(() => _error = msg);
-      if (mounted) _announce(context, 'Could not add meeting. $msg');
+      if (mounted) _announce(context, 'Could not save meeting. $msg');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -308,7 +347,7 @@ class _NewMeetingDialogState extends ConsumerState<_NewMeetingDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('New meeting'),
+      title: Text(_isEdit ? 'Edit meeting' : 'New meeting'),
       content: Form(
         key: _formKey,
         child: SizedBox(
@@ -336,20 +375,7 @@ class _NewMeetingDialogState extends ConsumerState<_NewMeetingDialog> {
           ]),
         ),
       ),
-      actions: _actions(context, _busy, _submit),
+      actions: _actions(context, _busy, _submit, _isEdit ? 'Save' : 'Create'),
     );
   }
 }
-
-List<Widget> _actions(BuildContext context, bool busy, VoidCallback submit) => [
-      TextButton(
-        onPressed: busy ? null : () => Navigator.of(context).pop(),
-        child: const Text('Cancel'),
-      ),
-      FilledButton(
-        onPressed: busy ? null : submit,
-        child: busy
-            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-            : const Text('Create'),
-      ),
-    ];
