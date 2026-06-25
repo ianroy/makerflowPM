@@ -11,11 +11,18 @@ import '../../state/session.dart';
 /// Built accessibly: the rail is a labelled landmark, nav items announce their
 /// selected state, and the body is the `main` region.
 class AppShell extends ConsumerWidget {
-  const AppShell({super.key, required this.routePath, required this.title, required this.child});
+  const AppShell({
+    super.key,
+    required this.routePath,
+    required this.title,
+    required this.child,
+    this.floatingActionButton,
+  });
 
   final String routePath;
   final String title;
   final Widget child;
+  final Widget? floatingActionButton;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -43,6 +50,7 @@ class AppShell extends ConsumerWidget {
     );
 
     return Scaffold(
+      floatingActionButton: floatingActionButton,
       appBar: AppBar(
         title: Text(title),
         actions: [

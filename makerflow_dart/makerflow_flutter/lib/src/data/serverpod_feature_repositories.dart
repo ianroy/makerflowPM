@@ -59,6 +59,26 @@ class ServerpodEquipmentRepository implements EquipmentRepository {
             ))
         .toList();
   }
+
+  @override
+  Future<EquipmentVm> create({
+    required int orgId,
+    required String name,
+    required String status,
+  }) async {
+    final now = DateTime.now().toUtc();
+    final saved = await _client.equipment.save(api.EquipmentAsset(
+      organizationId: orgId,
+      name: name,
+      status: api.EquipmentStatus.values.byName(status),
+      certificationRequired: false,
+      version: 1,
+      createdAt: now,
+      updatedAt: now,
+    ));
+    return EquipmentVm(
+        id: saved.id ?? 0, name: saved.name, status: saved.status.name, space: null);
+  }
 }
 
 class ServerpodConsumableRepository implements ConsumableRepository {
@@ -79,6 +99,37 @@ class ServerpodConsumableRepository implements ConsumableRepository {
             ))
         .toList();
   }
+
+  @override
+  Future<ConsumableVm> create({
+    required int orgId,
+    required String name,
+    required double quantityOnHand,
+    required double reorderPoint,
+    String? unit,
+  }) async {
+    final now = DateTime.now().toUtc();
+    final saved = await _client.consumable.save(api.Consumable(
+      organizationId: orgId,
+      name: name,
+      unit: unit,
+      quantityOnHand: quantityOnHand,
+      reorderPoint: reorderPoint,
+      // The server derives the real reorder status on save; this is a placeholder.
+      status: api.ConsumableStatus.inStock,
+      version: 1,
+      createdAt: now,
+      updatedAt: now,
+    ));
+    return ConsumableVm(
+      id: saved.id ?? 0,
+      name: saved.name,
+      status: saved.status.name,
+      quantityOnHand: saved.quantityOnHand,
+      reorderPoint: saved.reorderPoint,
+      unit: saved.unit,
+    );
+  }
 }
 
 class ServerpodMeetingRepository implements MeetingRepository {
@@ -96,5 +147,26 @@ class ServerpodMeetingRepository implements MeetingRepository {
               meetingAt: m.meetingAt,
             ))
         .toList();
+  }
+
+  @override
+  Future<MeetingVm> create({
+    required int orgId,
+    required String title,
+    required String status,
+  }) async {
+    final now = DateTime.now().toUtc();
+    final saved = await _client.meeting.saveAgenda(api.MeetingAgenda(
+      organizationId: orgId,
+      title: title,
+      status: status,
+      createdAt: now,
+      updatedAt: now,
+    ));
+    return MeetingVm(
+        id: saved.id ?? 0,
+        title: saved.title,
+        status: saved.status,
+        meetingAt: saved.meetingAt);
   }
 }

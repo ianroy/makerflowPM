@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:makerflow_design/makerflow_design.dart';
 
 import '../../state/providers.dart';
+import '../inventory/feature_create_dialogs.dart';
 import '../shell/app_shell.dart';
 
 class ConsumablesScreen extends ConsumerWidget {
@@ -13,6 +14,15 @@ class ConsumablesScreen extends ConsumerWidget {
     return AppShell(
       routePath: '/consumables',
       title: 'Consumables',
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final created = await showNewConsumableDialog(context);
+          if (created != null) ref.invalidate(consumablesProvider);
+        },
+        tooltip: 'New consumable',
+        icon: const Icon(Icons.add),
+        label: const Text('New consumable'),
+      ),
       child: AsyncList(
         value: ref.watch(consumablesProvider),
         itemBuilder: (context, k) => MfCard(

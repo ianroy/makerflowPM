@@ -72,8 +72,8 @@ Authoritative per-card state for the Dart rebuild. Maps to the task cards in [`.
 
 | Task | State | Notes |
 |---|---|---|
-| `fl-2-meetings` | `[~]` | Agenda/item/update models + `MeetingEndpoint` (incl. `convertItemToTask`) + meetings list screen + **live `ServerpodMeetingRepository`** (agendas read proven). Agenda detail UI TODO. |
-| `fl-2-inventory` | `[~]` | Equipment/Consumable/Partnership/Intake models + endpoints (consumable derives reorder status; intake `convertToProject`) + equipment & consumables screens + **live `ServerpodEquipmentRepository` + `ServerpodConsumableRepository`** (reads proven). Partnerships/intake screens + attachments TODO. |
+| `fl-2-meetings` | `[~]` | Agenda/item/update models + `MeetingEndpoint` (incl. `convertItemToTask`) + meetings list screen + **live `ServerpodMeetingRepository` with a create write-path** ("New meeting" dialog → `saveAgenda`). Agenda detail UI + edit TODO. |
+| `fl-2-inventory` | `[~]` | Equipment/Consumable/Partnership/Intake models + endpoints (consumable derives reorder status; intake `convertToProject`) + equipment & consumables screens + **live repos with create write-paths** (accessible "New equipment"/"New consumable" dialogs, widget-tested; consumable numeric validation). Partnerships/intake screens + edit paths + attachments TODO. |
 | `fl-2-pagination-perf` | `[~]` | Cursor helper authored + used by sync. Roll across all lists + client infinite-scroll TODO. |
 
 ## Phase 3 — People & analytics
