@@ -8,17 +8,22 @@ prioritized milestone view. Effort: S≈hours · M≈1–2d · L≈3–5d · XL�
 
 ![Rebuild roadmap: M0–M6 milestones, blockers, and sequence](../docs/diagrams/12-rebuild-roadmap.svg)
 
-## Where we are (updated 2026-07-14)
-Backend contract proven (**24 green server tests** incl. the 22-case live
-integration suite); the app does live reads + **task AND project CRUD**
-(create/edit/soft-delete + Trash for tasks; Archive for projects) + ops-feature
-create **and edit** (non-destructive fetch-merge); Board/List task views **with
-a project filter**; auth persists; production seed path done; packaged for
-DigitalOcean; **real CI at `/.github/workflows/dart-ci.yml`** (13 app tests +
-24 server tests gate PRs). All green (Dart 3.12.2 / Flutter 3.44.2 / Serverpod
-3.4.10). Gaps: not running anywhere yet (owner doctl token), detail screens +
-task calendar pending, realtime/offline/native are server-side-only, and the
-**web-a11y decision (R1) is still unmade**.
+## Where we are (paused 2026-07-14, end of session — resume point below)
+**Suites: server 29/29 · app 28/28 · design 7/7 · CI green.** The app wears the
+monday-style UI through **UI-3a** (Vibe design system, grey-frame shell +
+boards sidebar, board chrome with view tabs/toolbar, the grouped inline-editing
+**Main Table** as the default view, no page transitions). Full CRUD for tasks
+(+Trash) and projects (+Archive); ops features create/edit; **Phase 8 opened**:
+CustomView/FieldConfig/UserPreference endpoints live, **theme + sidebar persist
+across restarts**. Deploy-ready; PR #6 open.
+
+**▶ RESUME POINT: `fl-8-column-registry`** (resizable / reorderable / hideable /
+pinnable Main-Table columns, persisted to `CustomView.columnsJson` via the new
+ViewEndpoint) — spec in FLUTTER_REBUILD_PLAN.md §13 Phase 8; then
+fl-8-custom-fields (D6). Owner-blocked items unchanged: doctl token (live
+deploy), human AT pass (R1), PR #6 merge. Local demo stack may still be running
+(:8085 web · :8080 API · :8090 PG · :8091 Redis — kill/teardown commands in the
+2026-07-14 session notes; the PG cluster is disposable /tmp).
 
 ---
 
@@ -112,7 +117,7 @@ models exist with **no endpoints and no value storage**; Main Table columns are 
 
 | Order | Card | Effort | What it unlocks |
 |---|---|---|---|
-| 1 | fl-8-view-field-endpoints | M | serve CustomView/FieldConfig/UserPreference (theme+layout persistence) |
+| ~~1~~ ✅ | ~~fl-8-view-field-endpoints~~ done 2026-07-14 | M | endpoints live; theme+sidebar persist across restarts |
 | 2 | fl-8-column-registry | L | resize · reorder · show/hide · pin, persisted per view |
 | 3 | fl-8-custom-fields | XL | tier-1 field types on tasks (labels w/ colors, person, multi-select…) |
 | 4 | fl-8-saved-views | M | view tabs = saved/shared/default views |
@@ -146,4 +151,4 @@ SAML, SCIM, seat billing (universities buy site licenses on PO).
 Production seed flag · ops-feature edit paths · equipment space-name resolution
 (Space join) · password-reset flow · validate/refresh a restored session key.
 
-_Last updated: 2026-07-14 (monday UI shipped through UI-3a; M-CUST/M-ENT tracks added from the enterprise research pass — Phases 8/9 in the plan)._
+_Last updated: 2026-07-14 (paused; Phase 8 opened with fl-8-view-field-endpoints done — resume at fl-8-column-registry)._
