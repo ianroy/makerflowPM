@@ -8,11 +8,17 @@ prioritized milestone view. Effort: S≈hours · M≈1–2d · L≈3–5d · XL�
 
 ![Rebuild roadmap: M0–M6 milestones, blockers, and sequence](../docs/diagrams/12-rebuild-roadmap.svg)
 
-## Where we are
-Backend contract proven (19 live integration tests); the app does live reads +
-task create/edit + ops-feature create; auth persists; packaged for DigitalOcean.
-Gaps: not running anywhere yet, CRUD partial, realtime/offline/native are
-server-side-only, and the **web-a11y decision (R1) is still unmade**.
+## Where we are (re-verified 2026-07-11)
+Backend contract proven (19 green server tests incl. the 17-case live integration
+suite); the app does live reads + task CRUD (create/edit/soft-delete + Trash) +
+ops-feature create **and edit** (non-destructive fetch-merge); Board/List task
+views; auth persists; production seed path done; packaged for DigitalOcean.
+All green on the current toolchain (Dart 3.12.2 / Flutter 3.44.2 / Serverpod
+3.4.10). Gaps: not running anywhere yet, project CRUD + detail screens pending,
+realtime/offline/native are server-side-only, the **web-a11y decision (R1) is
+still unmade**, and **CI is inert** — `dart-ci.yml` sits at
+`makerflow_dart/.github/workflows/`, which GitHub Actions never reads (must move
+to the repo root).
 
 ---
 
@@ -54,7 +60,7 @@ Infra exists (`RealtimeEndpoint`, Redis `Channels`, `ChangeEvent`, `ItemComment`
 | Task | Effort | Deps | Notes |
 |---|---|---|---|
 | M3.1 Run `/spike` AT matrix (NVDA+Firefox, VoiceOver+Safari, keyboard); record verdict; decide web vs server-rendered fallback | M | **Human AT pass** | the R1 gate; fixture + report built |
-| M3.2 CI gates: 19 server tests (ephemeral PG/Redis) + 5 Flutter tests + axe-core | M | — | `dart-ci.yml` scaffold exists |
+| M3.2 CI gates: 19 server tests (ephemeral PG/Redis) + 10 Flutter tests + axe-core | M | — | **`dart-ci.yml` is INERT** (wrong dir — `makerflow_dart/.github/workflows/`; Actions only reads the repo root). Move + modernize it |
 | M3.3 Golden tests (both themes) + one Patrol E2E | M | — | — |
 
 **DoD:** CI blocks regressions; recorded AT verdict; web-target decision made.
@@ -71,6 +77,23 @@ Calendar sync (googleapis), CSV/ICS/PDF + SMTP, onboarding UI, reports/admin/set
 
 ## M6 — Release readiness · ~2 wk
 VPAT (after M3 verdict), store compliance (privacy manifests, signing), per-platform release pipelines.
+
+## M-EXP — Makerspace-team expansion track (from the 2026-07-11 capability review)
+Ranked by operational value ÷ effort; interleave with M2–M5 as capacity allows.
+Each builds on existing models/endpoints (details in [`Flutter_ProductSpec.md` §19](../Flutter_ProductSpec.md#19-where-to-go-next)):
+
+| # | Capability | Effort | Builds on |
+|---|---|---|---|
+| 1 | Low-stock alerts + reorder queue (dashboard panel, quick stock adjust, one-tap reorder task) | S | derived `ConsumableStatus`, TaskEndpoint, dashboard |
+| 2 | Onboarding / training checklist UI | S | `OnboardingEndpoint` (server done) |
+| 3 | Comments, watchers + activity stream UI | S | `CollabEndpoint` (server done), task edit dialog |
+| 4 | Equipment maintenance scheduling + service log | M | `nextMaintenanceAt`, FutureCall sweep → auto-task |
+| 5 | Member certifications / badging w/ equipment gating | M | `certificationRequired`, onboarding checklists as cert source |
+| 6 | Intake + partnerships screens | S | endpoints exist incl. `convertToProject` |
+| 7 | Incident / safety log (+ corrective-action tasks) | M | canonical model recipe, Attachment (photos later) |
+| 8 | Equipment reservation / booking (cert-gated, conflict-rejected) | L | `CalendarEvent`, version-conflict pattern, realtime |
+| 9 | Member check-in + volunteer hours (kiosk mode) | M | Membership/UserProfile, dashboard, InsightSnapshot |
+| 10 | Reports & insights dashboard (accessible charts + data tables) | M | `ReportTemplate`/`InsightSnapshot`, AuditLog as source |
 
 ---
 
@@ -90,4 +113,4 @@ VPAT (after M3 verdict), store compliance (privacy manifests, signing), per-plat
 Production seed flag · ops-feature edit paths · equipment space-name resolution
 (Space join) · password-reset flow · validate/refresh a restored session key.
 
-_Last updated: 2026-06-25._
+_Last updated: 2026-07-11 (deep review: docs refreshed against code; CI-inert finding; M-EXP track added)._

@@ -687,8 +687,9 @@ Port the token system from [`ProductSpec.md` §12](ProductSpec.md#12-design-syst
 **Spec (human-editable):**
 Stand up `serverpod_auth` (email/password), the `MembershipRole` enum + rank, the `requireRole(session, orgId, minRole)` guard, the org-scoped repository base, the audit interceptor, and soft-delete filtering — the full security contract from §5 — before any feature is built on top.
 
-- [ ] Email/password auth: register, login, reset; tokens in secure storage on client
-- [ ] `Membership` with role; org switch; `workspaceAdmin` pinned to one org; `isSuperuser` crosses orgs
+- [x] Login + session key in secure storage on client (`MakerflowKeyManager` on `flutter_secure_storage`, startup `restore()` gate)
+- [ ] Register + password-reset flows
+- [x] `Membership` with role; org switch (live memberships; active org defaults to first membership); `workspaceAdmin` pinned to one org; `isSuperuser` crosses orgs (role-matrix integration-tested)
 - [x] `requireRole` guard rejects under-privileged + cross-org access (integration-tested: viewer→Forbidden, unauth→Auth, cross-org→Forbidden)
 - [x] Every mutation writes an `auditLog` row via the interceptor (integration-tested: create → one org-scoped `AuditLog` row w/ actor + payload hash)
 - [x] Soft-delete sets `deletedAt`/`deletedByUserId`; default reads exclude deleted (integration-tested: soft-deleted task drops out of `list`, surfaces in trash, restores)
@@ -806,7 +807,7 @@ Establish the state + navigation patterns from [Appendix E](#e-state-management-
 
 #### fl-0-seed-data — Demo/seed data + first-run bootstrap
 
-- **Status:** [x] done — `business/seed.dart` + `bin/seed.dart` create a default org, a serverpod_auth owner login (+ superuser scope + owner membership + profile), a project, 6 tasks, equipment + consumable. Verified live (psql row counts); idempotent; clean CLI exit.
+- **Status:** [x] done — `business/seed.dart` + `bin/seed.dart` create a default org, a serverpod_auth owner login (+ superuser scope + owner membership + profile), a project, 6 tasks, equipment + consumable. Verified live (psql row counts); idempotent; clean CLI exit. **Production seed path added (M0.3):** a `--seed` flag on the server binary (stripped pre-ArgParser in `lib/server.dart`; shared `runSeed` bootstrap — `createSession()` without `pod.start()`, no port bind/Redis, safe in the serving container) + a `serve|seed` dispatch in `deploy/entrypoint.sh`; verified via the compiled binary with ports 8080–82 occupied; idempotent re-run is a no-op.
 - **Agent Persona:** dart-data
 - **Priority:** P2
 - **Complexity:** S
@@ -819,9 +820,9 @@ Establish the state + navigation patterns from [Appendix E](#e-state-management-
 **Spec (human-editable):**
 A seed routine that creates a default org, an owner admin (rotate-on-first-login), a couple of teams/spaces, and a realistic set of projects/tasks — the Dart analog of `scripts/load_sample_data.py`. Used by demos, the a11y spike, and integration tests.
 
-- [ ] `dart bin/seed.dart` populates a clean DB with a usable demo workspace
-- [ ] Idempotent (safe to re-run); guarded so it never runs against production
-- [ ] Tests reuse the same seed fixtures
+- [x] `dart bin/seed.dart` populates a clean DB with a usable demo workspace (verified live)
+- [x] Idempotent (safe to re-run). Production seeding is now an intentional one-off operator path (`entrypoint.sh seed` / `--seed`); idempotency is the guard — supersedes the original "never runs against production" wording
+- [ ] Tests reuse the same seed fixtures (integration suites build their own fixtures instead)
 
 **Agent Decisions (append-only, verbose):** _(empty)_
 
@@ -831,7 +832,7 @@ A seed routine that creates a default org, an owner admin (rotate-on-first-login
 
 #### fl-1-projects-tasks — Projects + tasks (kanban/list/calendar)
 
-- **Status:** [~] in_progress — Project/Task models + endpoints (full security contract + optimistic version, **integration-tested**), keyboard-accessible kanban, projects list screen, **and live `ServerpodTaskRepository` + `ServerpodProjectRepository`** through the authenticated generated client (task read proven end-to-end via `tool/auth_smoke.dart`; project read-path proven by `feature_reads_test.dart`; toggle with `--dart-define=MAKERFLOW_LIVE=true`). **Task create + edit write-paths wired** end-to-end: `TaskRepository.create`/`update` (in-memory + live `client.task.create`/`update`, the latter sending the base `version` so the server's optimistic-concurrency check fires) behind one accessible create/edit dialog (labelled fields, required-field validation, busy state, typed-error surface + live-region announce). Edit is reachable three ways without disturbing the keyboard-move pattern: pointer tap, the `E` key, and a screen-reader "Edit" custom action. Widget-tested (validation + create + edit + board refresh) **and proven live** end-to-end via `tool/ui_writepath_smoke.dart` (create/list/update/move + the stale-edit conflict, against real Postgres). Remaining: task list/calendar views
+- **Status:** [~] in_progress — Project/Task models + endpoints (full security contract + optimistic version, **integration-tested**), keyboard-accessible kanban, projects list screen, **and live `ServerpodTaskRepository` + `ServerpodProjectRepository`** through the authenticated generated client (task read proven end-to-end via `tool/auth_smoke.dart`; project read-path proven by `feature_reads_test.dart`; toggle with `--dart-define=MAKERFLOW_LIVE=true`). **Task create + edit write-paths wired** end-to-end: `TaskRepository.create`/`update` (in-memory + live `client.task.create`/`update`, the latter sending the base `version` so the server's optimistic-concurrency check fires) behind one accessible create/edit dialog (labelled fields, required-field validation, busy state, typed-error surface + live-region announce). Edit is reachable three ways without disturbing the keyboard-move pattern: pointer tap, the `E` key, and a screen-reader "Edit" custom action. Widget-tested (validation + create + edit + board refresh) **and proven live** end-to-end via `tool/ui_writepath_smoke.dart` (create/list/update/move + the stale-edit conflict, against real Postgres). **Task List view + Board/List toggle shipped** (M1.3a — `SegmentedButton` in the Tasks AppBar; `_TaskListView` groups tasks by status under `Semantics(header)` groups, rows tap-to-edit; widget-tested) and **soft-delete wired from the edit dialog** (M1.2 — danger Delete → confirm → board refresh; `TaskRepository.softDelete`, in-memory + live). Remaining: task calendar view (M1.3b — needs `TaskVm.dueAt` plumbing + a due-date picker); project create/edit UI + `ProjectEndpoint.update`/`softDelete` (M1.4)
 - **Agent Persona:** serverpod-backend + flutter-ui
 - **Priority:** P0
 - **Complexity:** XL
@@ -845,12 +846,13 @@ A seed routine that creates a default org, an owner admin (rotate-on-first-login
 **Spec (human-editable):**
 Projects board with lanes; tasks with three view modes (kanban / list / calendar). Full CRUD through endpoints; org-scoped; audited; soft-deletable. Kanban includes a **keyboard-accessible move** pattern from day one (WCAG 2.1.1 / 2.5.1).
 
-- [ ] Project + Task models + endpoints with role gates
-- [ ] Kanban drag-and-drop **and** keyboard move (Enter pick-up, arrows move, Enter drop, Esc cancel) with live-region announcements
-- [ ] List + calendar views
-- [ ] Optimistic updates via Riverpod; errors roll back
-- [ ] Status badges use the non-color cue from `makerflow_design`
-- [ ] Works on web + at least one mobile + one desktop target
+- [x] Project + Task models + endpoints with role gates (Task endpoints integration-tested; `ProjectEndpoint.update`/`softDelete` still TODO)
+- [x] Kanban drag-and-drop **and** keyboard move (Enter pick-up, arrows move, Enter drop, Esc cancel) with live-region announcements
+- [x] List view (Board/List toggle; status-grouped under `Semantics(header)`, rows tap-to-edit)
+- [ ] Calendar view (M1.3b — `dueAt` plumbing + due-date picker)
+- [ ] Optimistic updates via Riverpod; errors roll back (currently invalidate-and-refetch; typed errors surface + announce)
+- [x] Status badges use the non-color cue from `makerflow_design`
+- [ ] Works on web + at least one mobile + one desktop target (web verified; mobile/desktop targets not yet exercised)
 
 **Agent Decisions (append-only, verbose):** _(empty)_
 
@@ -882,7 +884,7 @@ Stand up the realtime substrate from [Appendix C](#c-realtime--offline-sync-arch
 
 #### fl-1-testing-harness — Test pyramid scaffold
 
-- **Status:** [~] in_progress — server unit test + Flutter widget test + a **live serverpod_test integration harness** (role-matrix, 6 cases, green over the `test`-mode DB with rollback-per-test; `dart_test.yaml` tags it `integration`). Still need golden tests + an E2E happy path
+- **Status:** [~] in_progress — **19 server tests green** (2 unit `rbac_rank_test.dart` + a live serverpod_test integration harness of **17 cases**: `role_matrix_test.dart` 6 · `contract_test.dart` 5 — audit / soft-delete+trash / optimistic-conflict / tenant-scoped reads · `feature_reads_test.dart` 6; rollback-per-test over the `test`-mode DB; `dart_test.yaml` tags them `integration`, concurrency 1) + **10 Flutter tests** (kanban board/create/edit/delete/list-toggle 5 · ops create/edit dialogs 3 · trash-repo coordination 2). Still need golden tests + an E2E happy path — and **CI is inert** (`dart-ci.yml` sits under `makerflow_dart/.github/workflows/`, which GitHub Actions never reads; move to the repo root)
 - **Agent Persona:** qa-automation-dart
 - **Priority:** P1
 - **Complexity:** M
@@ -983,7 +985,7 @@ Saved filters/columns per user (`customView`) and per-org custom fields (`fieldC
 
 #### fl-2-meetings — Meetings & agendas
 
-- **Status:** [~] in_progress — `MeetingAgenda`/`MeetingItem`/`MeetingItemNote` models + `MeetingEndpoint` (agendas, items, saveAgenda/saveItem, `convertItemToTask`) authored; **live `ServerpodMeetingRepository`** wired (agendas read proven by `feature_reads_test.dart`); Flutter agenda detail UI pending (list screen exists)
+- **Status:** [~] in_progress — `MeetingAgenda`/`MeetingItem`/`MeetingItemNote` models + `MeetingEndpoint` (agendas, items, saveAgenda/saveItem, `convertItemToTask`) authored; meetings list screen with **create + edit** ("New meeting" FAB + tap-a-card-to-edit → the shared accessible dialog; live edits via `saveAgenda` are non-destructive fetch-merge so `meetingAt`/owner/team survive; widget-tested). Agenda detail UI (nested items, notes timeline, convert-to-task) pending
 - **Agent Persona:** serverpod-backend + flutter-ui
 - **Priority:** P1
 - **Complexity:** XL
@@ -1007,7 +1009,7 @@ Agendas with parent/child items, item updates timeline, file attachments, and **
 
 #### fl-2-inventory — Equipment, consumables, partnerships, intake
 
-- **Status:** [~] in_progress — all four models + endpoints authored (equipment, consumable w/ derived reorder status, partnership, intake + `convertToProject`); Flutter list screens for equipment + consumables exist with **live `ServerpodEquipmentRepository` + `ServerpodConsumableRepository`** (reads proven by `feature_reads_test.dart`); partnerships/intake screens + attachment fields + equipment space-name resolution pending
+- **Status:** [~] in_progress — all four models + endpoints authored (equipment, consumable w/ derived reorder status, partnership, intake + `convertToProject`); Flutter list screens for equipment + consumables with **live repositories and create + edit write-paths** (accessible create/edit dialogs in `features/inventory/feature_create_dialogs.dart`; FAB to create, tap-a-card-to-edit; consumable numeric validation; live edits are **non-destructive fetch-merge** — read row → `copyWith` edited fields → save — so server-only fields like assetTag/spaceId/maintenance dates survive; widget-tested). Known limit: clearing an optional field via `copyWith` is a no-op. Partnerships/intake screens + attachment fields + equipment space-name resolution pending
 - **Agent Persona:** serverpod-backend + flutter-ui
 - **Priority:** P2
 - **Complexity:** XL
@@ -1080,7 +1082,7 @@ Role-based onboarding checklists → assignments with progress/due/completion. P
 
 #### fl-3-reports-admin-settings — Reports, admin, settings, trash
 
-- **Status:** [ ] backlog
+- **Status:** [~] in_progress — phase-3 models authored (`ReportTemplate`/`InsightSnapshot`/`UserPreference`/`RoleNavPreference`/`Space`/`Team`/`TeamMember`/`UserProfile`). **Trash queue shipped for tasks**: `TrashEndpoint` (list staff+; restore; purge `workspaceAdmin`+; restore/purge audited; integration-tested) + a `/trash` screen with nav entry, Restore, and confirm-gated Purge over `TrashRepository`/`ServerpodTrashRepository` (in-memory + live; unit-tested). Reports/admin/settings endpoints + UI TODO
 - **Agent Persona:** serverpod-backend + flutter-ui
 - **Priority:** P2
 - **Complexity:** XL
@@ -1096,7 +1098,7 @@ Reports + insight snapshots; admin/users governance; settings (profile, password
 - [ ] Reports + snapshots parity
 - [ ] Admin user management with role gates (owner/workspaceAdmin)
 - [ ] Settings incl. teams + spaces + per-role nav
-- [ ] Trash queue: restore + purge with audit
+- [x] Trash queue: restore + purge with audit (tasks; other entity types TODO)
 
 **Agent Decisions (append-only, verbose):** _(empty)_
 
@@ -1106,7 +1108,7 @@ Reports + insight snapshots; admin/users governance; settings (profile, password
 
 #### fl-4-calendar — Google Calendar sync (FutureCall)
 
-- **Status:** [ ] backlog
+- **Status:** [~] in_progress — `CalendarEvent`/`CalendarSyncSetting`/`CalendarSyncLink`/`MeetingNoteSource` models authored (generated + in the committed migration). googleapis OAuth + FutureCall sync + endpoints + UI TODO
 - **Agent Persona:** serverpod-backend
 - **Priority:** P2
 - **Complexity:** XL
@@ -1131,7 +1133,7 @@ Bidirectional Google Calendar sync via `googleapis`, run on a schedule with a Se
 
 #### fl-4-io-mail — CSV/ICS/PDF import-export + email
 
-- **Status:** [ ] backlog
+- **Status:** [~] in_progress — `EmailMessage` model authored (generated + in the committed migration). CSV/ICS/PDF endpoints + SMTP send + log TODO
 - **Agent Persona:** serverpod-backend
 - **Priority:** P2
 - **Complexity:** L
@@ -1209,7 +1211,7 @@ Drift local cache; mutation queue with client id + `version`; streaming server d
 
 #### fl-5-push — Push notifications (FCM/APNs/local)
 
-- **Status:** [ ] backlog
+- **Status:** [~] in_progress — `DeviceToken` model authored (generated + in the committed migration). FCM/APNs plumbing + endpoints + client TODO
 - **Agent Persona:** flutter-platform + serverpod-backend
 - **Priority:** P2
 - **Complexity:** L
@@ -1234,7 +1236,7 @@ Device-token registry; server emits on assignment/mention/comment/due-soon via F
 
 #### fl-5-camera-biometric — Camera capture + biometric unlock
 
-- **Status:** [ ] backlog
+- **Status:** [~] in_progress — `Attachment` model authored (generated + in the committed migration). Capture/upload + `local_auth` biometric TODO
 - **Agent Persona:** flutter-platform
 - **Priority:** P3
 - **Complexity:** M
@@ -1364,7 +1366,7 @@ Port the legacy [`docs/SECURITY.md`](docs/SECURITY.md) threat model to the Dart 
 
 #### fl-7-release-pipelines — App-store + desktop + web release pipelines
 
-- **Status:** [ ] backlog
+- **Status:** [~] in_progress — **server deploy assets authored + validated**: Dockerfile, `deploy/entrypoint.sh` (`serve|seed` dispatch, `sh -n` checked), `.do/app.yaml` (valid; deploys from `staging`), `dart compile exe` verified; full runbook in `makerflow_dart/DEPLOY.md`. Remaining: the live `doctl apps create` (needs DO credentials), signed builds for the six client targets, beta channels, rollback doc
 - **Agent Persona:** devops-dart
 - **Priority:** P1
 - **Complexity:** XL
@@ -1411,6 +1413,21 @@ Phase 7  Release ........... per-platform pipelines → GA
 - **M5 — Compliant GA:** Phases 6–7 complete; WCAG 2.1 AA per platform, signed releases, beta → GA.
 
 **Critical path:** `fl-0-monorepo-scaffold` → `fl-0-auth-rbac-tenancy` → `fl-1-projects-tasks` → everything. The **`fl-0-a11y-web-spike` gate** runs in parallel in Phase 0 and must resolve before the web target is promised.
+
+### 14.1 Current position & next steps (updated 2026-07-11)
+
+> The plan's milestones above (M1–M5) are **product** milestones. The near-term **operational** roadmap uses a separate M0–M6 scale in [`makerflow_dart/NEXTSTEPS.md`](makerflow_dart/NEXTSTEPS.md) — reference those as *NS-M0…NS-M6* to avoid collision.
+>
+> **Position:** between plan-M1 and plan-M2. Everything committed is green (re-verified 2026-07-11 on Dart 3.12.2 / Flutter 3.44.2 / Serverpod 3.4.10: server `dart analyze` clean + **19/19** tests over live Postgres; app `flutter analyze` clean + **10/10** + `flutter build web` ✓). NS-M0.3 (production seed), NS-M1.1–M1.3a, auth polish, and deploy prep are done; [PR #6](https://github.com/ianroy/makerflowPM/pull/6) (staging → main) is open.
+>
+> **Next, in order:**
+> 1. **NS-M0.2 — go live on DigitalOcean** (blocked on an owner `doctl` token; [`DEPLOY.md`](makerflow_dart/DEPLOY.md) is copy-paste) → `entrypoint.sh seed` → web build against the live API.
+> 2. **NS-M1.4 — project CRUD**: add `ProjectEndpoint.update`/`softDelete` (+ integration test + regen), project create/edit UI, project filter on task views. First card that needs server work since M1.1.
+> 3. **NS-M1.5 — detail screens**: agenda detail (items + `convertItemToTask`), intake (+ `convertToProject`), partnerships. Then **NS-M1.3b** — the task calendar view.
+> 4. **Fix CI (inert!)**: `dart-ci.yml` lives at `makerflow_dart/.github/workflows/`, which GitHub Actions never reads — move it to the repo root and update it (integration tag, PG service :8090, `server_test_tools_path`); gate the 19 + 10 tests.
+> 5. **Run the a11y gate** (`fl-0-a11y-web-spike`): human NVDA/VoiceOver/keyboard pass on `/spike`; decide the web target.
+> 6. **Makerspace-team expansion track** (ranked capability backlog from the 2026-07-11 review; full rationale in [`Flutter_ProductSpec.md` §19](Flutter_ProductSpec.md#19-where-to-go-next) and NEXTSTEPS): low-stock alerts + reorder queue (S) → onboarding/training checklist UI (S) → comments/watchers/activity UI (S) → equipment maintenance scheduling + service log (M) → certifications/badging w/ equipment gating (M) → intake+partnerships screens (S) → incident/safety log (M) → equipment reservations (L) → member check-in + volunteer hours (M) → reports & insights dashboard (M). The next §0.2 regeneration pass should formalize the top items as `fl-` cards (cap 7/pass).
+> 7. Then the native edge (offline client, push, camera, biometric — NS-M4) and release readiness (NS-M6).
 
 ---
 
@@ -1603,6 +1620,7 @@ Append-only. One line per completed-or-deferred task, in execution order.
 
 - `2026-06-25` — `fl-task-views` (M1.3a) — **Task List view + view toggle.** Added a `SegmentedButton` (Board / List) to the Tasks AppBar that swaps the body without touching the keyboard-accessible board (lowest-risk approach: the board renders only in kanban mode; its move/focus state is untouched). New `_TaskListView` — tasks grouped by status under `Semantics(header)` groups (WCAG 1.3.1), each row tap-to-edit (reuses the edit dialog). Verified: `flutter analyze` clean, `flutter test` **10/10** (added a toggle-to-list test), `flutter build web` ✓. **Deferred — M1.3b calendar:** needs `TaskVm.dueAt` plumbing + a due-date picker in the dialog (with the `copyWith` nullable-clear caveat); a clean separate increment.
 - `2026-06-25` — `fl-delete-trash` (M1.2) — **Soft-delete + a Trash queue.** `TaskRepository.softDelete` (in-memory + live `client.task.softDelete`) and a new `TrashRepository` (`deletedTasks`/`restoreTask`/`purgeTask` → `client.trash.*`). Delete is reachable from the task edit dialog — a danger "Delete" button → confirm → soft-delete → announce → board refresh (so every input path that opens edit can delete). New `/trash` screen + nav entry: lists deleted tasks with **Restore** and a confirm-gated **Purge** (workspace_admin+ server-side → surfaces the typed Forbidden). The in-memory task + trash repos **share one store** (a private `ProviderScope`-scoped provider) so the stub coordinates delete→trash→restore exactly like the live DB does — and stays test-isolated. Verified: `flutter analyze` clean, `flutter test` **9/9** (added a delete-off-the-board widget test + a trash-coordination unit test: soft-delete→trash→restore, and purge), `flutter build web` ✓.
+- `2026-07-11` — `fl-deep-review` — **Full-project review + doc refresh + next-steps consolidation.** Re-verified everything green on the current toolchain (unchanged: Dart 3.12.2 / Flutter 3.44.2 / Serverpod 3.4.10): server analyze clean + **19/19** (fresh PG cluster, live integration suite), app analyze clean + **10/10** + web build ✓ — the project resumes exactly where it left off. Ran a 3-agent audit (ProductSpec claims vs code · §13 card statuses vs code · makerspace capability gaps): **26 stale statements** found in `Flutter_ProductSpec.md` (it still described the pre-toolchain walking skeleton — "not compiled", "5 models/3 endpoints/3 screens", "no codegen committed", "/healthz", stale run recipe/gaps/next steps) → rewritten end-to-end; **12 stale §13 cards** corrected (list-view + trash + production-seed + session-persistence + create/edit paths recorded; `fl-4-calendar`/`fl-4-io-mail`/`fl-5-push`/`fl-5-camera-biometric`/`fl-7-release-pipelines`/`fl-3-reports-admin-settings` bumped from backlog to reflect authored models/assets). **Found CI is inert** — `dart-ci.yml` sits under `makerflow_dart/.github/workflows/`, which GitHub Actions never reads (workflows must live at the repo root); recorded as a top next step. Added §14.1 (current position + ordered next steps, disambiguating plan-M vs NEXTSTEPS NS-M scales) and a **ranked 10-item makerspace-team capability backlog** (low-stock/reorder → onboarding UI → collab UI → maintenance scheduling → certifications/gating → intake+partnerships → incident log → reservations → check-in/hours → reports) into §14.1, `Flutter_ProductSpec.md` §19, and NEXTSTEPS. Resume point: **NS-M0.2 live deploy (owner token) ∥ NS-M1.4 project CRUD**.
 - `2026-06-25` — `fl-ops-edit-paths` (M1.1) — **Edit write-paths for equipment / consumables / meetings + a non-destructive-edit fix.** Generalized each feature dialog to create/edit (pre-filled, "Save"), added `update` to the three repositories, and made each list card tap-to-edit (`Semantics(button)` + `InkWell`). **Correctness fix:** the `save` endpoints' update path takes unspecified fields from the incoming model, so a thin-VM edit would silently *wipe* server-only fields (assetTag, spaceId, maintenance dates, meetingAt, …). All live edits are now **fetch-merge** — read the current row, `copyWith` only the edited fields, save. Applied the same to the **task** edit (which had the same latent bug): it now fetches the row and overrides `version` with the caller's base version, so it's non-destructive *and* the optimistic-concurrency check still fires. Known limit: clearing an optional field via `copyWith` is a no-op (e.g. consumable unit); and fetch-merge costs an extra list round-trip until a `getById` endpoint exists. Verified: `flutter analyze` clean, `flutter test` **6/6** (added equipment-create, consumable-create-with-validation, equipment-edit), `flutter build web` ✓.
 - `2026-06-25` — `fl-roadmap + fl-prod-seed` — **Persisted the near-term roadmap and closed the production seed gap (M0.3).** Wrote [`makerflow_dart/NEXTSTEPS.md`](makerflow_dart/NEXTSTEPS.md) — a prioritized milestone view (M0 go-live → M6 release) with effort, dependencies, owner-blockers, and a recommended sequence — plus a roadmap diagram [`docs/diagrams/12-rebuild-roadmap.svg`](docs/diagrams/12-rebuild-roadmap.svg) in the app's design language. Closed M0.3: a production `--seed` path so the deployed runtime image can seed the managed DB (previously seed ran only in the Docker build stage). `server --mode production --seed` and `bin/seed.dart` now share one `runSeed` bootstrap in `lib/server.dart`; `--seed` is stripped before Serverpod's ArgParser (unknown flags trigger a fall-back-to-defaults that would drop `--mode`); `entrypoint.sh` gained a `seed` command; DEPLOY.md step 6 uses it. Idempotent + never starts the HTTP servers (safe to run in the serving instance). Server analyze clean; entrypoint `sh -n` clean.
 - `2026-06-25` — `fl-feature-write-paths` — **Broadened write paths to equipment / consumables / meetings (create).** Added `create` to the three feature repositories (in-memory impls made stateful so creates persist in-session; live impls call `client.equipment.save` / `client.consumable.save` / `client.meeting.saveAgenda`, all confirmed present in the generated client). Built three accessible create dialogs in `features/inventory/feature_create_dialogs.dart` (shared focus-trap/validation/busy/typed-error-announce pattern from the task dialog; consumable adds numeric validation on quantity/reorder). Gave `AppShell` an optional `floatingActionButton` slot and wired a "New …" FAB on each screen that opens the dialog and refreshes the list on success. For consumables the server derives the reorder status on save, so the live impl reflects the server's value (the in-memory stub mirrors the same rule). Verified: `flutter analyze` clean, `flutter test` **5/5** (added equipment create + consumable create-with-number-validation widget tests), `flutter build web` ✓. Edit paths for these three are the natural follow-up (the dialogs are create-only for now).
@@ -1629,4 +1647,4 @@ Append-only. One line per completed-or-deferred task, in execution order.
 
 ---
 
-_Last updated: 2026-06-16. This plan governs a greenfield Dart codebase and does not modify the existing Python app. Reconcile with [`FEATUREROADMAP_workplan.md`](FEATUREROADMAP_workplan.md) at each phase boundary; security/parity fixes to the Python app continue independently until the Dart build reaches M3._
+_Last updated: 2026-07-11. This plan governs a greenfield Dart codebase and does not modify the existing Python app. Reconcile with [`FEATUREROADMAP_workplan.md`](FEATUREROADMAP_workplan.md) at each phase boundary; security/parity fixes to the Python app continue independently until the Dart build reaches M3._

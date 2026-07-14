@@ -2,6 +2,8 @@
 
 Authoritative per-card state for the Dart rebuild. Maps to the task cards in [`../FLUTTER_REBUILD_PLAN.md`](../FLUTTER_REBUILD_PLAN.md).
 
+> **Re-verified green 2026-07-11** on an unchanged toolchain: server `dart analyze` clean + **19/19** (fresh PG cluster, full live integration suite) · app `flutter analyze` clean + **10/10** + `flutter build web` ✓. Deep-review findings that session: `Flutter_ProductSpec.md` refreshed end-to-end (26 stale claims), 12 stale plan cards corrected, and **CI found inert** (`dart-ci.yml` is under `makerflow_dart/.github/workflows/` — GitHub Actions only reads the repo root; move + modernize it). Next up: NS-M0.2 live DO deploy (owner token) ∥ NS-M1.4 project CRUD; the ranked makerspace capability backlog is in `NEXTSTEPS.md` (M-EXP).
+>
 > **Compiles + green (2026-06-16).** Run on Dart 3.12.2 / Flutter 3.44.2 / Serverpod 3.4.10:
 > - Server: `serverpod generate` ✓ · `dart analyze` clean · `dart test` **19/19 ✓ (2 unit + 17 live integration)** · `serverpod create-migration` ✓ (112 tables).
 > - Design: `flutter analyze` clean.
