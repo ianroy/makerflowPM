@@ -156,6 +156,7 @@ class _EquipmentDialogState extends ConsumerState<_EquipmentDialog> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
+              isExpanded: true,
               initialValue: _status,
               decoration: const InputDecoration(labelText: 'Status'),
               items: [
@@ -368,6 +369,7 @@ class _MeetingDialogState extends ConsumerState<_MeetingDialog> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
+              isExpanded: true,
               initialValue: _status,
               decoration: const InputDecoration(labelText: 'Status'),
               items: [
@@ -510,6 +512,7 @@ class _ProjectDialogState extends ConsumerState<_ProjectDialog> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
+              isExpanded: true,
               initialValue: _status,
               decoration: const InputDecoration(labelText: 'Status'),
               items: [
@@ -522,6 +525,7 @@ class _ProjectDialogState extends ConsumerState<_ProjectDialog> {
             Row(children: [
               Expanded(
                 child: DropdownButtonFormField<String?>(
+                  isExpanded: true,
                   initialValue: _lane,
                   decoration: const InputDecoration(labelText: 'Lane'),
                   items: [
@@ -535,6 +539,7 @@ class _ProjectDialogState extends ConsumerState<_ProjectDialog> {
               const SizedBox(width: 12),
               Expanded(
                 child: DropdownButtonFormField<String>(
+                  isExpanded: true,
                   initialValue: _priority,
                   decoration: const InputDecoration(labelText: 'Priority'),
                   items: [

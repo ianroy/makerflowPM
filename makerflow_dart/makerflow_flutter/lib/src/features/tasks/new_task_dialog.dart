@@ -176,6 +176,7 @@ class _TaskDialogState extends ConsumerState<_TaskDialog> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
+                isExpanded: true,
                 initialValue: _status,
                 decoration: const InputDecoration(labelText: 'Status'),
                 items: [
@@ -186,6 +187,7 @@ class _TaskDialogState extends ConsumerState<_TaskDialog> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
+                isExpanded: true,
                 initialValue: _priority,
                 decoration: const InputDecoration(labelText: 'Priority'),
                 items: [

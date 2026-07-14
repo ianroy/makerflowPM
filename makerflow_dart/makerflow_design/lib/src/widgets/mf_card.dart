@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../theme.dart';
 import '../tokens.dart';
 
-/// The canonical surface: 16px radius, 1px line border, flat offset shadow.
-/// Mirrors the legacy `.card` rule.
+/// The canonical surface, monday-style: white, radius 8, 1px layout border,
+/// Vibe shadow-xs. (Same API as v1 so every screen keeps compiling.)
 class MfCard extends StatelessWidget {
   const MfCard({super.key, required this.child, this.padding, this.onTap});
 
@@ -15,7 +15,8 @@ class MfCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = MakerflowTheme.of(context).colors;
     final card = Container(
-      padding: padding ?? const EdgeInsets.all(14),
+      padding: padding ?? const EdgeInsets.all(MndSpace.s12),
+      margin: const EdgeInsets.symmetric(vertical: MndSpace.s4),
       decoration: BoxDecoration(
         color: c.card,
         borderRadius: BorderRadius.circular(MakerflowShape.radiusCard),
@@ -28,6 +29,7 @@ class MfCard extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(MakerflowShape.radiusCard),
+      hoverColor: c.hover,
       child: card,
     );
   }

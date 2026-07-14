@@ -23,7 +23,8 @@ import '../features/trash/trash_screen.dart';
 import '../features/_spike/a11y_spike_screen.dart';
 
 /// Light/dark toggle (persisted to UserPreference server-side in fl-3).
-final themeModeProvider = StateProvider<ThemeMode>((_) => ThemeMode.dark);
+/// Light is the product default (monday-style redesign, UI-0).
+final themeModeProvider = StateProvider<ThemeMode>((_) => ThemeMode.light);
 
 /// The active organization id (drives every org-scoped read).
 final activeOrgIdProvider = StateProvider<int>((_) => 1);

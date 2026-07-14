@@ -151,7 +151,7 @@ carries its **text inside it** (white 14px on the label color), which is the non
 > Effort: S≈hours · M≈1–2d · L≈3–5d · XL≈1–2wk. Each phase ends analyze-clean + widget-tested +
 > web build green (the CI now enforces this). Goldens land with UI-0 and grow per phase.
 
-### UI-0 · Vibe-derived design system (`makerflow_design` v2) — **M** · unblocks everything
+### UI-0 · Vibe-derived design system (`makerflow_design` v2) — **M** · unblocks everything · ✅ **built 2026-07-14**
 Tokens: the §2.2 table verbatim (light + dark), 40-color label palette, spacing/radius/shadow/
 motion constants, focus-ring style. Fonts bundled. Core widgets: `MndButton` (3 kinds × 3
 sizes, press-scale), `MndPopover` (r8, shadow-md, pop-in), `StatusLabel` (cell + pill modes) +
@@ -288,4 +288,4 @@ Battery/Calendar/Llama-Farm widgets), 2024–2026 product-update writeups. Pixel
 published by monday (row ≈36px, sidebar ≈255px, edge bar 4–6px) are observational — verify
 against the Vibe UI Kit Figma before hard-coding.*
 
-*Written 2026-07-14. Next step: build UI-0.*
+*Written 2026-07-14. UI-0 shipped the same day (see BUILD_STATUS). Next step: UI-1 (app shell). Note from UI-0: pixel goldens are deferred until a CI-generated baseline exists (macOS-made goldens false-fail on Linux CI); the design suite carries semantic + AA-contrast tests instead.*
