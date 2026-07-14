@@ -78,6 +78,15 @@ Calendar sync (googleapis), CSV/ICS/PDF + SMTP, onboarding UI, reports/admin/set
 ## M6 — Release readiness · ~2 wk
 VPAT (after M3 verdict), store compliance (privacy manifests, signing), per-platform release pipelines.
 
+## M-UI — monday.com-style front-end redesign (planned 2026-07-14)
+The owner wants the interface to look like **monday.com**. Researched against monday's
+open-source **Vibe** design system (exact tokens) and planned in
+[`UI_REDESIGN_PLAN.md`](UI_REDESIGN_PLAN.md): 11 phases — UI-0 (Vibe-derived design system) →
+UI-1 shell → UI-2 board chrome → **UI-3 Main Table (the signature)** → kanban restyle → item
+card (Updates = CollabEndpoint UI) → bulk actions → calendar (absorbs M1.3b) → My Work →
+dashboard widgets → polish (confetti on Done). ≈4–6 wk to the "looks like monday" bar.
+**Build M1.5's screens on the new system (after UI-3) rather than styling them twice.**
+
 ## M-EXP — Makerspace-team expansion track (from the 2026-07-11 capability review)
 Ranked by operational value ÷ effort; interleave with M2–M5 as capacity allows.
 Each builds on existing models/endpoints (details in [`Flutter_ProductSpec.md` §19](../Flutter_ProductSpec.md#19-where-to-go-next)):
