@@ -98,70 +98,45 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
         _ => '${status[0].toUpperCase()}${status.substring(1)}',
       };
 
+  String _query = '';
+
   @override
   Widget build(BuildContext context) {
     final c = MakerflowTheme.of(context).colors;
     final tasksAsync = ref.watch(tasksProvider);
 
-    // UI-1: the Tasks board lives in the monday shell. Its controls sit in the
-    // sheet's title row until UI-2's board chrome (view tabs + toolbar) lands.
+    // UI-2: monday board chrome — view-tabs row + toolbar row under the board
+    // title. (Sticky-on-scroll + member avatars/Invite land in UI-2b.)
     return AppShell(
       routePath: '/tasks',
       title: 'Tasks',
-      actions: [
-        // Project filter (null = all). Live memberships feed projectsProvider.
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: ref.watch(projectsProvider).maybeWhen(
-                data: (projects) => Semantics(
-                  label: 'Filter tasks by project',
-                  child: DropdownButton<int?>(
-                    value: ref.watch(taskProjectFilterProvider),
-                    underline: const SizedBox.shrink(),
-                    isDense: true,
-                    items: [
-                      const DropdownMenuItem<int?>(value: null, child: Text('All projects')),
-                      for (final p in projects)
-                        DropdownMenuItem<int?>(value: p.id, child: Text(p.name)),
-                    ],
-                    onChanged: (id) =>
-                        ref.read(taskProjectFilterProvider.notifier).state = id,
-                  ),
-                ),
-                orElse: () => const SizedBox.shrink(),
-              ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: SegmentedButton<_TasksView>(
-            showSelectedIcon: false,
-            segments: const [
-              ButtonSegment(
-                  value: _TasksView.kanban,
-                  icon: Icon(Icons.view_kanban_outlined),
-                  label: Text('Board')),
-              ButtonSegment(
-                  value: _TasksView.list,
-                  icon: Icon(Icons.view_list_outlined),
-                  label: Text('List')),
-            ],
-            selected: {_view},
-            onSelectionChanged: (s) => setState(() => _view = s.first),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _ViewTabs(current: _view, onChanged: (v) => setState(() => _view = v)),
+          Divider(height: 1, color: c.line),
+          _BoardToolbar(
+            onNewItem: _openNewTask,
+            onQuery: (q) => setState(() => _query = q),
           ),
-        ),
-      ],
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openNewTask,
-        tooltip: 'New task',
-        icon: const Icon(Icons.add),
-        label: const Text('New task'),
-      ),
-      child: tasksAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Failed to load: $e')),
-        data: (tasks) => _view == _TasksView.list
-            ? _TaskListView(tasks: tasks, colors: c, onEdit: _openEditTask)
-            : _board(tasks, c),
+          Expanded(
+            child: tasksAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(child: Text('Failed to load: $e')),
+              data: (tasks) {
+                final visible = _query.isEmpty
+                    ? tasks
+                    : tasks
+                        .where((t) =>
+                            t.title.toLowerCase().contains(_query.toLowerCase()))
+                        .toList();
+                return _view == _TasksView.list
+                    ? _TaskListView(tasks: visible, colors: c, onEdit: _openEditTask)
+                    : _board(visible, c);
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -413,6 +388,142 @@ class _Card extends StatelessWidget {
             Opacity(opacity: 0.9, child: SizedBox(width: 260, child: card)),
         childWhenDragging: Opacity(opacity: 0.4, child: card),
         child: card,
+      ),
+    );
+  }
+}
+
+/// UI-2 view-tabs row: flat monday-style tabs — active = brand text + a 2px
+/// brand underline. "Main table" (UI-3) and "Calendar" (UI-7) are announced
+/// coming-soon stubs.
+class _ViewTabs extends StatelessWidget {
+  const _ViewTabs({required this.current, required this.onChanged});
+  final _TasksView current;
+  final ValueChanged<_TasksView> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = MakerflowTheme.of(context).colors;
+
+    Widget tab(String label, {_TasksView? view, bool soon = false}) {
+      final active = view != null && view == current;
+      return Semantics(
+        key: ValueKey('tab:$label'),
+        button: !soon,
+        selected: active,
+        label: soon ? '$label view — coming soon' : '$label view',
+        excludeSemantics: true,
+        child: Tooltip(
+          message: soon ? 'Coming soon' : '',
+          child: InkWell(
+            onTap: soon || view == null ? null : () => onChanged(view),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: MndSpace.s12, vertical: MndSpace.s8),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: active ? c.brand : Colors.transparent,
+                    width: 2,
+                  ),
+                ),
+              ),
+              child: Text(label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+                    color: active ? c.brand : (soon ? c.muted : c.text),
+                  )),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: MndSpace.s16),
+      child: Row(children: [
+        tab('Kanban', view: _TasksView.kanban),
+        tab('List', view: _TasksView.list),
+        tab('Main table', soon: true),
+        tab('Calendar', soon: true),
+      ]),
+    );
+  }
+}
+
+/// UI-2 toolbar row: New item (primary), board search, project filter, and
+/// announced coming-soon stubs for Person / Sort / Group by.
+class _BoardToolbar extends ConsumerWidget {
+  const _BoardToolbar({required this.onNewItem, required this.onQuery});
+  final VoidCallback onNewItem;
+  final ValueChanged<String> onQuery;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = MakerflowTheme.of(context).colors;
+
+    Widget stub(IconData icon, String label) => Semantics(
+          label: '$label — coming soon',
+          excludeSemantics: true,
+          child: Tooltip(
+            message: 'Coming soon',
+            child: TextButton.icon(
+              onPressed: null,
+              icon: Icon(icon, size: 16),
+              label: Text(label),
+            ),
+          ),
+        );
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(MndSpace.s16, MndSpace.s8, MndSpace.s16, MndSpace.s4),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(children: [
+          MndButton(
+            label: 'New item',
+            icon: Icons.add,
+            size: MndButtonSize.small,
+            onPressed: onNewItem,
+          ),
+          const SizedBox(width: MndSpace.s12),
+          SizedBox(
+            width: 200,
+            child: TextField(
+              onChanged: onQuery,
+              decoration: InputDecoration(
+                hintText: 'Search this board',
+                prefixIcon: Icon(Icons.search, size: 16, color: c.muted),
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(horizontal: MndSpace.s8, vertical: MndSpace.s8),
+              ),
+            ),
+          ),
+          const SizedBox(width: MndSpace.s12),
+          // Project filter (null = all). Live memberships feed projectsProvider.
+          ref.watch(projectsProvider).maybeWhen(
+                data: (projects) => Semantics(
+                  label: 'Filter tasks by project',
+                  child: DropdownButton<int?>(
+                    value: ref.watch(taskProjectFilterProvider),
+                    underline: const SizedBox.shrink(),
+                    isDense: true,
+                    items: [
+                      const DropdownMenuItem<int?>(value: null, child: Text('All projects')),
+                      for (final p in projects)
+                        DropdownMenuItem<int?>(value: p.id, child: Text(p.name)),
+                    ],
+                    onChanged: (id) =>
+                        ref.read(taskProjectFilterProvider.notifier).state = id,
+                  ),
+                ),
+                orElse: () => const SizedBox.shrink(),
+              ),
+          const SizedBox(width: MndSpace.s8),
+          stub(Icons.person_outline, 'Person'),
+          stub(Icons.swap_vert, 'Sort'),
+          stub(Icons.layers_outlined, 'Group by'),
+        ]),
       ),
     );
   }

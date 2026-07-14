@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:makerflow_design/makerflow_design.dart';
 
+import 'package:makerflow_flutter/src/data/models.dart';
 import 'package:makerflow_flutter/src/features/tasks/kanban_screen.dart';
 
 // Smoke test: the kanban renders its columns and the seeded tasks from the
@@ -40,8 +41,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Open the dialog from the FAB.
-    await tester.tap(find.byType(FloatingActionButton));
+    // Open the dialog from the toolbar's New item button (UI-2; FAB removed).
+    await tester.tap(find.text('New item'));
     await tester.pumpAndSettle();
     expect(find.text('New task'), findsWidgets); // dialog title
 
@@ -131,5 +132,50 @@ void main() {
 
     expect(find.text('Laser cutter monthly PM'), findsOneWidget); // a seeded task
     expect(find.text('To do'), findsWidgets); // a status group header
+  });
+
+  testWidgets('Board search narrows the visible cards (UI-2)', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: MakerflowThemeBuilder.dark(),
+          home: const KanbanScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Restock 3mm plywood'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'laser');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Laser cutter monthly PM'), findsOneWidget); // matches
+    expect(find.text('Restock 3mm plywood'), findsNothing); // filtered out
+  });
+
+  testWidgets('View tabs switch Kanban <-> List; soon-tabs are disabled (UI-2)',
+      (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: MakerflowThemeBuilder.dark(),
+          home: const KanbanScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('tab:List')));
+    await tester.pumpAndSettle();
+    expect(find.text('To do'), findsWidgets); // list group headers visible
+
+    await tester.tap(find.byKey(const ValueKey('tab:Main table')), warnIfMissed: false);
+    await tester.pumpAndSettle();
+    expect(find.text('To do'), findsWidgets); // disabled tab: still on List
+
+    await tester.tap(find.byKey(const ValueKey('tab:Kanban')));
+    await tester.pumpAndSettle();
+    // Board is back: the six kanban drop-target columns exist again.
+    expect(find.byType(DragTarget<TaskVm>), findsNWidgets(6));
   });
 }

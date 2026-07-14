@@ -348,3 +348,19 @@ a 1280×800 test viewport so the sidebar actually renders; nav rows got stable `
 handles because their labels ("Equipment") also appear as dashboard tiles. Org-switcher behavior
 (live memberships + first-membership default) moved from the old rail into the workspace tile with
 the same `ref.listen` defer. Search/notifications are honest disabled stubs with tooltips.
+
+### 🟨 UI-2 · Board chrome: view tabs + toolbar — PARTIAL (UI-2a) 2026-07-14
+- [x] View-tabs row on the Tasks board: **Kanban · List** functional (blue text + 2px underline active state); **Main table · Calendar** as announced coming-soon stubs (they activate with UI-3/UI-7)
+- [x] Toolbar row: **New item** (primary small MndButton — the FAB is gone; monday has no FABs) · **board search** (client-side title filter, works in both views) · project filter (moved in from the title row) · Person/Sort/Group-by stubs (disabled, tooltipped, announced)
+- [x] Widget tests: search narrows the board; tabs switch views; disabled soon-tab is a no-op; create flows retargeted from the FAB to New item
+- [x] Verified: analyze clean · app **21/21** · live web build rebuilt
+- [ ] UI-2b: member avatar stack + Invite + board ⋯ menu (needs a members→names lookup), sticky-collapse on scroll, tab state in the URL, functional Sort / Person filter / Group-by
+
+**Log (UI-2a):** The board chrome replaced the interim title-row controls: tabs live under the
+board title, toolbar under the tabs, exactly monday's stacking. The FAB removal is deliberate
+fidelity (monday's New Item is a toolbar button); only the Tasks board changed — ops screens keep
+FABs until they're rebuilt as boards after UI-3. Toolbar scrolls horizontally on narrow widths.
+Test note: the tabs test originally asserted "No tasks" after switching back to Kanban — wrong,
+because every seeded column has a task; it now asserts the six `DragTarget` columns exist. Search
+is client-side over the loaded page (fine at current scale; server-side search joins the
+pagination work later).
