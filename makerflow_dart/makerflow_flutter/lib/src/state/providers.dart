@@ -26,6 +26,10 @@ import '../features/_spike/a11y_spike_screen.dart';
 /// Light is the product default (monday-style redesign, UI-0).
 final themeModeProvider = StateProvider<ThemeMode>((_) => ThemeMode.light);
 
+/// Sidebar collapse (UI-1). Session-scoped; server-side persistence joins the
+/// UserPreference work in fl-3.
+final sidebarCollapsedProvider = StateProvider<bool>((_) => false);
+
 /// The active organization id (drives every org-scoped read).
 final activeOrgIdProvider = StateProvider<int>((_) => 1);
 

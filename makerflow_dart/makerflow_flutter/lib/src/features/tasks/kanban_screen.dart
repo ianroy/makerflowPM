@@ -6,6 +6,7 @@ import 'package:makerflow_design/makerflow_design.dart';
 
 import '../../data/models.dart';
 import '../../state/providers.dart';
+import '../shell/app_shell.dart';
 import 'new_task_dialog.dart';
 
 /// Kanban board with TWO equally-capable move mechanisms:
@@ -102,59 +103,60 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
     final c = MakerflowTheme.of(context).colors;
     final tasksAsync = ref.watch(tasksProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Tasks'),
-        actions: [
-          // Project filter (null = all). Live memberships feed projectsProvider.
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: ref.watch(projectsProvider).maybeWhen(
-                  data: (projects) => Semantics(
-                    label: 'Filter tasks by project',
-                    child: DropdownButton<int?>(
-                      value: ref.watch(taskProjectFilterProvider),
-                      underline: const SizedBox.shrink(),
-                      isDense: true,
-                      items: [
-                        const DropdownMenuItem<int?>(value: null, child: Text('All projects')),
-                        for (final p in projects)
-                          DropdownMenuItem<int?>(value: p.id, child: Text(p.name)),
-                      ],
-                      onChanged: (id) =>
-                          ref.read(taskProjectFilterProvider.notifier).state = id,
-                    ),
+    // UI-1: the Tasks board lives in the monday shell. Its controls sit in the
+    // sheet's title row until UI-2's board chrome (view tabs + toolbar) lands.
+    return AppShell(
+      routePath: '/tasks',
+      title: 'Tasks',
+      actions: [
+        // Project filter (null = all). Live memberships feed projectsProvider.
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: ref.watch(projectsProvider).maybeWhen(
+                data: (projects) => Semantics(
+                  label: 'Filter tasks by project',
+                  child: DropdownButton<int?>(
+                    value: ref.watch(taskProjectFilterProvider),
+                    underline: const SizedBox.shrink(),
+                    isDense: true,
+                    items: [
+                      const DropdownMenuItem<int?>(value: null, child: Text('All projects')),
+                      for (final p in projects)
+                        DropdownMenuItem<int?>(value: p.id, child: Text(p.name)),
+                    ],
+                    onChanged: (id) =>
+                        ref.read(taskProjectFilterProvider.notifier).state = id,
                   ),
-                  orElse: () => const SizedBox.shrink(),
                 ),
+                orElse: () => const SizedBox.shrink(),
+              ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: SegmentedButton<_TasksView>(
+            showSelectedIcon: false,
+            segments: const [
+              ButtonSegment(
+                  value: _TasksView.kanban,
+                  icon: Icon(Icons.view_kanban_outlined),
+                  label: Text('Board')),
+              ButtonSegment(
+                  value: _TasksView.list,
+                  icon: Icon(Icons.view_list_outlined),
+                  label: Text('List')),
+            ],
+            selected: {_view},
+            onSelectionChanged: (s) => setState(() => _view = s.first),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: SegmentedButton<_TasksView>(
-              showSelectedIcon: false,
-              segments: const [
-                ButtonSegment(
-                    value: _TasksView.kanban,
-                    icon: Icon(Icons.view_kanban_outlined),
-                    label: Text('Board')),
-                ButtonSegment(
-                    value: _TasksView.list,
-                    icon: Icon(Icons.view_list_outlined),
-                    label: Text('List')),
-              ],
-              selected: {_view},
-              onSelectionChanged: (s) => setState(() => _view = s.first),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openNewTask,
         tooltip: 'New task',
         icon: const Icon(Icons.add),
         label: const Text('New task'),
       ),
-      body: tasksAsync.when(
+      child: tasksAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Failed to load: $e')),
         data: (tasks) => _view == _TasksView.list

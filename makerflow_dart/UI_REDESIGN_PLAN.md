@@ -324,12 +324,12 @@ menu item and overflowed fixed-width dialogs → `isExpanded: true` on all 7 dia
 (caught by the existing widget tests, which is exactly what they're for).
 
 ### ⬜ UI-1 · App shell: frame, sidebar, top bar — IN PROGRESS
-- [ ] Grey app frame with the white rounded-top-left content sheet
-- [ ] Top bar (~48px, on the frame): wordmark · search (stub) · notifications bell (stub) · avatar menu (theme switcher + sign out)
-- [ ] Left sidebar (~255px): workspace tile (org initial + name, switches orgs) · Home · My Work (stub) · Favorites (stub) · Boards section (All tasks + per-project boards + ops screens) · Trash
-- [ ] Sidebar selected row = `selected` fill, radius 4; hover tint; keyboard-traversable under a nav landmark
-- [ ] Collapse toggle (persists for the session)
-- [ ] Mobile breakpoint → sidebar becomes a drawer
-- [ ] Tasks screen joins the shell (its filter + view toggle survive as sheet-header actions until UI-2)
+- [x] Grey app frame with the white rounded-top-left content sheet
+- [x] Top bar (~48px, on the frame): wordmark · search (stub) · notifications bell (stub) · avatar menu (theme switcher + sign out)
+- [x] Left sidebar (~255px): workspace tile (org initial + name, switches orgs) · Home · My Work (stub) · Favorites (stub) · Boards section (All tasks + per-project boards + ops screens) · Trash
+- [x] Sidebar selected row = `selected` fill, radius 4; hover tint; keyboard-traversable under a nav landmark
+- [x] Collapse toggle (persists for the session — `sidebarCollapsedProvider`)
+- [x] Mobile breakpoint (<900px) → sidebar becomes a drawer (hamburger in the top bar)
+- [x] Tasks screen joins the shell (filter + view toggle live in the sheet title row until UI-2)
 - [ ] Widget tests: sidebar nav, org switch, boards-from-projects, collapse, avatar-menu theme flip
 - [ ] Verified: design+app analyze clean · all tests green · web build ✓
