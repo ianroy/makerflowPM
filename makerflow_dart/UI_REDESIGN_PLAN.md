@@ -289,3 +289,47 @@ published by monday (row ≈36px, sidebar ≈255px, edge bar 4–6px) are observ
 against the Vibe UI Kit Figma before hard-coding.*
 
 *Written 2026-07-14. UI-0 shipped the same day (see BUILD_STATUS). Next step: UI-1 (app shell). Note from UI-0: pixel goldens are deferred until a CI-generated baseline exists (macOS-made goldens false-fail on Linux CI); the design suite carries semantic + AA-contrast tests instead.*
+
+---
+
+## 8. Build log & checklists (tick as you go — the execution tracker for §5)
+
+> Convention: every sub-item gets `[x]` in the same commit as its code; each phase gets a
+> verbose log entry here (what shipped, what was verified, honest gaps). Mirrored briefly in
+> `BUILD_STATUS.md` + the plan's §15 checkpoint log.
+
+### ✅ UI-0 · Vibe-derived design system — DONE 2026-07-14 · commit `f538e0c`
+- [x] Tokens: Vibe-exact light (default) + dark palettes; label palette (29 colors); spacing; radii 4/8/16; 4 shadows; motion durations + easings; focus ring
+- [x] Fonts: Figtree (400/500/600/700) + Poppins (500/600/700) bundled as package fonts, OFL licenses included (`fonts/OFL-*.txt`)
+- [x] ThemeData: full component theming (buttons + hover, inputs, dialogs r16, popovers r8, segmented, snackbar, appbar), light default
+- [x] `MfCard` restyled (white r8, layout border, xs shadow) — same API, zero screen breakage
+- [x] `StatusBadge` restyled (solid label pill, icon + text, single semantics announcement)
+- [x] `StatusLabel` (cell + pill) + `showStatusPicker` (full-width colored label buttons)
+- [x] `MndButton` (primary/secondary/tertiary × sm/md/lg, press-scale 0.95@70ms)
+- [x] `MndAvatar` + `MndAvatarStack` (+N overflow)
+- [x] `MndSkeleton` (opacity pulse 0.4↔1 @0.8s; honors reduced-motion)
+- [x] `showMndToast` (Undo slot) + `MndEmptyState`
+- [x] App defaults to the light theme
+- [x] Contrast unit test enforcing WCAG AA on every status label
+- [x] Verified: design 7/7 · app 13/13 · web build ✓ (live demo rebuilt)
+- [ ] Pixel goldens — **deferred**: CI is Linux, macOS-generated goldens false-fail; needs a CI-generated baseline (do alongside M3.3)
+
+**Log:** Grounding in Vibe's published SCSS made this mostly transcription — the judgment calls
+were (1) keeping the `MakerflowColors`/`MakerflowShape` field names so all six screens compiled
+untouched while every VALUE changed underneath; (2) two AA deviations from monday's exact label
+colors, enforced by test (black ink on bright labels — white fails on `#00C875`/`#FDAB3D`/`#579BFC`;
+Blocked uses dark-red `#BB3354` because stuck-red is 4.49:1, a hair under the 4.5 floor);
+(3) the new denser input theme surfaced a real layout bug — dialog dropdowns sized to their widest
+menu item and overflowed fixed-width dialogs → `isExpanded: true` on all 7 dialog dropdowns
+(caught by the existing widget tests, which is exactly what they're for).
+
+### ⬜ UI-1 · App shell: frame, sidebar, top bar — IN PROGRESS
+- [ ] Grey app frame with the white rounded-top-left content sheet
+- [ ] Top bar (~48px, on the frame): wordmark · search (stub) · notifications bell (stub) · avatar menu (theme switcher + sign out)
+- [ ] Left sidebar (~255px): workspace tile (org initial + name, switches orgs) · Home · My Work (stub) · Favorites (stub) · Boards section (All tasks + per-project boards + ops screens) · Trash
+- [ ] Sidebar selected row = `selected` fill, radius 4; hover tint; keyboard-traversable under a nav landmark
+- [ ] Collapse toggle (persists for the session)
+- [ ] Mobile breakpoint → sidebar becomes a drawer
+- [ ] Tasks screen joins the shell (its filter + view toggle survive as sheet-header actions until UI-2)
+- [ ] Widget tests: sidebar nav, org switch, boards-from-projects, collapse, avatar-menu theme flip
+- [ ] Verified: design+app analyze clean · all tests green · web build ✓
