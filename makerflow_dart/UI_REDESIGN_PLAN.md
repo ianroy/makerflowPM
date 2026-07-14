@@ -364,3 +364,27 @@ Test note: the tabs test originally asserted "No tasks" after switching back to 
 because every seeded column has a task; it now asserts the six `DragTarget` columns exist. Search
 is client-side over the loaded page (fine at current scale; server-side search joins the
 pagination work later).
+
+### 🟨 UI-3 · Main Table view — CORE SHIPPED (UI-3a) 2026-07-14
+- [x] Prereq plumbing: `TaskVm.dueAt` through the seam (in-memory + live fetch-merge; server field already existed). Known limit: clearing a date is a `copyWith` no-op (same class of limit as optional-field clears; needs the `getById`+explicit-null work)
+- [x] Grouped table (by status, board-column order): collapsible headers — chevron, **title in the group color**, item count
+- [x] Rows ~36px with the **4px group-colored left edge bar** + gridline bottoms
+- [x] Per-group column-header row (Item · Status · Due date · Priority)
+- [x] **Inline editing**: status cell = full-bleed `StatusLabel.cell` → label picker → the task moves groups; due-date cell → date picker (**deadline mode**: red + ! when overdue and not done); row tap → the edit dialog
+- [x] **“+ Add item” ghost row** per group — Enter creates in that group (inherits the active project-board filter) and keeps focus for rapid entry
+- [x] **Board-level status battery** (stacked label-color bar + “N% done”, full text equivalent + per-segment tooltips) — board-level because our groups ARE statuses, so a per-group battery would be a single color; per-group batteries arrive when Group-by (project/priority) lands
+- [x] “Main table” is now the **first tab and the default view** (monday's default)
+- [x] Tests: 5 new Main Table cases (groups/battery render, status-picker group move, ghost-row add + focus chaining, collapse, date picker) + 3 existing tests retargeted (kanban-specific tests now open the Kanban tab; search finder keyed since ghost rows are TextFields)
+- [x] Verified: analyze clean · app **26/26** · live web build rebuilt
+- [ ] UI-3b: Person column (needs members→names), hover-reveal checkbox/Open/💬 affordances, sticky column headers, WAI-ARIA-grid keyboard navigation across cells, drag-to-reorder rows, column sort
+
+**Log (UI-3a):** The signature view is real: colored groups, edge bars, full-bleed status cells
+with the picker, ghost add-rows that chain, deadline-mode dates, and the battery. Two design
+calls: (1) battery is board-level (status-grouping makes per-group batteries degenerate — they
+return with Group-by); (2) status changes go through `repo.move` (same op as a kanban drop —
+version bump + audit for free). Ghost-row adds inherit the sidebar's project-board filter, so
+adding an item on a project board files it under that project. Switching the DEFAULT view to the
+table surfaced honest test drift: two kanban tests now explicitly open the Kanban tab (their
+intent), and the board-search test needed a keyed finder because every group's ghost row is a
+TextField. The old below-the-fold gotcha also reappeared (ListView children are lazy — asserting
+on the Done group at 600px tall fails), so table tests run on a 1000×1400 surface.

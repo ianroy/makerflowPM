@@ -7,6 +7,7 @@ import 'package:makerflow_design/makerflow_design.dart';
 import '../../data/models.dart';
 import '../../state/providers.dart';
 import '../shell/app_shell.dart';
+import 'main_table_view.dart';
 import 'new_task_dialog.dart';
 
 /// Kanban board with TWO equally-capable move mechanisms:
@@ -21,14 +22,14 @@ class KanbanScreen extends ConsumerStatefulWidget {
   ConsumerState<KanbanScreen> createState() => _KanbanScreenState();
 }
 
-enum _TasksView { kanban, list }
+enum _TasksView { mainTable, kanban, list }
 
 class _KanbanScreenState extends ConsumerState<KanbanScreen> {
   // Keyboard-move state: the task currently "picked up", and the candidate
   // target column index while moving.
   int? _grabbedTaskId;
   int? _targetColumn;
-  _TasksView _view = _TasksView.kanban;
+  _TasksView _view = _TasksView.mainTable;
 
   void _announce(String msg) =>
       SemanticsService.sendAnnouncement(View.of(context), msg, TextDirection.ltr);
@@ -47,6 +48,34 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
   Future<void> _openEditTask(TaskVm task) async {
     final updated = await showEditTaskDialog(context, task);
     if (updated != null) ref.invalidate(tasksProvider); // dialog announced success
+  }
+
+  Future<void> _setDue(TaskVm task, DateTime due) async {
+    await ref.read(taskRepositoryProvider).update(
+          id: task.id,
+          version: task.version,
+          organizationId: task.organizationId,
+          title: task.title,
+          status: task.status,
+          priority: task.priority,
+          sortOrder: task.sortOrder,
+          projectId: task.projectId,
+          dueAt: due,
+        );
+    ref.invalidate(tasksProvider);
+    _announce('Due date set for ${task.title}.');
+  }
+
+  Future<void> _addItem(String status, String title) async {
+    await ref.read(taskRepositoryProvider).create(
+          organizationId: ref.read(activeOrgIdProvider),
+          title: title,
+          status: status,
+          priority: 'medium',
+          projectId: ref.read(taskProjectFilterProvider),
+        );
+    ref.invalidate(tasksProvider);
+    _announce('Created $title in ${_label(status)}.');
   }
 
   void _onCardKey(KeyEvent e, TaskVm task, int columnIndex) {
@@ -130,9 +159,18 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
                         .where((t) =>
                             t.title.toLowerCase().contains(_query.toLowerCase()))
                         .toList();
-                return _view == _TasksView.list
-                    ? _TaskListView(tasks: visible, colors: c, onEdit: _openEditTask)
-                    : _board(visible, c);
+                return switch (_view) {
+                  _TasksView.mainTable => MainTableView(
+                      tasks: visible,
+                      onOpen: _openEditTask,
+                      onSetStatus: (t, status) => _commitMove(t, status),
+                      onSetDue: _setDue,
+                      onAddItem: _addItem,
+                    ),
+                  _TasksView.list =>
+                    _TaskListView(tasks: visible, colors: c, onEdit: _openEditTask),
+                  _TasksView.kanban => _board(visible, c),
+                };
               },
             ),
           ),
@@ -442,9 +480,9 @@ class _ViewTabs extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: MndSpace.s16),
       child: Row(children: [
+        tab('Main table', view: _TasksView.mainTable),
         tab('Kanban', view: _TasksView.kanban),
         tab('List', view: _TasksView.list),
-        tab('Main table', soon: true),
         tab('Calendar', soon: true),
       ]),
     );
@@ -490,6 +528,7 @@ class _BoardToolbar extends ConsumerWidget {
           SizedBox(
             width: 200,
             child: TextField(
+              key: const ValueKey('board-search'),
               onChanged: onQuery,
               decoration: InputDecoration(
                 hintText: 'Search this board',

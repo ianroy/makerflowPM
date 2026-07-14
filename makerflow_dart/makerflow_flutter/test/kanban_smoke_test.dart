@@ -19,6 +19,9 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    // Default view is the Main table (UI-3); this test targets the kanban.
+    await tester.tap(find.byKey(const ValueKey('tab:Kanban')));
+    await tester.pumpAndSettle();
 
     // Unique seeded task titles prove the board hydrated from the repository.
     expect(find.text('Laser cutter monthly PM'), findsOneWidget);
@@ -146,7 +149,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Restock 3mm plywood'), findsOneWidget);
 
-    await tester.enterText(find.byType(TextField), 'laser');
+    await tester.enterText(find.byKey(const ValueKey('board-search')), 'laser');
     await tester.pumpAndSettle();
 
     expect(find.text('Laser cutter monthly PM'), findsOneWidget); // matches

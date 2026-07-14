@@ -46,6 +46,9 @@ void main() {
   testWidgets('Project filter narrows the kanban board', (tester) async {
     await tester.pumpWidget(_host(const KanbanScreen()));
     await tester.pumpAndSettle();
+    // Default view is the Main table (UI-3); this test targets the kanban.
+    await tester.tap(find.byKey(const ValueKey('tab:Kanban')));
+    await tester.pumpAndSettle();
     // Unfiltered: tasks from every project are on the board.
     expect(find.text('Laser cutter monthly PM'), findsOneWidget); // no project
     expect(find.text('Onboard fall student cohort'), findsOneWidget); // project 1

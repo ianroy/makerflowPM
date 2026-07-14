@@ -58,6 +58,7 @@ class ServerpodTaskRepository implements TaskRepository {
     required String priority,
     required double sortOrder,
     int? projectId,
+    DateTime? dueAt,
   }) async {
     // Fetch-merge: start from the current row so the edit preserves fields the
     // VM doesn't carry (description, dueAt, assignee, sortOrder, clientUuid…),
@@ -69,6 +70,7 @@ class ServerpodTaskRepository implements TaskRepository {
       title: title,
       status: api.TaskStatus.values.byName(status),
       priority: api.TaskPriority.values.byName(priority),
+      dueAt: dueAt ?? existing.dueAt,
       version: version,
     ));
     return _toVm(row);
@@ -84,6 +86,7 @@ class ServerpodTaskRepository implements TaskRepository {
         status: t.status.name,
         priority: t.priority.name,
         projectId: t.projectId,
+        dueAt: t.dueAt,
         sortOrder: t.sortOrder,
         version: t.version,
       );

@@ -11,6 +11,7 @@ class TaskVm {
     required this.priority,
     this.projectId,
     this.assigneeName,
+    this.dueAt,
     this.sortOrder = 0,
     this.version = 1,
   });
@@ -22,6 +23,7 @@ class TaskVm {
   String priority;
   final int? projectId;
   final String? assigneeName;
+  final DateTime? dueAt;
   double sortOrder;
   int version;
 
@@ -33,6 +35,7 @@ class TaskVm {
         priority: priority,
         projectId: projectId,
         assigneeName: assigneeName,
+        dueAt: dueAt,
         sortOrder: sortOrder ?? this.sortOrder,
         version: version ?? this.version,
       );

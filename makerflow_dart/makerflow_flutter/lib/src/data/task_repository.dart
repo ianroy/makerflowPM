@@ -23,6 +23,8 @@ abstract class TaskRepository {
   /// Edit a task. [version] is the row the edit is based on — the server
   /// rejects a stale version with a conflict (optimistic concurrency, R5).
   /// [sortOrder] is passed through unchanged so an edit never reorders the card.
+  /// [dueAt]: null = leave unchanged (clearing a date is a copyWith limitation,
+  /// tracked in the plan).
   Future<TaskVm> update({
     required int id,
     required int version,
@@ -32,6 +34,7 @@ abstract class TaskRepository {
     required String priority,
     required double sortOrder,
     int? projectId,
+    DateTime? dueAt,
   });
 
   /// Soft-delete: the task leaves the board but is restorable from the trash.
@@ -40,9 +43,9 @@ abstract class TaskRepository {
 
 class InMemoryTaskRepository implements TaskRepository {
   final List<TaskVm> _tasks = [
-    TaskVm(id: 1, organizationId: 1, title: 'Laser cutter monthly PM', status: 'todo', priority: 'high', assigneeName: 'Sam'),
+    TaskVm(id: 1, organizationId: 1, title: 'Laser cutter monthly PM', status: 'todo', priority: 'high', assigneeName: 'Sam', dueAt: DateTime(2026, 7, 18)),
     TaskVm(id: 2, organizationId: 1, title: 'Restock 3mm plywood', status: 'backlog', priority: 'medium', assigneeName: 'Jo'),
-    TaskVm(id: 3, organizationId: 1, title: 'Onboard fall student cohort', status: 'inProgress', priority: 'high', assigneeName: 'Pat', projectId: 1),
+    TaskVm(id: 3, organizationId: 1, title: 'Onboard fall student cohort', status: 'inProgress', priority: 'high', assigneeName: 'Pat', projectId: 1, dueAt: DateTime(2026, 7, 21)),
     TaskVm(id: 4, organizationId: 1, title: 'Fix dust collector sensor', status: 'blocked', priority: 'urgent', assigneeName: 'Sam'),
     TaskVm(id: 5, organizationId: 1, title: 'Publish Q3 usage report', status: 'inReview', priority: 'low', assigneeName: 'Jo'),
     TaskVm(id: 6, organizationId: 1, title: 'Archive completed capstones', status: 'done', priority: 'low', assigneeName: 'Pat', projectId: 1),
@@ -97,6 +100,7 @@ class InMemoryTaskRepository implements TaskRepository {
     required String priority,
     required double sortOrder,
     int? projectId,
+    DateTime? dueAt,
   }) async {
     final i = _tasks.indexWhere((t) => t.id == id);
     final updated = TaskVm(
@@ -107,6 +111,7 @@ class InMemoryTaskRepository implements TaskRepository {
       priority: priority,
       projectId: projectId ?? _tasks[i].projectId,
       assigneeName: _tasks[i].assigneeName,
+      dueAt: dueAt ?? _tasks[i].dueAt,
       sortOrder: sortOrder,
       version: version + 1,
     );
