@@ -117,16 +117,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
-      GoRoute(path: '/dashboard', builder: (_, __) => const DashboardScreen()),
-      GoRoute(path: '/tasks', builder: (_, __) => const KanbanScreen()),
-      GoRoute(path: '/projects', builder: (_, __) => const ProjectsScreen()),
-      GoRoute(path: '/equipment', builder: (_, __) => const EquipmentScreen()),
-      GoRoute(path: '/consumables', builder: (_, __) => const ConsumablesScreen()),
-      GoRoute(path: '/meetings', builder: (_, __) => const MeetingsScreen()),
-      GoRoute(path: '/trash', builder: (_, __) => const TrashScreen()),
+      // No page-slide transitions: monday swaps content instantly inside the
+      // static shell (the slide also fought the web back/forward feel).
+      GoRoute(path: '/login', pageBuilder: (_, s) => NoTransitionPage(key: s.pageKey, child: const LoginScreen())),
+      GoRoute(path: '/dashboard', pageBuilder: (_, s) => NoTransitionPage(key: s.pageKey, child: const DashboardScreen())),
+      GoRoute(path: '/tasks', pageBuilder: (_, s) => NoTransitionPage(key: s.pageKey, child: const KanbanScreen())),
+      GoRoute(path: '/projects', pageBuilder: (_, s) => NoTransitionPage(key: s.pageKey, child: const ProjectsScreen())),
+      GoRoute(path: '/equipment', pageBuilder: (_, s) => NoTransitionPage(key: s.pageKey, child: const EquipmentScreen())),
+      GoRoute(path: '/consumables', pageBuilder: (_, s) => NoTransitionPage(key: s.pageKey, child: const ConsumablesScreen())),
+      GoRoute(path: '/meetings', pageBuilder: (_, s) => NoTransitionPage(key: s.pageKey, child: const MeetingsScreen())),
+      GoRoute(path: '/trash', pageBuilder: (_, s) => NoTransitionPage(key: s.pageKey, child: const TrashScreen())),
       // fl-0-a11y-web-spike fixture. Reach at /spike for AT testing.
-      GoRoute(path: '/spike', builder: (_, __) => const A11ySpikeScreen()),
+      GoRoute(path: '/spike', pageBuilder: (_, s) => NoTransitionPage(key: s.pageKey, child: const A11ySpikeScreen())),
     ],
   );
 });
