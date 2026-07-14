@@ -2,6 +2,7 @@
 
 > Audience: a new developer who just cloned the repo and has not run the app yet.
 > Goal: by the end of this document, you can run MakerFlow locally, find any feature in the code, ship a small change safely, and know where to go for deeper material.
+> Note: this spec covers the legacy Python app, which is feature-frozen; the actively developed product is the Dart rebuild — see [Flutter_ProductSpec.md](Flutter_ProductSpec.md) and [FLUTTER_REBUILD_PLAN.md](FLUTTER_REBUILD_PLAN.md).
 
 - Repository: [https://github.com/ianroy/makerflowPM](https://github.com/ianroy/makerflowPM)
 - Primary site: [https://makerflow.org](https://makerflow.org)
@@ -390,7 +391,7 @@ This lets a reader cross-reference colors with the CSS variables without leaving
 
 ### 12.8 Where to look in code
 
-- Tokens: [`app/static/style.css:1-46`](app/static/style.css:1)
+- Tokens: [`app/static/style.css:1-46`](app/static/style.css)
 - Layout primitives: [`app/static/style.css`](app/static/style.css) — see `.app-shell`, `.sidebar`, `.topbar`, `.container`.
 - Theme switch behavior: search `data-theme` in [`app/static/app.js`](app/static/app.js).
 - Server-side preference: `user_preferences.theme` column; written via `/settings/profile`.
@@ -512,9 +513,11 @@ These are honest acknowledgments — see [`FEATUREROADMAP_workplan.md`](FEATURER
 
 ## 21. Where to go next
 
+> Reminder: this Python app is feature-frozen — new feature work happens in the Dart rebuild ([Flutter_ProductSpec.md](Flutter_ProductSpec.md) + [FLUTTER_REBUILD_PLAN.md](FLUTTER_REBUILD_PLAN.md)).
+
 1. Run the app locally ([§9](#9-run-it-locally-in-5-minutes)) and click through every left-nav item.
 2. Skim [`docs/DECISIONS.md`](docs/DECISIONS.md) — it explains *why* the architecture looks the way it does.
-3. Read the eight SVG diagrams in [`docs/diagrams/`](docs/diagrams/) in order (01 → 08).
+3. Read the twelve SVG diagrams in [`docs/diagrams/`](docs/diagrams/) in order (01 → 10 cover the Python app; 11 → 12 cover the Dart rebuild).
 4. Open [`FEATUREROADMAP_workplan.md`](FEATUREROADMAP_workplan.md), pick a task whose Status is `[ ] ready`, follow the embedded execution prompt.
 5. Make a small change end-to-end using the [feature recipe](#11-adding-a-new-feature--the-canonical-recipe). Submit a PR.
 
