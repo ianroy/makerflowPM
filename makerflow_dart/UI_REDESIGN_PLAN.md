@@ -323,7 +323,7 @@ Blocked uses dark-red `#BB3354` because stuck-red is 4.49:1, a hair under the 4.
 menu item and overflowed fixed-width dialogs → `isExpanded: true` on all 7 dialog dropdowns
 (caught by the existing widget tests, which is exactly what they're for).
 
-### ⬜ UI-1 · App shell: frame, sidebar, top bar — IN PROGRESS
+### ✅ UI-1 · App shell: frame, sidebar, top bar — DONE 2026-07-14 · commits `cbddb89` + this one
 - [x] Grey app frame with the white rounded-top-left content sheet
 - [x] Top bar (~48px, on the frame): wordmark · search (stub) · notifications bell (stub) · avatar menu (theme switcher + sign out)
 - [x] Left sidebar (~255px): workspace tile (org initial + name, switches orgs) · Home · My Work (stub) · Favorites (stub) · Boards section (All tasks + per-project boards + ops screens) · Trash
@@ -331,5 +331,20 @@ menu item and overflowed fixed-width dialogs → `isExpanded: true` on all 7 dia
 - [x] Collapse toggle (persists for the session — `sidebarCollapsedProvider`)
 - [x] Mobile breakpoint (<900px) → sidebar becomes a drawer (hamburger in the top bar)
 - [x] Tasks screen joins the shell (filter + view toggle live in the sheet title row until UI-2)
-- [ ] Widget tests: sidebar nav, org switch, boards-from-projects, collapse, avatar-menu theme flip
-- [ ] Verified: design+app analyze clean · all tests green · web build ✓
+- [x] Widget tests: sidebar nav, boards-from-projects filter, collapse, avatar-menu theme flip, drawer breakpoint (test/shell_test.dart — 6 cases on the REAL router with stub sign-in)
+- [x] Verified: design+app analyze clean · app **19/19** (13 existing + 6 shell) · web build ✓ · live demo rebuilt
+
+**Log (UI-1):** Kept the AppShell constructor API (+ optional `actions`) so zero screens broke;
+the Tasks board joined the shell by swapping its Scaffold/AppBar for
+`AppShell(actions: [filter, toggle])` — the keyboard-move pattern was untouched and all 13
+pre-existing tests passed unmodified on the first run after the swap. monday's board=project idea
+is real now: the sidebar lists one board per project and tapping it sets `taskProjectFilterProvider`
+before navigating — the shell tests prove the filtered board renders only that project's tasks.
+Two gotchas: (1) the dashboard's quick-access tile text ("Consumables") measured EXACTLY the tile's
+inner width under the test font, wrapped, and overflowed by 2px — `maxLines: 1` + ellipsis; while
+in there, retired the stale "walking skeleton" dashboard note (drift) and retitled the screen
+"Home" to match the sidebar. (2) Shell tests run the real `routerProvider` (stub sign-in first) at
+a 1280×800 test viewport so the sidebar actually renders; nav rows got stable `ValueKey('nav:…')`
+handles because their labels ("Equipment") also appear as dashboard tiles. Org-switcher behavior
+(live memberships + first-membership default) moved from the old rail into the workspace tile with
+the same `ref.listen` defer. Search/notifications are honest disabled stubs with tooltips.

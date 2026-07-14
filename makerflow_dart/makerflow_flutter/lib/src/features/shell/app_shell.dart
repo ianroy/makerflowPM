@@ -471,6 +471,7 @@ class _NavRow extends StatelessWidget {
     final c = MakerflowTheme.of(context).colors;
     final fg = comingSoon ? c.muted : c.text;
     return Semantics(
+      key: ValueKey('nav:$label'),
       button: !comingSoon,
       selected: selected,
       label: comingSoon ? '$label — coming soon' : label,
