@@ -5,8 +5,8 @@
 # or connect the repo in the DO dashboard.
 #
 # Deploys from `staging` — that's where the Dart rebuild (and these deploy
-# assets) live; `main` is ~10 commits behind and predates the Dockerfile/spec.
-# For a production cutover, merge staging -> main and flip `branch` to main.
+# assets) live; `main` predates the Dockerfile/spec. For a production cutover,
+# merge staging -> main and flip `branch` to main.
 # See DEPLOY.md for the full runbook.
 #
 # This is SEPARATE from the Python app's /.do/app.yaml at the repo root — the
@@ -68,12 +68,17 @@ services:
       - key: SERVICE_SECRET
         value: REPLACE_WITH_64_CHAR_SECRET   # set as an encrypted secret in DO
         type: SECRET
+      # Optional but recommended BEFORE first users: serverpod_auth password
+      # pepper (cannot be rotated later without invalidating credentials).
+      # - key: EMAIL_PASSWORD_PEPPER
+      #   value: REPLACE_WITH_32_CHAR_SECRET
+      #   type: SECRET
 
 databases:
   - name: makerflow-db
     engine: PG
-    version: "16"
+    version: "17"   # matches local dev + CI (postgres:17); migrations verified on 17
     production: false        # flip to true (+ a sized cluster) for production
   - name: makerflow-redis
-    engine: REDIS
+    engine: VALKEY   # DO discontinued managed Redis (EOL 2025-06); Valkey is protocol-compatible
     production: false

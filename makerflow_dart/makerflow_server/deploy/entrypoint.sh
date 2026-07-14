@@ -19,6 +19,12 @@ $mode:
   redis: '${REDIS_PASSWORD:-}'
   serviceSecret: '${SERVICE_SECRET}'
 EOF
+# serverpod_auth reads an optional pepper for email/password hashing. Set it
+# BEFORE the first production users exist — it cannot be rotated later without
+# invalidating stored credentials.
+if [ -n "${EMAIL_PASSWORD_PEPPER:-}" ]; then
+  printf "  emailPasswordPepper: '%s'\n" "${EMAIL_PASSWORD_PEPPER}" >> /app/config/passwords.yaml
+fi
 
 cat > "/app/config/${mode}.yaml" <<EOF
 apiServer:

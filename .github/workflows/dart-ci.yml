@@ -1,0 +1,67 @@
+# CI for the Dart rebuild (makerflow_dart/). Lives at the REPO ROOT because
+# GitHub Actions only reads /.github/workflows/ — a nested copy under
+# makerflow_dart/ never ran (found inert 2026-07-11 and moved here).
+#
+# Mirrors the verified local recipe: the serverpod_test harness runs in `test`
+# mode (config/test.yaml → makerflow_test on :8090, redis disabled) and applies
+# migrations itself, so the only infra CI needs is Postgres with that database.
+name: dart-ci
+
+on:
+  pull_request:
+    paths:
+      - "makerflow_dart/**"
+      - ".github/workflows/dart-ci.yml"
+  push:
+    branches: [main, staging]
+    paths:
+      - "makerflow_dart/**"
+      - ".github/workflows/dart-ci.yml"
+
+jobs:
+  server:
+    name: server (analyze + 24 tests, live PG)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: makerflow_dart/makerflow_server
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_DB: makerflow_test
+          POSTGRES_PASSWORD: makerflow_dev_password
+        ports: ["8090:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: "3.12.2" # matches the pinned toolchain (BUILD_STATUS.md)
+      - run: cp config/passwords.example.yaml config/passwords.yaml
+      - run: dart pub get
+      - run: dart analyze
+      # Integration tests are tagged (dart_test.yaml, concurrency 1) and apply
+      # migrations to makerflow_test themselves via the withServerpod harness.
+      - run: dart test
+
+  app:
+    name: app (analyze + tests + web build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: makerflow_dart/makerflow_flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.44.2" # matches the pinned toolchain
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+      - run: flutter build web --release

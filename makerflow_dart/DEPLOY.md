@@ -15,7 +15,7 @@ prepared and verified; this runbook is the exact sequence to take it live.
 ## 0. What deploys, and from where
 
 - **App spec:** [`.do/app.yaml`](.do/app.yaml) — one web service (the Serverpod
-  monolith) + managed `makerflow-db` (PG 16) + `makerflow-redis`.
+  monolith) + managed `makerflow-db` (PG 17) + `makerflow-redis` (**Valkey** — DO discontinued managed Redis in 2025; protocol-compatible, the `REDIS_*` bindings work unchanged).
 - **Image:** [`makerflow_server/Dockerfile`](makerflow_server/Dockerfile) —
   multi-stage `dart compile exe` → `debian-slim`. Build context is
   `makerflow_dart/` (the server path-depends on `../makerflow_client` +
@@ -24,9 +24,8 @@ prepared and verified; this runbook is the exact sequence to take it live.
   renders `config/<mode>.yaml` + `config/passwords.yaml` from the env vars DO
   injects (managed-DB bindings + secrets), applies migrations, then serves.
 - **Branch:** the spec deploys from **`staging`**. That's where the rebuild and
-  these deploy assets live; `main` is ~10 commits behind and predates the
-  Dockerfile/spec. For a production cutover, merge `staging → main` and flip
-  `branch: main` in the spec.
+  these deploy assets live; `main` predates the Dockerfile/spec. For a
+  production cutover, merge `staging → main` and flip `branch: main` in the spec.
 - This is **independent** of the legacy Python app's [`/.do/app.yaml`](../.do/app.yaml)
   (a different DO app). Deploying the Dart app does not touch it.
 

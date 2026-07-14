@@ -11,6 +11,10 @@ WORKDIR /build
 COPY makerflow_client/ makerflow_client/
 COPY makerflow_shared/ makerflow_shared/
 COPY makerflow_server/ makerflow_server/
+# Defense in depth: local secrets must never reach an image layer, even if the
+# build context includes them (the real guard is makerflow_dart/.dockerignore --
+# which Docker only reads at the CONTEXT root, not next to this Dockerfile).
+RUN rm -f makerflow_server/config/passwords.yaml
 
 WORKDIR /build/makerflow_server
 RUN dart pub get
