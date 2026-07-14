@@ -265,6 +265,8 @@ These four decisions are locked. Reopen only with an explicit ADR appended here.
 
 ---
 
+**D6 — Custom-field storage (2026-07-14):** custom field VALUES live in a **JSON property bag on the entity** (`customFieldsJson`, keyed by `FieldConfig.key`), not an EAV value table. Rationale: one-row reads for table rendering; Postgres GIN/expression indexes cover filter/sort at this scale; Serverpod codegen fights EAV joins; offline `version` reconcile stays single-row. Revisit only if per-cell audit history or cross-entity single-field queries become requirements. (Research: Phase 8 header, §15 2026-07-14 entry.)
+
 ## 2. Target architecture
 
 See the diagram at the top of this file ([`docs/diagrams/11-flutter-target-architecture.svg`](docs/diagrams/11-flutter-target-architecture.svg)). In words:
@@ -586,7 +588,7 @@ Mobile/desktop add **fixed program costs** independent of traffic: Apple Develop
 
 ## 13. Phased task cards
 
-Schema in [§0.4](#04-task-card-schema); legend/personas/scales in [§0.5](#05-status-legend-personas-scales). IDs use the prefix `fl-` (Flutter rebuild) so they never collide with the Python roadmap. **30 cards across 8 phases.**
+Schema in [§0.4](#04-task-card-schema); legend/personas/scales in [§0.5](#05-status-legend-personas-scales). IDs use the prefix `fl-` (Flutter rebuild) so they never collide with the Python roadmap. **31 parity/native cards across 8 phases, plus Phase 8 (customization platform, 11 cards) and Phase 9 (enterprise readiness, 8 cards) added 2026-07-14.**
 
 > **Build progress (2026-06-15, batch 2).** A large authoring pass advanced many cards from `backlog`/`in_progress`. On disk now: the **full parity data model** (35 models + 11 enums), the **cross-cutting layer** (cursor pagination, structured-logging, Redis-backed realtime channels, serializable-exception spec), and **endpoints across every domain** (org/membership, collab + streaming activity, meeting + convert, equipment, consumable, partnership, intake + convert, onboarding, trash restore/purge, realtime, sync pull + cursor) — plus the **Flutter app shell** (org switcher + nav), four feature screens, repositories, and a role-matrix test scaffold. **Authored to convention; not compiled** (no toolchain in the authoring env). Authoritative per-card state: [`makerflow_dart/BUILD_STATUS.md`](makerflow_dart/BUILD_STATUS.md). Statuses below are updated to `[~] in_progress` where code was authored but remains unverified (codegen + analyze + tests pending).
 
@@ -1389,6 +1391,332 @@ Automated, signed releases for all six targets + the server image. TestFlight/Pl
 
 ---
 
+### Phase 8 — Customization platform (PoC → customizable tool)
+
+> **Added 2026-07-14 from the customization research pass** (catalog of monday/Airtable/Notion/ClickUp patterns + a codebase-grounding audit; verbose sources in §15). The through-line: `FieldConfig` + `CustomView` models already exist **with no endpoints, no value storage, and a hardcoded-column Main Table** — this phase turns them into the customization platform the product needs to leave proof-of-concept. Decision of record **D6** (§1) fixes the storage model.
+
+#### fl-8-view-field-endpoints — Serve CustomView / FieldConfig / UserPreference
+
+- **Status:** [ ] ready
+- **Agent Persona:** serverpod-backend
+- **Priority:** P0 (phase gate)
+- **Complexity:** M
+- **Dependencies:** — (models + tables exist; both are endpoint-less today)
+- **Unblocks:** fl-8-column-registry, fl-8-saved-views, fl-8-custom-fields, theme/sidebar persistence
+- **Files to modify:** `makerflow_server/lib/src/endpoints/{view,field_config,preference}_endpoint.dart` (new), `models/custom_view.spy.yaml` (+`version`/soft-delete to match conventions), `models/user_preference.spy.yaml`, integration tests, regenerated client.
+
+**Spec (human-editable):** CRUD endpoints following the task_endpoint recipe (requireRole → org-scope → audit → soft-delete): `ViewEndpoint` (list/save/delete/share for `CustomView`; owner-or-shared visibility), `FieldConfigEndpoint` (workspaceAdmin+ manages field definitions; validate `fieldType`; guard key uniqueness), `PreferenceEndpoint` (get/upsert own `UserPreference`; theme/sidebar/nav persistence — closes the fl-3 stub comments in `providers.dart:25-31`).
+- [ ] Three endpoints + integration tests (role gates incl. shared-view read, admin-only field mutation)
+- [ ] `CustomView` gains `version` + soft-delete fields (migration)
+- [ ] Theme + sidebar-collapse providers persist via PreferenceEndpoint (survive restart)
+
+**Unblocks:** everything below. **Agent Decisions:** _(empty)_
+
+---
+
+#### fl-8-column-registry — Main Table column system (resize · reorder · show/hide · pin)
+
+- **Status:** [ ] ready
+- **Agent Persona:** flutter-ui
+- **Priority:** P0
+- **Complexity:** L
+- **Dependencies:** fl-8-view-field-endpoints (persistence target)
+- **Unblocks:** fl-8-custom-fields (custom columns render through the registry), fl-8-saved-views, fl-8-column-summaries
+- **Files to modify:** `makerflow_flutter/lib/src/features/tasks/main_table_view.dart` (columns are hardcoded const widths today: 150/104/92), new `column_registry.dart`, `state/providers.dart`, widget tests.
+
+**Spec:** Replace hardcoded columns with a `ColumnSpec` registry (id, label, width/min/max, cellBuilder, headerBuilder, comparator, summaryFns). Interactions per the research spec: **resize** = 6px boundary hit-zone, `SystemMouseCursors.resizeColumn`, ghost guide-line during drag, apply on release, double-click = autofit, min 60px (name 120px); **reorder** = drag header w/ lift+drop indicator (name column pinned first, not reorderable — kills edge cases); **show/hide** = toolbar "Hide" popover with toggles + search (this popover is also the keyboard/AT path for reorder — Up/Down moves a column); **pin** = name column frozen (fixed version first; arbitrary freeze later). Layout persists (debounced ~500ms) into the active view's `columnsJson` `{key,width,hidden}[]`.
+- [ ] Registry renders the existing 4 columns identically before any new behavior lands (refactor-proof)
+- [ ] Resize + autofit + reorder + hide, all persisted; keyboard/AT equivalents for each (the popover)
+- [ ] Widget tests: resize persists, reorder persists, hidden column absent, popover a11y labels
+
+**Agent Decisions:** _(empty)_
+
+---
+
+#### fl-8-custom-fields — Custom field types on tasks (definitions → values → cells)
+
+- **Status:** [ ] ready
+- **Agent Persona:** serverpod-backend + flutter-ui
+- **Priority:** P0
+- **Complexity:** XL
+- **Dependencies:** fl-8-view-field-endpoints, fl-8-column-registry
+- **Unblocks:** fl-8-filter-sort-group (custom fields filterable), fl-8-templates, formula/rollup (later)
+- **Files to modify:** `models/task.spy.yaml` (+`customFieldsJson: String?` per **D6**) + migration, `task_endpoint.dart` (validate values against FieldConfig on write), `field_config.spy.yaml` (extend `fieldType` set), new field-manager UI + cell editors, `TaskVm` (+custom map), tests.
+
+**Spec:** Storage per **D6**: a JSON property bag on the entity (`customFieldsJson`, keyed by `FieldConfig.key`) — one-row reads for table rendering, GIN/expression indexes when server-side filtering arrives, single-row offline `version` reconcile; EAV rejected (join fan-out + Serverpod codegen friction). Field types tier 1: text, long-text, number (+unit/precision on the column per monday), date, **status-style label sets (custom labels + fixed 20-color palette + order)**, dropdown, multi-select/tags, person, checkbox — plus free created/updated/by meta columns. Type changes attempt safe coercion and warn (Airtable pattern). Field manager UI (workspaceAdmin+): add/rename/reorder/retire fields, label editor. Cells render/edit through the column registry with per-type editors (reuse the status-picker pattern).
+- [ ] D6 storage + validation server-side (reject values not matching FieldConfig type)
+- [ ] Tier-1 editors in the table + task dialog; AA contrast enforced for custom label colors (reuse `MndLabelColors.textOn`)
+- [ ] Field manager UI + integration tests (definition CRUD, value round-trip, coercion warning)
+
+**Agent Decisions:** _(empty)_
+
+---
+
+#### fl-8-saved-views — Saved views as view tabs (per-user + shared + default)
+
+- **Status:** [ ] ready
+- **Agent Persona:** flutter-ui
+- **Priority:** P1
+- **Complexity:** M
+- **Dependencies:** fl-8-view-field-endpoints, fl-8-column-registry
+- **Unblocks:** per-view everything (filters/sort/group/columns/view-type)
+- **Files to modify:** `kanban_screen.dart` (tabs ← views), new view-switcher/save flow, tests.
+
+**Spec:** monday's tabs become **saved views**: each `CustomView` stores view type (table/kanban/list/calendar) + `filtersJson` + `columnsJson` + sort/group config. "+" adds a view (name + type); dirty-state chip offers "Save / Save as new / Reset"; shared views (isShared) visible org-wide, editable by owner/admin; a per-board default view. URL carries the view id.
+- [ ] Tabs render saved views; create/rename/duplicate/delete/share; default view
+- [ ] Layout/filter changes mark the view dirty; save/save-as/reset flows announced
+- [ ] Tests: switch views restores layout; shared view visible to a second user (integration)
+
+**Agent Decisions:** _(empty)_
+
+---
+
+#### fl-8-filter-sort-group — Filter builder · multi-sort · group-by-any-field
+
+- **Status:** [ ] ready
+- **Agent Persona:** flutter-ui
+- **Priority:** P1
+- **Complexity:** L
+- **Dependencies:** fl-8-column-registry; fl-8-custom-fields (for custom-field operands)
+- **Unblocks:** fl-8-column-summaries per-group batteries; Group-by toolbar stub (UI-2) becomes real
+- **Files to modify:** toolbar Filter/Sort/Group-by controls, a filter-builder popover, `main_table_view.dart` grouping, tests.
+
+**Spec:** Filter builder (Airtable pattern): condition rows (field · per-type operator · value) with AND/OR groups, one level of nesting; quick "Person" filter chip = assigned-to. Multi-level sort (add sort → ordered list, drag priority). **Group-by any groupable field** (status/priority/project/person/dropdown custom field): groups take label colors where the field has them, per-group counts + collapse persist per view; grouping by status keeps today's behavior as the default view. Client-side evaluation now (loaded page), server push-down when pagination lands.
+- [ ] Filter builder w/ per-type operators; persisted per view; announced result counts
+- [ ] Multi-sort; column-header click sorts (per-column menu integration)
+- [ ] Group-by-any-field incl. custom dropdowns; per-group aggregates
+- [ ] Tests: filter narrows, sort orders, group-by-person groups correctly
+
+**Agent Decisions:** _(empty)_
+
+---
+
+#### fl-8-column-summaries — Footer aggregations + per-group batteries
+
+- **Status:** [ ] backlog
+- **Agent Persona:** flutter-ui
+- **Priority:** P2
+- **Complexity:** S
+- **Dependencies:** fl-8-column-registry, fl-8-filter-sort-group
+- **Files to modify:** `main_table_view.dart` footers, column-menu "summary" picker.
+
+**Spec:** Per-column footer cell with type-valid aggregation picker (number: sum/avg/min/max; status: battery/count; date: range; checkbox: %; person: unique). Per-group footers when grouped + board grand total (the board battery generalizes). Persist choice per view. Client-side compute.
+- [ ] Aggregation picker + per-group/board footers + persistence + text equivalents
+
+**Agent Decisions:** _(empty)_
+
+---
+
+#### fl-8-subitems — Subitems (nested rows) + progress
+
+- **Status:** [ ] backlog
+- **Agent Persona:** serverpod-backend + flutter-ui
+- **Priority:** P2
+- **Complexity:** M
+- **Dependencies:** fl-8-column-registry
+- **Files to modify:** `task.spy.yaml` (+`parentTaskId: int?`) + migration, `task_endpoint.dart` (list children; cascade archive), table expand/collapse rows, item-card subitem mini-table (UI-5), tests.
+
+**Spec:** `parentTaskId` self-reference; expand chevron on parent rows reveals indented child rows (same inline editing); parent shows child-progress (n/m done, optional progress bar); delete/archive cascades with confirm. Kanban/calendar show parents only (monday default).
+- [ ] Model + endpoints + nested rendering + progress + cascade rules + tests
+
+**Agent Decisions:** _(empty)_
+
+---
+
+#### fl-8-drag-suite — Drag rows/groups/multi-select + keyboard parity
+
+- **Status:** [ ] backlog
+- **Agent Persona:** flutter-ui + flutter-a11y
+- **Priority:** P2
+- **Complexity:** M
+- **Dependencies:** fl-8-column-registry; pairs with UI-4 bulk actions
+- **Files to modify:** `main_table_view.dart` row drag handles, group headers, tests.
+
+**Spec:** Row drag (handle appears on hover/focus) within + across groups (drop = grouped-field change, same `repo.move` semantics as kanban); group reorder by header drag (persist order per view); multi-row drag with selection. **Every drag has a keyboard path** (the kanban pick-up/arrows/drop pattern generalized to the table: Space to lift a row, arrows to target, Enter to drop) — the a11y persona signs off.
+- [ ] Row/group/multi drag + keyboard equivalents + live-region announcements + tests
+
+**Agent Decisions:** _(empty)_
+
+---
+
+#### fl-8-templates — Board & item templates
+
+- **Status:** [ ] backlog
+- **Agent Persona:** serverpod-backend + flutter-ui
+- **Priority:** P2
+- **Complexity:** M
+- **Dependencies:** fl-8-custom-fields (templates carry field configs)
+- **Files to modify:** new `board_template` model or reuse `report_template` pattern, endpoints, "new board from template" flow, "duplicate" actions.
+
+**Spec:** Save a project/board (groups, field configs, views, optionally items) as a template; instantiate on create; duplicate board/item with/without data. Ship 3 makerspace starter templates (semester onboarding, equipment maintenance, event build).
+- [ ] Template save/instantiate/duplicate + starter templates + tests
+
+**Agent Decisions:** _(empty)_
+
+---
+
+#### fl-8-dashboard-widgets — Customizable dashboards (endpoints + widget grid)
+
+- **Status:** [ ] backlog
+- **Agent Persona:** serverpod-backend + flutter-ui
+- **Priority:** P2
+- **Complexity:** L
+- **Dependencies:** fl-8-filter-sort-group (widget-level filters); extends UI-9
+- **Files to modify:** `report_template`/`insight_snapshot` endpoints (models idle today), snapshot FutureCall, dashboard widget grid (add/drag/resize), widget types (numbers/chart/battery/table).
+
+**Spec:** Serve the idle dashboard models; a snapshot job (first FutureCall in the codebase) computes metric series; widget grid = add/configure/drag/resize, widget-level board+filter scope; every chart carries a data-table equivalent (AA). Visibility private/team/org per `report_template.visibility`.
+- [ ] Endpoints + snapshot job + 4 widget types + grid editing + AA equivalents + tests
+
+**Agent Decisions:** _(empty)_
+
+---
+
+#### fl-8-automations — Automation recipes (when X → do Y)
+
+- **Status:** [ ] backlog
+- **Agent Persona:** serverpod-backend
+- **Priority:** P3 (after realtime M2 publishes everywhere)
+- **Complexity:** XL
+- **Dependencies:** fl-8-custom-fields; M2 realtime (mutation events); fl-8-dashboard-widgets (FutureCall precedent)
+- **Files to modify:** new `automation_rule` model + migration, publish `ChangeEvent` from **all** mutating endpoints (today only `collab_endpoint.dart:49` publishes), trigger-matcher + action executors, recipe-builder UI.
+
+**Spec:** monday-style recipes: trigger (status changed / item created / date arrives / field changed) + optional condition + action (set field, assign, create item, notify, move group). Rules stored per board; executor consumes the mutation event stream + FutureCall for date triggers; every action runs through the normal endpoint logic (RBAC as a service account, audited). Recipe builder = sentence UI with slot pickers.
+- [ ] Event publication from all mutations; rule model; 6 starter recipes; executor idempotency; audit trail of automation actions; UI + tests
+
+**Agent Decisions:** _(empty)_
+
+---
+
+### Phase 9 — Enterprise readiness (customizable tool → enterprise sale-ready)
+
+> **Added 2026-07-14 from the enterprise research pass**, ranked for the actual buyer (university/makerspace procurement: campus IT security review + accessibility office + purchasing). The architecture's three chokepoints — `RbacGuard.requireRole`, `tenancy.dart`, the audit interceptor — make most items additive. VPAT work rides Phase 6 (fl-6-vpat) and is this market's cheapest, most-differentiating gate.
+
+#### fl-9-oidc-sso — University SSO (OIDC + JIT membership)
+
+- **Status:** [ ] ready
+- **Agent Persona:** serverpod-backend + security-reviewer
+- **Priority:** P0 (top campus-IT ask)
+- **Complexity:** L
+- **Dependencies:** — 
+- **Unblocks:** fl-9-user-lifecycle; "MFA via your IdP" answer; defers SCIM
+- **Files to modify:** serverpod_auth OIDC wiring (or IdP-proxy path), org settings (issuer/client per org, email-domain→org JIT rule), login screen "Continue with SSO", integration tests.
+
+**Spec:** OIDC auth-code flow per org (works with Shibboleth/Azure AD/CAS behind an OIDC bridge — document that path rather than implementing SAML natively). JIT: first SSO login with a matching email domain creates the membership at a default role. Session policy fields (max lifetime) on `Organization`.
+- [ ] OIDC login end-to-end vs a test IdP; JIT membership; per-org config; docs for campus IT
+- [ ] SAML explicitly deferred to an IdP proxy (documented)
+
+**Agent Decisions:** _(empty)_
+
+---
+
+#### fl-9-pats — API tokens (PATs) + service accounts
+
+- **Status:** [ ] ready
+- **Agent Persona:** serverpod-backend
+- **Priority:** P1
+- **Complexity:** M
+- **Dependencies:** —
+- **Unblocks:** fl-9-rest-webhooks, integrations (badge readers, LMS, Slack)
+- **Files to modify:** new `TokenEndpoint` (mint scoped `AuthKey` rows via serverpod_auth — the bearer path already exists end-to-end), optional PAT-metadata model (name/expiry/last-used), settings UI, tests.
+
+**Spec:** Mint long-lived scoped keys (`keyId:key` shown once), list + revoke; service accounts = non-login UserInfo + membership, flagged in audit summaries. Existing `RbacGuard`/tenancy/audit apply unchanged — zero per-endpoint work.
+- [ ] Mint/list/revoke + scopes + service accounts + audit flagging + tests
+
+**Agent Decisions:** _(empty)_
+
+---
+
+#### fl-9-org-export — Full-org export + audit-log export
+
+- **Status:** [ ] ready
+- **Agent Persona:** serverpod-backend
+- **Priority:** P1 ("how do we get our data out" — every review)
+- **Complexity:** M
+- **Dependencies:** —
+- **Files to modify:** export endpoint(s) (cursor-paginated JSON/CSV bundle per org; audit CSV/JSON stream), admin UI buttons, retention setting (archive-not-delete keeps the append-only promise), tests.
+
+- [ ] Org bundle export + audit export + retention config + restore-your-data doc
+
+**Agent Decisions:** _(empty)_
+
+---
+
+#### fl-9-user-lifecycle — Invites, suspension, cohort offboarding
+
+- **Status:** [ ] ready
+- **Agent Persona:** serverpod-backend + flutter-ui
+- **Priority:** P1 (semester churn is THE makerspace pain)
+- **Complexity:** M
+- **Dependencies:** — (clone the `password_reset` token flow; extends the onboarding models)
+- **Files to modify:** invite model+endpoint, suspend flag on Membership, bulk cohort offboard (by team/semester tag), admin console screens, tests.
+
+- [ ] Email invites → activate; suspend/reactivate; bulk offboard w/ confirm + audit; admin UI
+
+**Agent Decisions:** _(empty)_
+
+---
+
+#### fl-9-resource-grants — Private boards, board-level sharing, guest users
+
+- **Status:** [ ] backlog (start the design early — the one structural item)
+- **Agent Persona:** serverpod-backend + security-reviewer
+- **Priority:** P2
+- **Complexity:** XL
+- **Dependencies:** fl-9-user-lifecycle (guests are invited)
+- **Files to modify:** new `resource_grant` model (space/projectId × principal × role) + migration, `RbacGuard` extension (org role = ceiling default; grants override per resource), `private` flags on space/project, every list-query filter (tenancy.dart is the seam), sharing UI, extensive role-matrix tests.
+
+**Spec:** Sub-org authorization: private boards visible only via grant; guest role valid only through explicit grants; org role remains the default ceiling. This touches most read paths — land behind a feature flag with a doubled role-matrix integration suite.
+- [ ] Grant model + guard extension + private boards + guests + feature flag + role-matrix suite ×2
+
+**Agent Decisions:** _(empty)_
+
+---
+
+#### fl-9-csv-import — CSV import (the incumbent is a spreadsheet)
+
+- **Status:** [ ] backlog
+- **Agent Persona:** serverpod-backend + flutter-ui
+- **Priority:** P2
+- **Complexity:** M
+- **Dependencies:** fl-8-custom-fields (map columns to fields)
+- **Files to modify:** import endpoint (reuse the idempotent seed writers), column-mapping UI, dry-run preview, tests.
+
+- [ ] CSV → tasks/projects with column mapper + dry-run + row-error report
+
+**Agent Decisions:** _(empty)_
+
+---
+
+#### fl-9-rest-webhooks — Public REST facade + outbound webhooks
+
+- **Status:** [ ] backlog
+- **Agent Persona:** serverpod-backend
+- **Priority:** P2
+- **Complexity:** XL
+- **Dependencies:** fl-9-pats; M2 (mutation event stream); fl-8-automations shares the executor infra
+- **Files to modify:** Relic web routes on the webServer (8082) — `/api/v1/...` facade over existing endpoint logic, OpenAPI spec, webhook subscription model + HMAC-signed delivery worker w/ retries, rate limiting (Redis token bucket interceptor), docs.
+
+- [ ] REST facade (tasks/projects/orgs read+write) + OpenAPI + PAT auth + rate limits + webhooks w/ retries/DLQ + tests
+
+**Agent Decisions:** _(empty)_
+
+---
+
+#### fl-9-ops-hardening — Multi-instance safety, status page, restore drills
+
+- **Status:** [ ] ready
+- **Agent Persona:** devops
+- **Priority:** P1 (cheap credibility)
+- **Complexity:** M
+- **Dependencies:** —
+- **Files to modify:** `.do/app.yaml` (pre-deploy migration job; drop `--apply-migrations` from serve — the entrypoint's own comment prescribes this), `deploy/entrypoint.sh`, status page (hosted, pings `GET /` + `health.ready`), `/.well-known/security.txt`, documented RPO/RTO + quarterly restore drill script, HECVAT-Lite answer set doc.
+
+- [ ] Migration job split + readiness probes + status page + security.txt + restore drill + HECVAT doc
+
+**Agent Decisions:** _(empty)_
+
+---
+
 ## 14. Sequencing & milestones
 
 Dependency-ordered; complexity is order-of-magnitude (XS–XL per [§0.5](#05-status-legend-personas-scales)), not calendar dates.
@@ -1402,6 +1730,8 @@ Phase 4  Integrations ...... calendar sync → io/mail
 Phase 5  Native ............ offline sync → push → camera/biometric
 Phase 6  Accessibility ..... conformance across platforms → VPAT/statement
 Phase 7  Release ........... per-platform pipelines → GA
+Phase 8  Customization ..... view/field endpoints → column registry → custom fields → saved views → filter/group → summaries/subitems/drag/templates → dashboards → automations
+Phase 9  Enterprise ........ SSO/PATs/export/lifecycle/ops-hardening → resource grants → CSV import → REST+webhooks
 ```
 
 **Milestones:**
@@ -1411,6 +1741,8 @@ Phase 7  Release ........... per-platform pipelines → GA
 - **M3 — Feature parity:** Phases 2–4 complete; everything the Python app does, in Dart.
 - **M4 — Native edge:** Phase 5 complete; offline + push + camera + biometric.
 - **M5 — Compliant GA:** Phases 6–7 complete; WCAG 2.1 AA per platform, signed releases, beta → GA.
+- **M6 — Customizable platform:** Phase 8 through fl-8-filter-sort-group; columns resize/reorder/hide, custom fields on tasks, saved shared views, group-by-any-field — the "monday-class customization" bar.
+- **M7 — Enterprise-ready:** Phase 9 through fl-9-ops-hardening + fl-9-resource-grants; the university procurement gauntlet (VPAT · SSO · export · lifecycle · ops evidence) passes.
 
 **Critical path:** `fl-0-monorepo-scaffold` → `fl-0-auth-rbac-tenancy` → `fl-1-projects-tasks` → everything. The **`fl-0-a11y-web-spike` gate** runs in parallel in Phase 0 and must resolve before the web target is promised.
 
@@ -1620,6 +1952,7 @@ Append-only. One line per completed-or-deferred task, in execution order.
 
 - `2026-06-25` — `fl-task-views` (M1.3a) — **Task List view + view toggle.** Added a `SegmentedButton` (Board / List) to the Tasks AppBar that swaps the body without touching the keyboard-accessible board (lowest-risk approach: the board renders only in kanban mode; its move/focus state is untouched). New `_TaskListView` — tasks grouped by status under `Semantics(header)` groups (WCAG 1.3.1), each row tap-to-edit (reuses the edit dialog). Verified: `flutter analyze` clean, `flutter test` **10/10** (added a toggle-to-list test), `flutter build web` ✓. **Deferred — M1.3b calendar:** needs `TaskVm.dueAt` plumbing + a due-date picker in the dialog (with the `copyWith` nullable-clear caveat); a clean separate increment.
 - `2026-06-25` — `fl-delete-trash` (M1.2) — **Soft-delete + a Trash queue.** `TaskRepository.softDelete` (in-memory + live `client.task.softDelete`) and a new `TrashRepository` (`deletedTasks`/`restoreTask`/`purgeTask` → `client.trash.*`). Delete is reachable from the task edit dialog — a danger "Delete" button → confirm → soft-delete → announce → board refresh (so every input path that opens edit can delete). New `/trash` screen + nav entry: lists deleted tasks with **Restore** and a confirm-gated **Purge** (workspace_admin+ server-side → surfaces the typed Forbidden). The in-memory task + trash repos **share one store** (a private `ProviderScope`-scoped provider) so the stub coordinates delete→trash→restore exactly like the live DB does — and stays test-isolated. Verified: `flutter analyze` clean, `flutter test` **9/9** (added a delete-off-the-board widget test + a trash-coordination unit test: soft-delete→trash→restore, and purge), `flutter build web` ✓.
+- `2026-07-14` — `fl-enterprise-plan` — **Holistic PoC→enterprise plan added (Phases 8 + 9, D6).** Owner direction: expand the roadmap into full view/data customization (resizable/movable/customizable columns, custom field types, drill-downs, drag everything) and a path to a customizable enterprise tool. Ran a 3-agent research pass: (1) a customization-capability catalog across monday/Airtable/Notion/ClickUp/Linear/Smartsheet with interaction-level specs (resize hit-zones + autofit, header-drag reorder w/ pinned name column, hide-fields popover as the a11y fallback, per-column settings menu as the discoverability hub, footer aggregations + per-group batteries, field-type tiering, label-editor pattern, filter-builder AND/OR shapes) and a build order; (2) an enterprise-readiness catalog **ranked for the actual buyer** — university/makerspace procurement (VPAT first, OIDC SSO w/ JIT membership, backup/restore evidence + HECVAT, org+audit export, multi-instance-safe deploys, cohort user lifecycle, then resource grants/CSV import/REST+webhooks; SOC2/SCIM/seat-billing deliberately deferred); (3) a codebase-grounding audit — `CustomView`+`FieldConfig` models exist with **zero endpoints and no value storage**, Main Table columns are hardcoded const widths, `user_preference`/`report_template`/`insight_snapshot` tables idle, `ChangeEvent` published from exactly one place (`collab_endpoint.dart:49`), FutureCall unused, `attachment` unwired, team/space models exist but RBAC is org-only, and no web routes exist at all (REST facade = greenfield). Outcome: **11 Phase-8 cards** (endpoints → column registry → custom fields → saved views → filter/sort/group → summaries → subitems → drag suite → templates → dashboards → automations), **8 Phase-9 cards** (SSO, PATs, export, lifecycle, resource grants, CSV import, REST+webhooks, ops hardening), decision **D6** (custom-field values = JSON property bag on the entity, EAV rejected with rationale), milestones M6/M7, and NEXTSTEPS M-CUST/M-ENT tracks. The three architecture chokepoints (RbacGuard / tenancy / audit interceptor) make most enterprise items additive; the two structural efforts are resource grants and the REST facade.
 - `2026-07-14` — `fl-ui-0-1-build` — **UI-0 (Vibe design system) + UI-1 (monday app shell) SHIPPED** (commits `f538e0c`, `cbddb89`, `f3d2793`; detailed tick-lists + verbose logs live in [`makerflow_dart/UI_REDESIGN_PLAN.md` §8](makerflow_dart/UI_REDESIGN_PLAN.md)). UI-0: `makerflow_design` v0.2 — Vibe-exact tokens (light default + dark), bundled Figtree/Poppins (OFL), full ThemeData, restyled `MfCard`/`StatusBadge`, new kit (StatusLabel+picker, MndButton, avatars, skeletons, toast, empty state); AA enforced by a contrast unit test (two deliberate deviations from monday's exact label colors — black ink on bright labels, dark-red Blocked — because monday's own values fail 4.5:1). UI-1: grey frame + white rounded sheet, top bar (avatar menu owns theme/sign-out now), sidebar with live workspace tile + **board-per-project** rows that set the task filter, collapse, drawer breakpoint; Tasks board joined the shell with its controls as sheet-title actions; 6 shell tests run the real router with stub sign-in. Suites: design 7/7 · app 19/19 · builds green; live demo at :8085 rebuilt on the new UI. Next: UI-2 board chrome (view tabs + toolbar), then UI-3 Main Table.
 - `2026-07-14` — `fl-ui-monday-plan` — **Planned the monday.com-style front-end redesign (planning only; build next).** Owner direction: the interface should look like monday.com. Ran a 3-agent research pass grounded in monday's **open-source Vibe design system** (github.com/mondaycom/vibe — read their actual SCSS token sources) + support/product docs: exact palette (`#0073EA` primary, status trio `#00C875`/`#FDAB3D`/`#E2445C`, the 40-color label palette), Figtree/Poppins type scale (both OFL → bundleable), radii 4/8/16, shadow + motion tokens, keyboard-focus-ring spec, and the full component anatomy (grey app frame + white rounded sheet, ~255px sidebar, 3-row board header, the grouped **Main Table** with colored group edge-bars + full-bleed status cells + label-picker popover + battery summaries, bulk-actions bar, item-card panel w/ Updates/Files/Activity, kanban/calendar views, dashboard widgets, confetti-on-Done). Wrote [`makerflow_dart/UI_REDESIGN_PLAN.md`](makerflow_dart/UI_REDESIGN_PLAN.md): approach = reskin + structural upgrade (repositories/providers/tests untouched), monday→MakerFlow mapping (workspace=org, board=tasks-surface/per-project, Updates tab = the already-built `CollabEndpoint`, Activity = `AuditLog`, dashboards = `InsightSnapshot`), WCAG 2.1 AA carried through (label text as the non-color cue; keyboard equivalents for every hover affordance; keep the proven keyboard-kanban + live-region patterns), an **11-phase build-ready feature list** (UI-0 design system → UI-10 polish) with efforts/deps/per-phase a11y DoD, small server prereqs (TaskVm `dueAt`+assignee, `AuditEndpoint.forEntity`, `myWork`), sequencing (~4–6 wk to the looks-like-monday bar), and 4 open decisions. NEXTSTEPS gained the M-UI track; M1.5 screens will be built on the new system after UI-3. Light becomes the default theme; the dark-navy look becomes dark mode.
 - `2026-07-14` — `fl-1-project-crud + fl-drift-repairs` (NS-M1.4) — **Project CRUD shipped + the 45-item drift audit repaired.** Server: `version` added to the Project model (migration `20260714153805942`), `ProjectEndpoint.update` (optimistic-conflict, tenancy pinned — update cannot reassign org, integration-tested) + `softDelete` (archive; tasks keep their link); **5 new integration cases → server 24/24**. Client: project create/edit dialog with Archive (shared accessible-dialog pattern), tap-to-edit projects screen, `taskProjectFilterProvider` + an accessible project-filter dropdown on the Tasks views (in-memory repo now honors `projectId` too); **app 13/13** (+3: create, edit, filter-narrows-board), web build ✓. Drift repairs (from a 4-agent audit, 45 verified items): **(1) security** — `.dockerignore` was at `makerflow_server/` but the build context is `makerflow_dart/`, so Docker never read it and local image builds baked `config/passwords.yaml` into layers → moved to the context root + `RUN rm -f` in the Dockerfile as defense-in-depth; **(2) CI resurrected** — new `/.github/workflows/dart-ci.yml` (repo root, where Actions actually reads): server job = PG17 service (`makerflow_test` + example passwords) + analyze + 24 tests; app job = pinned Flutter 3.44.2 analyze/test/web build; the inert nested copy deleted; **(3) config rot** — `passwords.example.yaml` gained the required `test:` section (fresh clones couldn't run integration tests), compose now creates `makerflow_test` via docker-init + PG 16→17 aligned across compose/CI/`.do/app.yaml` (17 is what's verified), `.do/app.yaml` engine `REDIS`→`VALKEY` (DO discontinued managed Redis mid-2025; protocol-compatible) + an optional `EMAIL_PASSWORD_PEPPER` (must be set before first users), entrypoint renders the pepper when provided, melos `test` script no longer runs `dart test` inside the Flutter package (flutter:false + a `test:flutter` script), `makerflow_design` got its missing `analysis_options.yaml`; **(4) doc drift** — root README (badge "planned"→active, stale skeleton/status text, phantom pypdf/import_project_notes references, 12-diagram count), `makerflow_dart/README` (live-proof status, staging deploy branch, committed-codegen), ProductSpec (feature-freeze note, diagram count, link fix), FEATUREROADMAP (freeze banner + 3 anchor fixes), docs/DEPLOYMENT+ARCHITECTURE (phantom pypdf), spike-report link — all applied by verified repair agents; **(5) hygiene** — tracked `.DS_Store` ×3 + SQLite WAL side-files untracked. Not done (needs owner): deleting merged remote branches (`docs/ada-504-accessibility-program`, `docs/onboarding-and-roadmap-v2` — verified merged; permission-gated) and the live DO deploy. Stack verified end-to-end after everything: server analyze clean + 24/24, app analyze clean + 13/13 + web build, client/design analyze clean, all YAMLs + entrypoint validated.
