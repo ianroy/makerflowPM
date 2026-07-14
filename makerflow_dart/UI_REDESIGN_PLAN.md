@@ -388,3 +388,22 @@ table surfaced honest test drift: two kanban tests now explicitly open the Kanba
 intent), and the board-search test needed a keyed finder because every group's ghost row is a
 TextField. The old below-the-fold gotcha also reappeared (ListView children are lazy — asserting
 on the Done group at 600px tall fails), so table tests run on a 1000×1400 surface.
+
+
+---
+
+## 9. Where customization lands (Phase 8 tie-in, added 2026-07-14)
+
+The owner-requested customization program (resizable/movable/customizable columns, custom field
+types, saved views, group-by-any-field, drag-everything, subitems, dashboard widgets, automations)
+is planned as **Phase 8 in [`../FLUTTER_REBUILD_PLAN.md` §13](../FLUTTER_REBUILD_PLAN.md)** with
+interaction-level specs from the 2026-07-14 research pass. It builds directly on this redesign:
+- **fl-8-column-registry** replaces UI-3's hardcoded Main-Table columns (resize w/ 6px hit-zone +
+  autofit, header-drag reorder w/ the name column pinned, hide-fields popover = the a11y fallback,
+  per-column settings menu) — persisting into `CustomView.columnsJson`.
+- **fl-8-saved-views** turns UI-2's view tabs into real saved/shared views.
+- **fl-8-filter-sort-group** makes UI-2's Person/Sort/Group-by toolbar stubs functional and
+  brings per-group batteries (generalizing UI-3's board battery).
+- **fl-8-dashboard-widgets** = UI-9 grown up; **fl-8-drag-suite** pairs with UI-4.
+Sequence: finish UI-5/UI-6 (item card, kanban restyle), then enter Phase 8 at
+fl-8-view-field-endpoints.

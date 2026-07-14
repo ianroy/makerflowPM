@@ -104,6 +104,30 @@ Each builds on existing models/endpoints (details in [`Flutter_ProductSpec.md` �
 | 9 | Member check-in + volunteer hours (kiosk mode) | M | Membership/UserProfile, dashboard, InsightSnapshot |
 | 10 | Reports & insights dashboard (accessible charts + data tables) | M | `ReportTemplate`/`InsightSnapshot`, AuditLog as source |
 
+## M-CUST — Customization platform (Phase 8, added 2026-07-14)
+From PoC to a monday-class customizable tool. Full cards in
+[`../FLUTTER_REBUILD_PLAN.md` §13 Phase 8](../FLUTTER_REBUILD_PLAN.md); storage decision **D6**
+(custom-field values = JSON property bag on the entity). Grounding: `CustomView`/`FieldConfig`
+models exist with **no endpoints and no value storage**; Main Table columns are hardcoded.
+
+| Order | Card | Effort | What it unlocks |
+|---|---|---|---|
+| 1 | fl-8-view-field-endpoints | M | serve CustomView/FieldConfig/UserPreference (theme+layout persistence) |
+| 2 | fl-8-column-registry | L | resize · reorder · show/hide · pin, persisted per view |
+| 3 | fl-8-custom-fields | XL | tier-1 field types on tasks (labels w/ colors, person, multi-select…) |
+| 4 | fl-8-saved-views | M | view tabs = saved/shared/default views |
+| 5 | fl-8-filter-sort-group | L | filter builder · multi-sort · group-by-any-field |
+| 6–11 | summaries · subitems · drag suite · templates · dashboards · automations | S→XL | the long tail |
+
+## M-ENT — Enterprise readiness (Phase 9, added 2026-07-14)
+Ranked for the actual buyer (university/makerspace procurement):
+**VPAT** (rides fl-6) → **fl-9-oidc-sso** (OIDC + JIT membership; SAML via IdP proxy) →
+**fl-9-ops-hardening** (migration-job split, status page, security.txt, restore drill, HECVAT) →
+**fl-9-org-export** (org + audit export) → **fl-9-user-lifecycle** (invites, suspend, cohort
+offboard) → **fl-9-pats** → fl-9-resource-grants (private boards/guests — the structural one)
+→ fl-9-csv-import → fl-9-rest-webhooks. Deliberately deferred: SOC2 (HECVAT first), native
+SAML, SCIM, seat billing (universities buy site licenses on PO).
+
 ---
 
 ## Recommended sequence
@@ -122,4 +146,4 @@ Each builds on existing models/endpoints (details in [`Flutter_ProductSpec.md` �
 Production seed flag · ops-feature edit paths · equipment space-name resolution
 (Space join) · password-reset flow · validate/refresh a restored session key.
 
-_Last updated: 2026-07-14 (M1.4 project CRUD done; drift repairs applied: CI live at the repo root, dockerignore fixed, Valkey/PG17, docs refreshed)._
+_Last updated: 2026-07-14 (monday UI shipped through UI-3a; M-CUST/M-ENT tracks added from the enterprise research pass — Phases 8/9 in the plan)._

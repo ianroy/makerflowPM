@@ -1,6 +1,6 @@
 # FEATUREROADMAP_workplan.md
 
-> **Status (2026-07): the Python app is feature-frozen** — only security and compliance fixes land here. Active development is the Dart rebuild; see [FLUTTER_REBUILD_PLAN.md](FLUTTER_REBUILD_PLAN.md) and [makerflow_dart/NEXTSTEPS.md](makerflow_dart/NEXTSTEPS.md). This file remains the queue for Python maintenance work only.
+> **Status (2026-07): the Python app is feature-frozen** — only security and compliance fixes land here. Active development is the Dart rebuild — including the 2026-07-14 customization + enterprise program (FLUTTER_REBUILD_PLAN.md §13 Phases 8–9); see [FLUTTER_REBUILD_PLAN.md](FLUTTER_REBUILD_PLAN.md) and [makerflow_dart/NEXTSTEPS.md](makerflow_dart/NEXTSTEPS.md). This file remains the queue for Python maintenance work only.
 
 > A **resumable, pause-able, context-window-aware** roadmap for MakerFlow PM.
 > Designed so an LLM agent (or a human) can pick this file up at any time, regenerate or execute, and never lose track of state. All state lives in this file; no external orchestrator is required.
