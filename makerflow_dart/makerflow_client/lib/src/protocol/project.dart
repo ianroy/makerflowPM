@@ -25,12 +25,13 @@ abstract class Project implements _i1.SerializableModel {
     this.ownerUserInfoId,
     this.teamId,
     this.spaceId,
+    int? version,
     required this.createdAt,
     required this.updatedAt,
     this.createdByUserInfoId,
     this.deletedAt,
     this.deletedByUserInfoId,
-  });
+  }) : version = version ?? 1;
 
   factory Project({
     int? id,
@@ -42,6 +43,7 @@ abstract class Project implements _i1.SerializableModel {
     int? ownerUserInfoId,
     int? teamId,
     int? spaceId,
+    int? version,
     required DateTime createdAt,
     required DateTime updatedAt,
     int? createdByUserInfoId,
@@ -62,6 +64,7 @@ abstract class Project implements _i1.SerializableModel {
       ownerUserInfoId: jsonSerialization['ownerUserInfoId'] as int?,
       teamId: jsonSerialization['teamId'] as int?,
       spaceId: jsonSerialization['spaceId'] as int?,
+      version: jsonSerialization['version'] as int?,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -97,6 +100,8 @@ abstract class Project implements _i1.SerializableModel {
 
   int? spaceId;
 
+  int version;
+
   DateTime createdAt;
 
   DateTime updatedAt;
@@ -120,6 +125,7 @@ abstract class Project implements _i1.SerializableModel {
     int? ownerUserInfoId,
     int? teamId,
     int? spaceId,
+    int? version,
     DateTime? createdAt,
     DateTime? updatedAt,
     int? createdByUserInfoId,
@@ -139,6 +145,7 @@ abstract class Project implements _i1.SerializableModel {
       if (ownerUserInfoId != null) 'ownerUserInfoId': ownerUserInfoId,
       if (teamId != null) 'teamId': teamId,
       if (spaceId != null) 'spaceId': spaceId,
+      'version': version,
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
       if (createdByUserInfoId != null)
@@ -168,6 +175,7 @@ class _ProjectImpl extends Project {
     int? ownerUserInfoId,
     int? teamId,
     int? spaceId,
+    int? version,
     required DateTime createdAt,
     required DateTime updatedAt,
     int? createdByUserInfoId,
@@ -183,6 +191,7 @@ class _ProjectImpl extends Project {
          ownerUserInfoId: ownerUserInfoId,
          teamId: teamId,
          spaceId: spaceId,
+         version: version,
          createdAt: createdAt,
          updatedAt: updatedAt,
          createdByUserInfoId: createdByUserInfoId,
@@ -204,6 +213,7 @@ class _ProjectImpl extends Project {
     Object? ownerUserInfoId = _Undefined,
     Object? teamId = _Undefined,
     Object? spaceId = _Undefined,
+    int? version,
     DateTime? createdAt,
     DateTime? updatedAt,
     Object? createdByUserInfoId = _Undefined,
@@ -222,6 +232,7 @@ class _ProjectImpl extends Project {
           : this.ownerUserInfoId,
       teamId: teamId is int? ? teamId : this.teamId,
       spaceId: spaceId is int? ? spaceId : this.spaceId,
+      version: version ?? this.version,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       createdByUserInfoId: createdByUserInfoId is int?

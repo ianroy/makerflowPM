@@ -879,6 +879,43 @@ class Endpoints extends _i1.EndpointDispatch {
                 params['draft'],
               ),
         ),
+        'update': _i1.MethodConnector(
+          name: 'update',
+          params: {
+            'incoming': _i1.ParameterDescription(
+              name: 'incoming',
+              type: _i1.getType<_i28.Project>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['project'] as _i11.ProjectEndpoint).update(
+                session,
+                params['incoming'],
+              ),
+        ),
+        'softDelete': _i1.MethodConnector(
+          name: 'softDelete',
+          params: {
+            'projectId': _i1.ParameterDescription(
+              name: 'projectId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['project'] as _i11.ProjectEndpoint).softDelete(
+                    session,
+                    params['projectId'],
+                  ),
+        ),
       },
     );
     connectors['realtime'] = _i1.EndpointConnector(

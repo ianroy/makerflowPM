@@ -27,18 +27,68 @@ class ServerpodProjectRepository implements ProjectRepository {
   ServerpodProjectRepository(this._client);
   final api.Client _client;
 
+  ProjectVm _toVm(api.Project p) => ProjectVm(
+        id: p.id ?? 0,
+        name: p.name,
+        status: p.status,
+        lane: p.lane,
+        priority: p.priority.name,
+        version: p.version,
+      );
+
   @override
   Future<List<ProjectVm>> list(int orgId) async {
     final rows = await _client.project.list(orgId);
-    return rows
-        .map((p) => ProjectVm(
-              id: p.id ?? 0,
-              name: p.name,
-              status: p.status,
-              lane: p.lane,
-            ))
-        .toList();
+    return rows.map(_toVm).toList();
   }
+
+  @override
+  Future<ProjectVm> create({
+    required int orgId,
+    required String name,
+    required String status,
+    required String priority,
+    String? lane,
+  }) async {
+    final now = DateTime.now().toUtc();
+    final saved = await _client.project.create(api.Project(
+      organizationId: orgId,
+      name: name,
+      status: status,
+      lane: lane,
+      priority: api.TaskPriority.values.byName(priority),
+      version: 1,
+      createdAt: now,
+      updatedAt: now,
+    ));
+    return _toVm(saved);
+  }
+
+  @override
+  Future<ProjectVm> update({
+    required int id,
+    required int version,
+    required int orgId,
+    required String name,
+    required String status,
+    required String priority,
+    String? lane,
+  }) async {
+    // Fetch-merge (preserves owner/team/space); override version with the
+    // caller's base so the optimistic-concurrency check still fires.
+    final existing = (await _client.project.list(orgId)).firstWhere((p) => p.id == id);
+    final saved = await _client.project.update(existing.copyWith(
+      name: name,
+      status: status,
+      lane: lane,
+      priority: api.TaskPriority.values.byName(priority),
+      version: version,
+    ));
+    return _toVm(saved);
+  }
+
+  @override
+  Future<void> softDelete(int id) => _client.project.softDelete(id);
 }
 
 class ServerpodEquipmentRepository implements EquipmentRepository {

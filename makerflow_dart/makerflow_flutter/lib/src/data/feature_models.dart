@@ -7,11 +7,20 @@ class OrgVm {
 }
 
 class ProjectVm {
-  ProjectVm({required this.id, required this.name, required this.status, this.lane});
+  ProjectVm({
+    required this.id,
+    required this.name,
+    required this.status,
+    this.lane,
+    this.priority = 'medium',
+    this.version = 1,
+  });
   final int id;
   final String name;
-  final String status;
-  final String? lane;
+  final String status; // planned | active | onHold | completed | archived
+  final String? lane; // discovery | build | operate
+  final String priority; // TaskPriority names
+  final int version; // optimistic concurrency (mirrors task)
 }
 
 class EquipmentVm {

@@ -42,15 +42,18 @@ class InMemoryTaskRepository implements TaskRepository {
   final List<TaskVm> _tasks = [
     TaskVm(id: 1, organizationId: 1, title: 'Laser cutter monthly PM', status: 'todo', priority: 'high', assigneeName: 'Sam'),
     TaskVm(id: 2, organizationId: 1, title: 'Restock 3mm plywood', status: 'backlog', priority: 'medium', assigneeName: 'Jo'),
-    TaskVm(id: 3, organizationId: 1, title: 'Onboard fall student cohort', status: 'inProgress', priority: 'high', assigneeName: 'Pat'),
+    TaskVm(id: 3, organizationId: 1, title: 'Onboard fall student cohort', status: 'inProgress', priority: 'high', assigneeName: 'Pat', projectId: 1),
     TaskVm(id: 4, organizationId: 1, title: 'Fix dust collector sensor', status: 'blocked', priority: 'urgent', assigneeName: 'Sam'),
     TaskVm(id: 5, organizationId: 1, title: 'Publish Q3 usage report', status: 'inReview', priority: 'low', assigneeName: 'Jo'),
-    TaskVm(id: 6, organizationId: 1, title: 'Archive completed capstones', status: 'done', priority: 'low', assigneeName: 'Pat'),
+    TaskVm(id: 6, organizationId: 1, title: 'Archive completed capstones', status: 'done', priority: 'low', assigneeName: 'Pat', projectId: 1),
   ];
 
   @override
-  Future<List<TaskVm>> list(int organizationId, {int? projectId}) async =>
-      _tasks.where((t) => t.organizationId == organizationId).toList();
+  Future<List<TaskVm>> list(int organizationId, {int? projectId}) async => _tasks
+      .where((t) =>
+          t.organizationId == organizationId &&
+          (projectId == null || t.projectId == projectId))
+      .toList();
 
   @override
   Future<TaskVm> move(int taskId, String toStatus, double toSortOrder) async {

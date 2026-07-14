@@ -60,9 +60,13 @@ final meetingRepositoryProvider = Provider<MeetingRepository>((ref) => useLiveBa
 // --- Reads, all scoped to the active org ---
 final orgsProvider = FutureProvider<List<OrgVm>>((ref) => ref.watch(orgRepositoryProvider).listMine());
 
+/// Optional project filter for the task views (null = all projects).
+final taskProjectFilterProvider = StateProvider<int?>((_) => null);
+
 final tasksProvider = FutureProvider<List<TaskVm>>((ref) {
   final orgId = ref.watch(activeOrgIdProvider);
-  return ref.watch(taskRepositoryProvider).list(orgId);
+  final projectId = ref.watch(taskProjectFilterProvider);
+  return ref.watch(taskRepositoryProvider).list(orgId, projectId: projectId);
 });
 final projectsProvider = FutureProvider<List<ProjectVm>>((ref) {
   final orgId = ref.watch(activeOrgIdProvider);

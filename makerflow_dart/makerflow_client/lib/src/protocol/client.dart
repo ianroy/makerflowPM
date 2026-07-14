@@ -448,6 +448,24 @@ class EndpointProject extends _i1.EndpointRef {
         'create',
         {'draft': draft},
       );
+
+  /// Update a project. Optimistic-concurrency aware via [Project.version]:
+  /// throws if the client's base version is stale (mirrors TaskEndpoint.update).
+  _i2.Future<_i9.Project> update(_i9.Project incoming) =>
+      caller.callServerEndpoint<_i9.Project>(
+        'project',
+        'update',
+        {'incoming': incoming},
+      );
+
+  /// Soft-delete (archives the project; tasks keep their projectId and stay
+  /// visible — matching the legacy behavior. Restore is server-side until the
+  /// trash UI covers projects).
+  _i2.Future<void> softDelete(int projectId) => caller.callServerEndpoint<void>(
+    'project',
+    'softDelete',
+    {'projectId': projectId},
+  );
 }
 
 /// The realtime rail (fl-1-realtime-infra). A single streaming endpoint that

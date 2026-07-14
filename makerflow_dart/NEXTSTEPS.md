@@ -8,17 +8,17 @@ prioritized milestone view. Effort: S≈hours · M≈1–2d · L≈3–5d · XL�
 
 ![Rebuild roadmap: M0–M6 milestones, blockers, and sequence](../docs/diagrams/12-rebuild-roadmap.svg)
 
-## Where we are (re-verified 2026-07-11)
-Backend contract proven (19 green server tests incl. the 17-case live integration
-suite); the app does live reads + task CRUD (create/edit/soft-delete + Trash) +
-ops-feature create **and edit** (non-destructive fetch-merge); Board/List task
-views; auth persists; production seed path done; packaged for DigitalOcean.
-All green on the current toolchain (Dart 3.12.2 / Flutter 3.44.2 / Serverpod
-3.4.10). Gaps: not running anywhere yet, project CRUD + detail screens pending,
-realtime/offline/native are server-side-only, the **web-a11y decision (R1) is
-still unmade**, and **CI is inert** — `dart-ci.yml` sits at
-`makerflow_dart/.github/workflows/`, which GitHub Actions never reads (must move
-to the repo root).
+## Where we are (updated 2026-07-14)
+Backend contract proven (**24 green server tests** incl. the 22-case live
+integration suite); the app does live reads + **task AND project CRUD**
+(create/edit/soft-delete + Trash for tasks; Archive for projects) + ops-feature
+create **and edit** (non-destructive fetch-merge); Board/List task views **with
+a project filter**; auth persists; production seed path done; packaged for
+DigitalOcean; **real CI at `/.github/workflows/dart-ci.yml`** (13 app tests +
+24 server tests gate PRs). All green (Dart 3.12.2 / Flutter 3.44.2 / Serverpod
+3.4.10). Gaps: not running anywhere yet (owner doctl token), detail screens +
+task calendar pending, realtime/offline/native are server-side-only, and the
+**web-a11y decision (R1) is still unmade**.
 
 ---
 
@@ -40,7 +40,7 @@ A real URL on managed Postgres.
 | ~~M1.1 Edit paths for equipment/consumables/meetings~~ ✅ | M | done — create/edit dialogs, tap-to-edit, non-destructive fetch-merge |
 | ~~M1.2 Delete + Trash UI~~ ✅ | M | done — soft-delete from edit dialog + `/trash` screen (restore/purge), shared in-memory store |
 | M1.3 Task list + calendar views | M | **list + toggle ✅**; calendar deferred (M1.3b — needs `dueAt` + date picker) |
-| M1.4 Project create/edit + project→task linkage | M | `ProjectEndpoint` exists |
+| ~~M1.4 Project create/edit + project→task linkage~~ ✅ | M | done — `update`/`softDelete` + version + migration; dialog + Archive; task-view project filter |
 | M1.5 Detail screens: meeting agenda (convert-to-task), intake→project, partnerships | L | endpoints exist |
 
 **DoD:** every core entity is full CRUD from the UI against live data; widget-tested.
@@ -60,7 +60,7 @@ Infra exists (`RealtimeEndpoint`, Redis `Channels`, `ChangeEvent`, `ItemComment`
 | Task | Effort | Deps | Notes |
 |---|---|---|---|
 | M3.1 Run `/spike` AT matrix (NVDA+Firefox, VoiceOver+Safari, keyboard); record verdict; decide web vs server-rendered fallback | M | **Human AT pass** | the R1 gate; fixture + report built |
-| M3.2 CI gates: 19 server tests (ephemeral PG/Redis) + 10 Flutter tests + axe-core | M | — | **`dart-ci.yml` is INERT** (wrong dir — `makerflow_dart/.github/workflows/`; Actions only reads the repo root). Move + modernize it |
+| M3.2 CI gates: 19 server tests (ephemeral PG/Redis) + 10 Flutter tests + axe-core | M | — | **moved + rewritten 2026-07-14** → `/.github/workflows/dart-ci.yml` (server: PG17 + 24 tests; app: analyze/test/web). Remaining: axe-core gate + goldens/E2E |
 | M3.3 Golden tests (both themes) + one Patrol E2E | M | — | — |
 
 **DoD:** CI blocks regressions; recorded AT verdict; web-target decision made.
@@ -113,4 +113,4 @@ Each builds on existing models/endpoints (details in [`Flutter_ProductSpec.md` �
 Production seed flag · ops-feature edit paths · equipment space-name resolution
 (Space join) · password-reset flow · validate/refresh a restored session key.
 
-_Last updated: 2026-07-11 (deep review: docs refreshed against code; CI-inert finding; M-EXP track added)._
+_Last updated: 2026-07-14 (M1.4 project CRUD done; drift repairs applied: CI live at the repo root, dockerignore fixed, Valkey/PG17, docs refreshed)._

@@ -40,6 +40,8 @@ partnership:
 project:
   - list:
   - create:
+  - update:
+  - softDelete:
 realtime:
   - subscribe:
 sync:

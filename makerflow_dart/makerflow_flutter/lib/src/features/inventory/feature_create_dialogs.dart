@@ -29,6 +29,11 @@ Future<MeetingVm?> showNewMeetingDialog(BuildContext context) =>
 Future<MeetingVm?> showEditMeetingDialog(BuildContext context, MeetingVm m) =>
     showDialog<MeetingVm>(context: context, builder: (_) => _MeetingDialog(existing: m));
 
+Future<ProjectVm?> showNewProjectDialog(BuildContext context) =>
+    showDialog<ProjectVm>(context: context, builder: (_) => const _ProjectDialog());
+Future<ProjectVm?> showEditProjectDialog(BuildContext context, ProjectVm p) =>
+    showDialog<ProjectVm>(context: context, builder: (_) => _ProjectDialog(existing: p));
+
 // --- shared helpers ---
 
 void _announce(BuildContext context, String msg) =>
@@ -376,6 +381,184 @@ class _MeetingDialogState extends ConsumerState<_MeetingDialog> {
         ),
       ),
       actions: _actions(context, _busy, _submit, _isEdit ? 'Save' : 'Create'),
+    );
+  }
+}
+
+// --- Project ---
+
+const _projectStatuses = ['planned', 'active', 'onHold', 'completed', 'archived'];
+const _projectLanes = ['discovery', 'build', 'operate'];
+const _projectPriorities = ['low', 'medium', 'high', 'urgent'];
+
+String _projectStatusLabel(String s) => switch (s) {
+      'onHold' => 'On hold',
+      _ => _cap(s),
+    };
+
+class _ProjectDialog extends ConsumerStatefulWidget {
+  const _ProjectDialog({this.existing});
+  final ProjectVm? existing;
+  @override
+  ConsumerState<_ProjectDialog> createState() => _ProjectDialogState();
+}
+
+class _ProjectDialogState extends ConsumerState<_ProjectDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final _name = TextEditingController(text: widget.existing?.name ?? '');
+  late String _status = widget.existing?.status ?? 'planned';
+  late String? _lane = widget.existing?.lane;
+  late String _priority = widget.existing?.priority ?? 'medium';
+  bool _busy = false;
+  String? _error;
+  bool get _isEdit => widget.existing != null;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final repo = ref.read(projectRepositoryProvider);
+      final orgId = ref.read(activeOrgIdProvider);
+      final saved = _isEdit
+          ? await repo.update(
+              id: widget.existing!.id,
+              version: widget.existing!.version,
+              orgId: orgId,
+              name: _name.text.trim(),
+              status: _status,
+              priority: _priority,
+              lane: _lane)
+          : await repo.create(
+              orgId: orgId,
+              name: _name.text.trim(),
+              status: _status,
+              priority: _priority,
+              lane: _lane);
+      if (mounted) {
+        _announce(context, '${_isEdit ? 'Updated' : 'Created'} project ${saved.name}.');
+        Navigator.of(context).pop(saved);
+      }
+    } catch (e) {
+      final msg = _friendly(e);
+      setState(() => _error = msg);
+      if (mounted) _announce(context, 'Could not save project. $msg');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _archive() async {
+    final p = widget.existing!;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Archive project?'),
+        content: Text(
+            '"${p.name}" will be removed from the projects list. Its tasks keep their link. (Restore is server-side until the trash UI covers projects.)'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Archive')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref.read(projectRepositoryProvider).softDelete(p.id);
+      if (mounted) {
+        _announce(context, 'Archived project ${p.name}.');
+        Navigator.of(context).pop(p); // non-null → caller refreshes
+      }
+    } catch (e) {
+      final msg = _friendly(e);
+      setState(() {
+        _error = msg;
+        _busy = false;
+      });
+      if (mounted) _announce(context, 'Could not archive project. $msg');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(_isEdit ? 'Edit project' : 'New project'),
+      content: Form(
+        key: _formKey,
+        child: SizedBox(
+          width: 380,
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            TextFormField(
+              controller: _name,
+              autofocus: true,
+              enabled: !_busy,
+              decoration: const InputDecoration(labelText: 'Name'),
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+              onFieldSubmitted: (_) => _submit(),
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              initialValue: _status,
+              decoration: const InputDecoration(labelText: 'Status'),
+              items: [
+                for (final s in _projectStatuses)
+                  DropdownMenuItem(value: s, child: Text(_projectStatusLabel(s))),
+              ],
+              onChanged: _busy ? null : (v) => setState(() => _status = v!),
+            ),
+            const SizedBox(height: 16),
+            Row(children: [
+              Expanded(
+                child: DropdownButtonFormField<String?>(
+                  initialValue: _lane,
+                  decoration: const InputDecoration(labelText: 'Lane'),
+                  items: [
+                    const DropdownMenuItem<String?>(value: null, child: Text('None')),
+                    for (final l in _projectLanes)
+                      DropdownMenuItem<String?>(value: l, child: Text(_cap(l))),
+                  ],
+                  onChanged: _busy ? null : (v) => setState(() => _lane = v),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  initialValue: _priority,
+                  decoration: const InputDecoration(labelText: 'Priority'),
+                  items: [
+                    for (final p in _projectPriorities)
+                      DropdownMenuItem(value: p, child: Text(_cap(p))),
+                  ],
+                  onChanged: _busy ? null : (v) => setState(() => _priority = v!),
+                ),
+              ),
+            ]),
+            if (_error != null) _errorRow(context, _error!),
+          ]),
+        ),
+      ),
+      actions: [
+        if (_isEdit)
+          TextButton(
+            onPressed: _busy ? null : _archive,
+            style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error),
+            child: const Text('Archive'),
+          ),
+        ..._actions(context, _busy, _submit, _isEdit ? 'Save' : 'Create'),
+      ],
     );
   }
 }

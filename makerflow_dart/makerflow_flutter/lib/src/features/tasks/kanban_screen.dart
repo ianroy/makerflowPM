@@ -106,6 +106,28 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
       appBar: AppBar(
         title: const Text('Tasks'),
         actions: [
+          // Project filter (null = all). Live memberships feed projectsProvider.
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: ref.watch(projectsProvider).maybeWhen(
+                  data: (projects) => Semantics(
+                    label: 'Filter tasks by project',
+                    child: DropdownButton<int?>(
+                      value: ref.watch(taskProjectFilterProvider),
+                      underline: const SizedBox.shrink(),
+                      isDense: true,
+                      items: [
+                        const DropdownMenuItem<int?>(value: null, child: Text('All projects')),
+                        for (final p in projects)
+                          DropdownMenuItem<int?>(value: p.id, child: Text(p.name)),
+                      ],
+                      onChanged: (id) =>
+                          ref.read(taskProjectFilterProvider.notifier).state = id,
+                    ),
+                  ),
+                  orElse: () => const SizedBox.shrink(),
+                ),
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: SegmentedButton<_TasksView>(

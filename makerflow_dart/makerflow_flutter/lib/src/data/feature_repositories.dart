@@ -18,15 +18,86 @@ class InMemoryOrgRepository implements OrgRepository {
 
 abstract class ProjectRepository {
   Future<List<ProjectVm>> list(int orgId);
+  Future<ProjectVm> create({
+    required int orgId,
+    required String name,
+    required String status,
+    required String priority,
+    String? lane,
+  });
+
+  /// Edit a project. [version] is the base the edit was made on — the server
+  /// rejects a stale version with a conflict (mirrors the task contract).
+  Future<ProjectVm> update({
+    required int id,
+    required int version,
+    required int orgId,
+    required String name,
+    required String status,
+    required String priority,
+    String? lane,
+  });
+
+  /// Archive (soft-delete): the project leaves the list; restore is
+  /// server-side until the trash UI covers projects.
+  Future<void> softDelete(int id);
 }
 
 class InMemoryProjectRepository implements ProjectRepository {
+  final List<ProjectVm> _items = [
+    ProjectVm(id: 1, name: 'Fall capstone cohort', status: 'active', lane: 'build'),
+    ProjectVm(id: 2, name: 'Shop safety refresh', status: 'planned', lane: 'discovery'),
+    ProjectVm(id: 3, name: 'Open-house build night', status: 'onHold', lane: 'operate'),
+  ];
+
   @override
-  Future<List<ProjectVm>> list(int orgId) async => [
-        ProjectVm(id: 1, name: 'Fall capstone cohort', status: 'active', lane: 'build'),
-        ProjectVm(id: 2, name: 'Shop safety refresh', status: 'planned', lane: 'discovery'),
-        ProjectVm(id: 3, name: 'Open-house build night', status: 'onHold', lane: 'operate'),
-      ];
+  Future<List<ProjectVm>> list(int orgId) async => List.unmodifiable(_items);
+
+  @override
+  Future<ProjectVm> create({
+    required int orgId,
+    required String name,
+    required String status,
+    required String priority,
+    String? lane,
+  }) async {
+    final created = ProjectVm(
+      id: _nextId(_items.map((e) => e.id)),
+      name: name,
+      status: status,
+      lane: lane,
+      priority: priority,
+    );
+    _items.add(created);
+    return created;
+  }
+
+  @override
+  Future<ProjectVm> update({
+    required int id,
+    required int version,
+    required int orgId,
+    required String name,
+    required String status,
+    required String priority,
+    String? lane,
+  }) async {
+    final i = _items.indexWhere((e) => e.id == id);
+    final updated = ProjectVm(
+      id: id,
+      name: name,
+      status: status,
+      lane: lane,
+      priority: priority,
+      version: version + 1,
+    );
+    _items[i] = updated;
+    return updated;
+  }
+
+  @override
+  Future<void> softDelete(int id) async =>
+      _items.removeWhere((e) => e.id == id);
 }
 
 abstract class EquipmentRepository {

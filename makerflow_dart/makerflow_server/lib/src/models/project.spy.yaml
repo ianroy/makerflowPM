@@ -10,6 +10,7 @@ fields:
   ownerUserInfoId: int?
   teamId: int?
   spaceId: int?
+  version: int, default=1          # bumped on every update; optimistic concurrency (mirrors task)
   createdAt: DateTime
   updatedAt: DateTime
   createdByUserInfoId: int?
