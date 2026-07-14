@@ -18,27 +18,30 @@ import 'package:makerflow_client/src/protocol/consumable.dart' as _i5;
 import 'package:makerflow_client/src/protocol/equipment_asset.dart' as _i6;
 import 'package:makerflow_client/src/protocol/enums/equipment_status.dart'
     as _i7;
-import 'package:makerflow_client/src/protocol/intake_request.dart' as _i8;
-import 'package:makerflow_client/src/protocol/project.dart' as _i9;
-import 'package:makerflow_client/src/protocol/meeting_agenda.dart' as _i10;
-import 'package:makerflow_client/src/protocol/meeting_item.dart' as _i11;
-import 'package:makerflow_client/src/protocol/task.dart' as _i12;
-import 'package:makerflow_client/src/protocol/onboarding_template.dart' as _i13;
+import 'package:makerflow_client/src/protocol/field_config.dart' as _i8;
+import 'package:makerflow_client/src/protocol/intake_request.dart' as _i9;
+import 'package:makerflow_client/src/protocol/project.dart' as _i10;
+import 'package:makerflow_client/src/protocol/meeting_agenda.dart' as _i11;
+import 'package:makerflow_client/src/protocol/meeting_item.dart' as _i12;
+import 'package:makerflow_client/src/protocol/task.dart' as _i13;
+import 'package:makerflow_client/src/protocol/onboarding_template.dart' as _i14;
 import 'package:makerflow_client/src/protocol/onboarding_assignment.dart'
-    as _i14;
-import 'package:makerflow_client/src/protocol/enums/onboarding_state.dart'
     as _i15;
-import 'package:makerflow_client/src/protocol/organization.dart' as _i16;
-import 'package:makerflow_client/src/protocol/membership.dart' as _i17;
+import 'package:makerflow_client/src/protocol/enums/onboarding_state.dart'
+    as _i16;
+import 'package:makerflow_client/src/protocol/organization.dart' as _i17;
+import 'package:makerflow_client/src/protocol/membership.dart' as _i18;
 import 'package:makerflow_client/src/protocol/enums/membership_role.dart'
-    as _i18;
-import 'package:makerflow_client/src/protocol/partnership.dart' as _i19;
+    as _i19;
+import 'package:makerflow_client/src/protocol/partnership.dart' as _i20;
 import 'package:makerflow_client/src/protocol/enums/partnership_stage.dart'
-    as _i20;
-import 'package:makerflow_client/src/protocol/task_delta_page.dart' as _i21;
-import 'package:makerflow_client/src/protocol/enums/task_status.dart' as _i22;
-import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i23;
-import 'protocol.dart' as _i24;
+    as _i21;
+import 'package:makerflow_client/src/protocol/user_preference.dart' as _i22;
+import 'package:makerflow_client/src/protocol/task_delta_page.dart' as _i23;
+import 'package:makerflow_client/src/protocol/enums/task_status.dart' as _i24;
+import 'package:makerflow_client/src/protocol/custom_view.dart' as _i25;
+import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i26;
+import 'protocol.dart' as _i27;
 
 /// Comments + watchers on any entity, plus a streaming activity feed that
 /// replaces the legacy poll/refresh helper. Comments are announced to watchers
@@ -169,6 +172,46 @@ class EndpointEquipment extends _i1.EndpointRef {
   );
 }
 
+/// Custom-field DEFINITIONS (fl-8-view-field-endpoints). Members read them to
+/// render columns; only workspaceAdmin+ mutates the schema. Values land with
+/// fl-8-custom-fields (D6: JSON property bag on the entity).
+/// {@category Endpoint}
+class EndpointFieldConfig extends _i1.EndpointRef {
+  EndpointFieldConfig(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'fieldConfig';
+
+  _i2.Future<List<_i8.FieldConfig>> list(
+    int organizationId, {
+    String? entityType,
+  }) => caller.callServerEndpoint<List<_i8.FieldConfig>>(
+    'fieldConfig',
+    'list',
+    {
+      'organizationId': organizationId,
+      'entityType': entityType,
+    },
+  );
+
+  /// Create or update a definition (workspaceAdmin+). Validates the field type
+  /// and guards the (org, entityType, key) uniqueness with a typed conflict.
+  _i2.Future<_i8.FieldConfig> save(_i8.FieldConfig draft) =>
+      caller.callServerEndpoint<_i8.FieldConfig>(
+        'fieldConfig',
+        'save',
+        {'draft': draft},
+      );
+
+  /// Remove a definition (workspaceAdmin+). Hard delete is acceptable while no
+  /// value storage exists; fl-8-custom-fields upgrades this to retire.
+  _i2.Future<void> delete(int id) => caller.callServerEndpoint<void>(
+    'fieldConfig',
+    'delete',
+    {'id': id},
+  );
+}
+
 /// Readiness probe with a DB round-trip (legacy /readyz). The cheap liveness
 /// probe (/healthz) is wired as a web route in server.dart.
 /// {@category Endpoint}
@@ -194,24 +237,24 @@ class EndpointIntake extends _i1.EndpointRef {
   @override
   String get name => 'intake';
 
-  _i2.Future<List<_i8.IntakeRequest>> list(int organizationId) =>
-      caller.callServerEndpoint<List<_i8.IntakeRequest>>(
+  _i2.Future<List<_i9.IntakeRequest>> list(int organizationId) =>
+      caller.callServerEndpoint<List<_i9.IntakeRequest>>(
         'intake',
         'list',
         {'organizationId': organizationId},
       );
 
-  _i2.Future<_i8.IntakeRequest> save(_i8.IntakeRequest draft) =>
-      caller.callServerEndpoint<_i8.IntakeRequest>(
+  _i2.Future<_i9.IntakeRequest> save(_i9.IntakeRequest draft) =>
+      caller.callServerEndpoint<_i9.IntakeRequest>(
         'intake',
         'save',
         {'draft': draft},
       );
 
-  _i2.Future<_i9.Project> convertToProject(
+  _i2.Future<_i10.Project> convertToProject(
     int organizationId,
     int requestId,
-  ) => caller.callServerEndpoint<_i9.Project>(
+  ) => caller.callServerEndpoint<_i10.Project>(
     'intake',
     'convertToProject',
     {
@@ -230,17 +273,17 @@ class EndpointMeeting extends _i1.EndpointRef {
   @override
   String get name => 'meeting';
 
-  _i2.Future<List<_i10.MeetingAgenda>> agendas(int organizationId) =>
-      caller.callServerEndpoint<List<_i10.MeetingAgenda>>(
+  _i2.Future<List<_i11.MeetingAgenda>> agendas(int organizationId) =>
+      caller.callServerEndpoint<List<_i11.MeetingAgenda>>(
         'meeting',
         'agendas',
         {'organizationId': organizationId},
       );
 
-  _i2.Future<List<_i11.MeetingItem>> items(
+  _i2.Future<List<_i12.MeetingItem>> items(
     int organizationId,
     int agendaId,
-  ) => caller.callServerEndpoint<List<_i11.MeetingItem>>(
+  ) => caller.callServerEndpoint<List<_i12.MeetingItem>>(
     'meeting',
     'items',
     {
@@ -249,15 +292,15 @@ class EndpointMeeting extends _i1.EndpointRef {
     },
   );
 
-  _i2.Future<_i10.MeetingAgenda> saveAgenda(_i10.MeetingAgenda draft) =>
-      caller.callServerEndpoint<_i10.MeetingAgenda>(
+  _i2.Future<_i11.MeetingAgenda> saveAgenda(_i11.MeetingAgenda draft) =>
+      caller.callServerEndpoint<_i11.MeetingAgenda>(
         'meeting',
         'saveAgenda',
         {'draft': draft},
       );
 
-  _i2.Future<_i11.MeetingItem> saveItem(_i11.MeetingItem draft) =>
-      caller.callServerEndpoint<_i11.MeetingItem>(
+  _i2.Future<_i12.MeetingItem> saveItem(_i12.MeetingItem draft) =>
+      caller.callServerEndpoint<_i12.MeetingItem>(
         'meeting',
         'saveItem',
         {'draft': draft},
@@ -265,10 +308,10 @@ class EndpointMeeting extends _i1.EndpointRef {
 
   /// Convert a meeting item into a Task (the execution bridge). Links the new
   /// task back onto the item so the agenda shows what it became.
-  _i2.Future<_i12.Task> convertItemToTask(
+  _i2.Future<_i13.Task> convertItemToTask(
     int organizationId,
     int itemId,
-  ) => caller.callServerEndpoint<_i12.Task>(
+  ) => caller.callServerEndpoint<_i13.Task>(
     'meeting',
     'convertItemToTask',
     {
@@ -287,27 +330,27 @@ class EndpointOnboarding extends _i1.EndpointRef {
   @override
   String get name => 'onboarding';
 
-  _i2.Future<List<_i13.OnboardingTemplate>> templates(int organizationId) =>
-      caller.callServerEndpoint<List<_i13.OnboardingTemplate>>(
+  _i2.Future<List<_i14.OnboardingTemplate>> templates(int organizationId) =>
+      caller.callServerEndpoint<List<_i14.OnboardingTemplate>>(
         'onboarding',
         'templates',
         {'organizationId': organizationId},
       );
 
-  _i2.Future<_i13.OnboardingTemplate> saveTemplate(
-    _i13.OnboardingTemplate draft,
-  ) => caller.callServerEndpoint<_i13.OnboardingTemplate>(
+  _i2.Future<_i14.OnboardingTemplate> saveTemplate(
+    _i14.OnboardingTemplate draft,
+  ) => caller.callServerEndpoint<_i14.OnboardingTemplate>(
     'onboarding',
     'saveTemplate',
     {'draft': draft},
   );
 
-  _i2.Future<_i14.OnboardingAssignment> assign(
+  _i2.Future<_i15.OnboardingAssignment> assign(
     int organizationId,
     int templateId,
     int assigneeUserInfoId,
     DateTime? dueAt,
-  ) => caller.callServerEndpoint<_i14.OnboardingAssignment>(
+  ) => caller.callServerEndpoint<_i15.OnboardingAssignment>(
     'onboarding',
     'assign',
     {
@@ -319,11 +362,11 @@ class EndpointOnboarding extends _i1.EndpointRef {
   );
 
   /// Advance state. The assignee may update their own; managers may update any.
-  _i2.Future<_i14.OnboardingAssignment> setState(
+  _i2.Future<_i15.OnboardingAssignment> setState(
     int assignmentId,
-    _i15.OnboardingState state,
+    _i16.OnboardingState state,
     String? progressJson,
-  ) => caller.callServerEndpoint<_i14.OnboardingAssignment>(
+  ) => caller.callServerEndpoint<_i15.OnboardingAssignment>(
     'onboarding',
     'setState',
     {
@@ -346,16 +389,16 @@ class EndpointOrg extends _i1.EndpointRef {
   String get name => 'org';
 
   /// Organizations the caller belongs to (for the org switcher).
-  _i2.Future<List<_i16.Organization>> listMine() =>
-      caller.callServerEndpoint<List<_i16.Organization>>(
+  _i2.Future<List<_i17.Organization>> listMine() =>
+      caller.callServerEndpoint<List<_i17.Organization>>(
         'org',
         'listMine',
         {},
       );
 
   /// Members of an org (manager+).
-  _i2.Future<List<_i17.Membership>> members(int organizationId) =>
-      caller.callServerEndpoint<List<_i17.Membership>>(
+  _i2.Future<List<_i18.Membership>> members(int organizationId) =>
+      caller.callServerEndpoint<List<_i18.Membership>>(
         'org',
         'members',
         {'organizationId': organizationId},
@@ -363,11 +406,11 @@ class EndpointOrg extends _i1.EndpointRef {
 
   /// Add or update a member's role (workspace_admin+). Cannot set/modify `owner`
   /// unless the caller is owner or superuser.
-  _i2.Future<_i17.Membership> setRole(
+  _i2.Future<_i18.Membership> setRole(
     int organizationId,
     int targetUserInfoId,
-    _i18.MembershipRole role,
-  ) => caller.callServerEndpoint<_i17.Membership>(
+    _i19.MembershipRole role,
+  ) => caller.callServerEndpoint<_i18.Membership>(
     'org',
     'setRole',
     {
@@ -400,10 +443,10 @@ class EndpointPartnership extends _i1.EndpointRef {
   @override
   String get name => 'partnership';
 
-  _i2.Future<List<_i19.Partnership>> list(
+  _i2.Future<List<_i20.Partnership>> list(
     int organizationId, {
-    _i20.PartnershipStage? stage,
-  }) => caller.callServerEndpoint<List<_i19.Partnership>>(
+    _i21.PartnershipStage? stage,
+  }) => caller.callServerEndpoint<List<_i20.Partnership>>(
     'partnership',
     'list',
     {
@@ -412,8 +455,8 @@ class EndpointPartnership extends _i1.EndpointRef {
     },
   );
 
-  _i2.Future<_i19.Partnership> save(_i19.Partnership draft) =>
-      caller.callServerEndpoint<_i19.Partnership>(
+  _i2.Future<_i20.Partnership> save(_i20.Partnership draft) =>
+      caller.callServerEndpoint<_i20.Partnership>(
         'partnership',
         'save',
         {'draft': draft},
@@ -426,6 +469,36 @@ class EndpointPartnership extends _i1.EndpointRef {
   );
 }
 
+/// Per-user preferences (fl-8-view-field-endpoints): theme, locale, and UI
+/// layout (`uiJson` — sidebar collapse etc.). Strictly self-service: the
+/// authenticated user reads/writes only their own row (userInfoId pinned), so
+/// no org-role gate applies. Not audited — user-personal settings, not org
+/// data (Audit is org-scoped by design).
+/// {@category Endpoint}
+class EndpointPreference extends _i1.EndpointRef {
+  EndpointPreference(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'preference';
+
+  /// The caller's preferences; creates defaults on first access.
+  _i2.Future<_i22.UserPreference> getMine() =>
+      caller.callServerEndpoint<_i22.UserPreference>(
+        'preference',
+        'getMine',
+        {},
+      );
+
+  /// Upsert the caller's preferences. userInfoId is pinned from the session —
+  /// a client can never write another user's row.
+  _i2.Future<_i22.UserPreference> saveMine(_i22.UserPreference draft) =>
+      caller.callServerEndpoint<_i22.UserPreference>(
+        'preference',
+        'saveMine',
+        {'draft': draft},
+      );
+}
+
 /// Project CRUD. Same security contract as [TaskEndpoint].
 /// Replaces the legacy /projects, /projects/new, /projects/update routes.
 /// {@category Endpoint}
@@ -435,15 +508,15 @@ class EndpointProject extends _i1.EndpointRef {
   @override
   String get name => 'project';
 
-  _i2.Future<List<_i9.Project>> list(int organizationId) =>
-      caller.callServerEndpoint<List<_i9.Project>>(
+  _i2.Future<List<_i10.Project>> list(int organizationId) =>
+      caller.callServerEndpoint<List<_i10.Project>>(
         'project',
         'list',
         {'organizationId': organizationId},
       );
 
-  _i2.Future<_i9.Project> create(_i9.Project draft) =>
-      caller.callServerEndpoint<_i9.Project>(
+  _i2.Future<_i10.Project> create(_i10.Project draft) =>
+      caller.callServerEndpoint<_i10.Project>(
         'project',
         'create',
         {'draft': draft},
@@ -451,8 +524,8 @@ class EndpointProject extends _i1.EndpointRef {
 
   /// Update a project. Optimistic-concurrency aware via [Project.version]:
   /// throws if the client's base version is stale (mirrors TaskEndpoint.update).
-  _i2.Future<_i9.Project> update(_i9.Project incoming) =>
-      caller.callServerEndpoint<_i9.Project>(
+  _i2.Future<_i10.Project> update(_i10.Project incoming) =>
+      caller.callServerEndpoint<_i10.Project>(
         'project',
         'update',
         {'incoming': incoming},
@@ -503,11 +576,11 @@ class EndpointSync extends _i1.EndpointRef {
 
   /// Tasks changed since the device's cursor, ordered by (updatedAt, id).
   /// Includes soft-deleted rows as tombstones so the client can remove them.
-  _i2.Future<_i21.TaskDeltaPage> pullTasks(
+  _i2.Future<_i23.TaskDeltaPage> pullTasks(
     int organizationId,
     String? cursor, {
     int? limit,
-  }) => caller.callServerEndpoint<_i21.TaskDeltaPage>(
+  }) => caller.callServerEndpoint<_i23.TaskDeltaPage>(
     'sync',
     'pullTasks',
     {
@@ -546,11 +619,11 @@ class EndpointTask extends _i1.EndpointRef {
   String get name => 'task';
 
   /// List non-deleted tasks for an org, optionally filtered by project/status.
-  _i2.Future<List<_i12.Task>> list(
+  _i2.Future<List<_i13.Task>> list(
     int organizationId, {
     int? projectId,
-    _i22.TaskStatus? status,
-  }) => caller.callServerEndpoint<List<_i12.Task>>(
+    _i24.TaskStatus? status,
+  }) => caller.callServerEndpoint<List<_i13.Task>>(
     'task',
     'list',
     {
@@ -562,8 +635,8 @@ class EndpointTask extends _i1.EndpointRef {
 
   /// Create a task. Requires `staff`+ (students create only via their own
   /// scoped flow — modeled in fl-1; viewer/student blocked here).
-  _i2.Future<_i12.Task> create(_i12.Task draft) =>
-      caller.callServerEndpoint<_i12.Task>(
+  _i2.Future<_i13.Task> create(_i13.Task draft) =>
+      caller.callServerEndpoint<_i13.Task>(
         'task',
         'create',
         {'draft': draft},
@@ -571,8 +644,8 @@ class EndpointTask extends _i1.EndpointRef {
 
   /// Update a task. Optimistic-concurrency aware via [Task.version]:
   /// throws if the client's base version is stale (offline reconcile, R5).
-  _i2.Future<_i12.Task> update(_i12.Task incoming) =>
-      caller.callServerEndpoint<_i12.Task>(
+  _i2.Future<_i13.Task> update(_i13.Task incoming) =>
+      caller.callServerEndpoint<_i13.Task>(
         'task',
         'update',
         {'incoming': incoming},
@@ -580,11 +653,11 @@ class EndpointTask extends _i1.EndpointRef {
 
   /// Kanban move: change status and reorder. Used by both drag-and-drop and
   /// the keyboard move pattern (fl-1-projects-tasks, WCAG 2.1.1 / 2.5.1).
-  _i2.Future<_i12.Task> move(
+  _i2.Future<_i13.Task> move(
     int taskId,
-    _i22.TaskStatus toStatus,
+    _i24.TaskStatus toStatus,
     double toSortOrder,
-  ) => caller.callServerEndpoint<_i12.Task>(
+  ) => caller.callServerEndpoint<_i13.Task>(
     'task',
     'move',
     {
@@ -612,15 +685,15 @@ class EndpointTrash extends _i1.EndpointRef {
   @override
   String get name => 'trash';
 
-  _i2.Future<List<_i12.Task>> deletedTasks(int organizationId) =>
-      caller.callServerEndpoint<List<_i12.Task>>(
+  _i2.Future<List<_i13.Task>> deletedTasks(int organizationId) =>
+      caller.callServerEndpoint<List<_i13.Task>>(
         'trash',
         'deletedTasks',
         {'organizationId': organizationId},
       );
 
-  _i2.Future<_i12.Task> restoreTask(int id) =>
-      caller.callServerEndpoint<_i12.Task>(
+  _i2.Future<_i13.Task> restoreTask(int id) =>
+      caller.callServerEndpoint<_i13.Task>(
         'trash',
         'restoreTask',
         {'id': id},
@@ -635,12 +708,54 @@ class EndpointTrash extends _i1.EndpointRef {
   );
 }
 
+/// Saved views (fl-8-view-field-endpoints). A view is personal by default;
+/// `isShared` publishes it org-wide (read-only for non-owners). Any member
+/// manages their OWN views; editing someone else's requires workspaceAdmin+.
+/// Same contract as TaskEndpoint: requireRole → org-scope → version → audit →
+/// soft-delete.
+/// {@category Endpoint}
+class EndpointView extends _i1.EndpointRef {
+  EndpointView(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'view';
+
+  /// The caller's views + shared org views, optionally per entity type.
+  _i2.Future<List<_i25.CustomView>> list(
+    int organizationId, {
+    String? entityType,
+  }) => caller.callServerEndpoint<List<_i25.CustomView>>(
+    'view',
+    'list',
+    {
+      'organizationId': organizationId,
+      'entityType': entityType,
+    },
+  );
+
+  /// Create or update a view. Owner (or workspaceAdmin+) only for updates;
+  /// optimistic version check; tenancy + ownership pinned server-side.
+  _i2.Future<_i25.CustomView> save(_i25.CustomView draft) =>
+      caller.callServerEndpoint<_i25.CustomView>(
+        'view',
+        'save',
+        {'draft': draft},
+      );
+
+  /// Soft-delete a view (owner or workspaceAdmin+).
+  _i2.Future<void> softDelete(int id) => caller.callServerEndpoint<void>(
+    'view',
+    'softDelete',
+    {'id': id},
+  );
+}
+
 class Modules {
   Modules(Client client) {
-    auth = _i23.Caller(client);
+    auth = _i26.Caller(client);
   }
 
-  late final _i23.Caller auth;
+  late final _i26.Caller auth;
 }
 
 class Client extends _i1.ServerpodClientShared {
@@ -663,7 +778,7 @@ class Client extends _i1.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i24.Protocol(),
+         _i27.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,
@@ -675,17 +790,20 @@ class Client extends _i1.ServerpodClientShared {
     collab = EndpointCollab(this);
     consumable = EndpointConsumable(this);
     equipment = EndpointEquipment(this);
+    fieldConfig = EndpointFieldConfig(this);
     health = EndpointHealth(this);
     intake = EndpointIntake(this);
     meeting = EndpointMeeting(this);
     onboarding = EndpointOnboarding(this);
     org = EndpointOrg(this);
     partnership = EndpointPartnership(this);
+    preference = EndpointPreference(this);
     project = EndpointProject(this);
     realtime = EndpointRealtime(this);
     sync = EndpointSync(this);
     task = EndpointTask(this);
     trash = EndpointTrash(this);
+    view = EndpointView(this);
     modules = Modules(this);
   }
 
@@ -694,6 +812,8 @@ class Client extends _i1.ServerpodClientShared {
   late final EndpointConsumable consumable;
 
   late final EndpointEquipment equipment;
+
+  late final EndpointFieldConfig fieldConfig;
 
   late final EndpointHealth health;
 
@@ -707,6 +827,8 @@ class Client extends _i1.ServerpodClientShared {
 
   late final EndpointPartnership partnership;
 
+  late final EndpointPreference preference;
+
   late final EndpointProject project;
 
   late final EndpointRealtime realtime;
@@ -717,6 +839,8 @@ class Client extends _i1.ServerpodClientShared {
 
   late final EndpointTrash trash;
 
+  late final EndpointView view;
+
   late final Modules modules;
 
   @override
@@ -724,17 +848,20 @@ class Client extends _i1.ServerpodClientShared {
     'collab': collab,
     'consumable': consumable,
     'equipment': equipment,
+    'fieldConfig': fieldConfig,
     'health': health,
     'intake': intake,
     'meeting': meeting,
     'onboarding': onboarding,
     'org': org,
     'partnership': partnership,
+    'preference': preference,
     'project': project,
     'realtime': realtime,
     'sync': sync,
     'task': task,
     'trash': trash,
+    'view': view,
   };
 
   @override

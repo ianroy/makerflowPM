@@ -6,6 +6,7 @@ import '../data/models.dart';
 import '../data/feature_models.dart';
 import '../data/task_repository.dart';
 import '../data/serverpod_task_repository.dart';
+import '../data/preference_repository.dart';
 import '../data/trash_repository.dart';
 import '../data/serverpod_trash_repository.dart';
 import '../data/api_client.dart';
@@ -26,9 +27,30 @@ import '../features/_spike/a11y_spike_screen.dart';
 /// Light is the product default (monday-style redesign, UI-0).
 final themeModeProvider = StateProvider<ThemeMode>((_) => ThemeMode.light);
 
-/// Sidebar collapse (UI-1). Session-scoped; server-side persistence joins the
-/// UserPreference work in fl-3.
+/// Sidebar collapse (UI-1); persisted via PreferenceEndpoint (fl-8).
 final sidebarCollapsedProvider = StateProvider<bool>((_) => false);
+
+// --- Per-user preference persistence (fl-8-view-field-endpoints) ---
+final preferenceRepositoryProvider = Provider<PreferenceRepository>((ref) =>
+    useLiveBackend
+        ? ServerpodPreferenceRepository(ref.watch(serverpodClientProvider))
+        : InMemoryPreferenceRepository());
+
+/// Saved prefs, loaded once per sign-in (invalidated on sign-out). The shell
+/// ref.listens to this and applies theme/sidebar when it resolves — listening
+/// (not modifying) is the build-safe way to hydrate.
+final prefsLoadProvider = FutureProvider<PrefsVm>(
+    (ref) => ref.watch(preferenceRepositoryProvider).load());
+
+/// Persist the current theme + sidebar state (fire-and-forget).
+void persistPrefs(WidgetRef ref) {
+  final prefs = PrefsVm(
+    theme: ref.read(themeModeProvider) == ThemeMode.dark ? 'dark' : 'light',
+    sidebarCollapsed: ref.read(sidebarCollapsedProvider),
+  );
+  // ignore: discarded_futures
+  ref.read(preferenceRepositoryProvider).save(prefs).catchError((_) {});
+}
 
 /// The active organization id (drives every org-scoped read).
 final activeOrgIdProvider = StateProvider<int>((_) => 1);

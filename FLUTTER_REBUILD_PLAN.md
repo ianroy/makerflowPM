@@ -1397,7 +1397,7 @@ Automated, signed releases for all six targets + the server image. TestFlight/Pl
 
 #### fl-8-view-field-endpoints — Serve CustomView / FieldConfig / UserPreference
 
-- **Status:** [ ] ready
+- **Status:** [x] done (2026-07-14)
 - **Agent Persona:** serverpod-backend
 - **Priority:** P0 (phase gate)
 - **Complexity:** M
@@ -1406,11 +1406,12 @@ Automated, signed releases for all six targets + the server image. TestFlight/Pl
 - **Files to modify:** `makerflow_server/lib/src/endpoints/{view,field_config,preference}_endpoint.dart` (new), `models/custom_view.spy.yaml` (+`version`/soft-delete to match conventions), `models/user_preference.spy.yaml`, integration tests, regenerated client.
 
 **Spec (human-editable):** CRUD endpoints following the task_endpoint recipe (requireRole → org-scope → audit → soft-delete): `ViewEndpoint` (list/save/delete/share for `CustomView`; owner-or-shared visibility), `FieldConfigEndpoint` (workspaceAdmin+ manages field definitions; validate `fieldType`; guard key uniqueness), `PreferenceEndpoint` (get/upsert own `UserPreference`; theme/sidebar/nav persistence — closes the fl-3 stub comments in `providers.dart:25-31`).
-- [ ] Three endpoints + integration tests (role gates incl. shared-view read, admin-only field mutation)
-- [ ] `CustomView` gains `version` + soft-delete fields (migration)
-- [ ] Theme + sidebar-collapse providers persist via PreferenceEndpoint (survive restart)
+- [x] Three endpoints + integration tests (role gates incl. shared-view read, admin-only field mutation)
+- [x] `CustomView` gains `version` + soft-delete fields (migration `20260714…`; `UserPreference` also gained `uiJson` for layout prefs)
+- [x] Theme + sidebar-collapse providers persist via PreferenceEndpoint (survive restart)
 
-**Unblocks:** everything below. **Agent Decisions:** _(empty)_
+**Unblocks:** everything below. **Agent Decisions:**
+- `2026-07-14` — Built as specced. `ViewEndpoint` (owner-or-shared list; owner/workspaceAdmin edit gate; version conflict; ownership + tenancy pinned server-side; soft-delete), `FieldConfigEndpoint` (workspaceAdmin+ mutations; server-side `allowedFieldTypes` set so clients can't invent types; duplicate-key → typed Conflict; `key` immutable after create since values will key on it; hard-delete acceptable until value storage exists), `PreferenceEndpoint` (strictly self-service — userInfoId pinned from the session, verified by a spoof-attempt test; NOT audited because Audit is org-scoped and prefs are personal). Client: `PreferenceRepository` (in-memory + live), `prefsLoadProvider` + `ref.listen` hydration in the shell, persist on theme flip + sidebar collapse, invalidate on sign-out. **Gotcha recorded:** first attempt mutated providers during build (Riverpod forbids it — 26 test failures); the listen-based hydration is the build-safe pattern. Suites: server **29/29** (+5 customization cases incl. shared-view visibility + stale-version conflict + admin gates), app **28/28** (+2 prefs round-trip tests), analyze clean, live demo rebuilt + demo DB migrated.
 
 ---
 

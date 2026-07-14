@@ -11,6 +11,10 @@ equipment:
   - list:
   - save:
   - softDelete:
+fieldConfig:
+  - list:
+  - save:
+  - delete:
 health:
   - ready:
 intake:
@@ -37,6 +41,9 @@ partnership:
   - list:
   - save:
   - softDelete:
+preference:
+  - getMine:
+  - saveMine:
 project:
   - list:
   - create:
@@ -57,3 +64,7 @@ trash:
   - deletedTasks:
   - restoreTask:
   - purgeTask:
+view:
+  - list:
+  - save:
+  - softDelete:

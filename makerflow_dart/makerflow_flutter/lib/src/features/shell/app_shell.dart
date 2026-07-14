@@ -35,6 +35,16 @@ class AppShell extends ConsumerWidget {
     final c = MakerflowTheme.of(context).colors;
     final wide = MediaQuery.sizeOf(context).width >= _kWideBreakpoint;
     final collapsed = ref.watch(sidebarCollapsedProvider);
+
+    // Hydrate saved prefs (theme, sidebar) when they load (fl-8). ref.listen
+    // fires post-build, so this never mutates providers during build.
+    ref.listen(prefsLoadProvider, (prev, next) {
+      final p = next.valueOrNull;
+      if (p == null) return;
+      ref.read(themeModeProvider.notifier).state =
+          p.theme == 'dark' ? ThemeMode.dark : ThemeMode.light;
+      ref.read(sidebarCollapsedProvider.notifier).state = p.sidebarCollapsed;
+    });
     final showSidebar = wide && !collapsed;
 
     return Scaffold(
@@ -180,7 +190,9 @@ class _TopBar extends ConsumerWidget {
               if (v == 'theme') {
                 ref.read(themeModeProvider.notifier).state =
                     mode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+                persistPrefs(ref); // fl-8: survives restart
               } else if (v == 'signout') {
+                ref.invalidate(prefsLoadProvider); // re-hydrate on next sign-in
                 await ref.read(sessionProvider.notifier).signOut();
                 if (context.mounted) context.go('/login');
               }
@@ -219,8 +231,10 @@ class _CollapseHandle extends ConsumerWidget {
             shape: const CircleBorder(),
           ),
           icon: Icon(collapsed ? Icons.chevron_right : Icons.chevron_left, color: c.muted),
-          onPressed: () =>
-              ref.read(sidebarCollapsedProvider.notifier).state = !collapsed,
+          onPressed: () {
+            ref.read(sidebarCollapsedProvider.notifier).state = !collapsed;
+            persistPrefs(ref); // fl-8: survives restart
+          },
         ),
       ),
     );

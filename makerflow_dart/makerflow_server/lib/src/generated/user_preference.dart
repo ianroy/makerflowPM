@@ -24,6 +24,7 @@ abstract class UserPreference
     this.timezone,
     this.notificationsJson,
     this.sessionTimeoutSeconds,
+    this.uiJson,
     required this.updatedAt,
   }) : theme = theme ?? 'dark',
        locale = locale ?? 'en';
@@ -36,6 +37,7 @@ abstract class UserPreference
     String? timezone,
     String? notificationsJson,
     int? sessionTimeoutSeconds,
+    String? uiJson,
     required DateTime updatedAt,
   }) = _UserPreferenceImpl;
 
@@ -48,6 +50,7 @@ abstract class UserPreference
       timezone: jsonSerialization['timezone'] as String?,
       notificationsJson: jsonSerialization['notificationsJson'] as String?,
       sessionTimeoutSeconds: jsonSerialization['sessionTimeoutSeconds'] as int?,
+      uiJson: jsonSerialization['uiJson'] as String?,
       updatedAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['updatedAt'],
       ),
@@ -73,6 +76,8 @@ abstract class UserPreference
 
   int? sessionTimeoutSeconds;
 
+  String? uiJson;
+
   DateTime updatedAt;
 
   @override
@@ -89,6 +94,7 @@ abstract class UserPreference
     String? timezone,
     String? notificationsJson,
     int? sessionTimeoutSeconds,
+    String? uiJson,
     DateTime? updatedAt,
   });
   @override
@@ -103,6 +109,7 @@ abstract class UserPreference
       if (notificationsJson != null) 'notificationsJson': notificationsJson,
       if (sessionTimeoutSeconds != null)
         'sessionTimeoutSeconds': sessionTimeoutSeconds,
+      if (uiJson != null) 'uiJson': uiJson,
       'updatedAt': updatedAt.toJson(),
     };
   }
@@ -119,6 +126,7 @@ abstract class UserPreference
       if (notificationsJson != null) 'notificationsJson': notificationsJson,
       if (sessionTimeoutSeconds != null)
         'sessionTimeoutSeconds': sessionTimeoutSeconds,
+      if (uiJson != null) 'uiJson': uiJson,
       'updatedAt': updatedAt.toJson(),
     };
   }
@@ -164,6 +172,7 @@ class _UserPreferenceImpl extends UserPreference {
     String? timezone,
     String? notificationsJson,
     int? sessionTimeoutSeconds,
+    String? uiJson,
     required DateTime updatedAt,
   }) : super._(
          id: id,
@@ -173,6 +182,7 @@ class _UserPreferenceImpl extends UserPreference {
          timezone: timezone,
          notificationsJson: notificationsJson,
          sessionTimeoutSeconds: sessionTimeoutSeconds,
+         uiJson: uiJson,
          updatedAt: updatedAt,
        );
 
@@ -188,6 +198,7 @@ class _UserPreferenceImpl extends UserPreference {
     Object? timezone = _Undefined,
     Object? notificationsJson = _Undefined,
     Object? sessionTimeoutSeconds = _Undefined,
+    Object? uiJson = _Undefined,
     DateTime? updatedAt,
   }) {
     return UserPreference(
@@ -202,6 +213,7 @@ class _UserPreferenceImpl extends UserPreference {
       sessionTimeoutSeconds: sessionTimeoutSeconds is int?
           ? sessionTimeoutSeconds
           : this.sessionTimeoutSeconds,
+      uiJson: uiJson is String? ? uiJson : this.uiJson,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
@@ -242,6 +254,11 @@ class UserPreferenceUpdateTable extends _i1.UpdateTable<UserPreferenceTable> {
         value,
       );
 
+  _i1.ColumnValue<String, String> uiJson(String? value) => _i1.ColumnValue(
+    table.uiJson,
+    value,
+  );
+
   _i1.ColumnValue<DateTime, DateTime> updatedAt(DateTime value) =>
       _i1.ColumnValue(
         table.updatedAt,
@@ -279,6 +296,10 @@ class UserPreferenceTable extends _i1.Table<int?> {
       'sessionTimeoutSeconds',
       this,
     );
+    uiJson = _i1.ColumnString(
+      'uiJson',
+      this,
+    );
     updatedAt = _i1.ColumnDateTime(
       'updatedAt',
       this,
@@ -299,6 +320,8 @@ class UserPreferenceTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt sessionTimeoutSeconds;
 
+  late final _i1.ColumnString uiJson;
+
   late final _i1.ColumnDateTime updatedAt;
 
   @override
@@ -310,6 +333,7 @@ class UserPreferenceTable extends _i1.Table<int?> {
     timezone,
     notificationsJson,
     sessionTimeoutSeconds,
+    uiJson,
     updatedAt,
   ];
 }

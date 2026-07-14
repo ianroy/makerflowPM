@@ -68,16 +68,18 @@ import 'user_profile.dart' as _i55;
 import 'package:makerflow_server/src/generated/item_comment.dart' as _i56;
 import 'package:makerflow_server/src/generated/consumable.dart' as _i57;
 import 'package:makerflow_server/src/generated/equipment_asset.dart' as _i58;
-import 'package:makerflow_server/src/generated/intake_request.dart' as _i59;
-import 'package:makerflow_server/src/generated/meeting_agenda.dart' as _i60;
-import 'package:makerflow_server/src/generated/meeting_item.dart' as _i61;
+import 'package:makerflow_server/src/generated/field_config.dart' as _i59;
+import 'package:makerflow_server/src/generated/intake_request.dart' as _i60;
+import 'package:makerflow_server/src/generated/meeting_agenda.dart' as _i61;
+import 'package:makerflow_server/src/generated/meeting_item.dart' as _i62;
 import 'package:makerflow_server/src/generated/onboarding_template.dart'
-    as _i62;
-import 'package:makerflow_server/src/generated/organization.dart' as _i63;
-import 'package:makerflow_server/src/generated/membership.dart' as _i64;
-import 'package:makerflow_server/src/generated/partnership.dart' as _i65;
-import 'package:makerflow_server/src/generated/project.dart' as _i66;
-import 'package:makerflow_server/src/generated/task.dart' as _i67;
+    as _i63;
+import 'package:makerflow_server/src/generated/organization.dart' as _i64;
+import 'package:makerflow_server/src/generated/membership.dart' as _i65;
+import 'package:makerflow_server/src/generated/partnership.dart' as _i66;
+import 'package:makerflow_server/src/generated/project.dart' as _i67;
+import 'package:makerflow_server/src/generated/task.dart' as _i68;
+import 'package:makerflow_server/src/generated/custom_view.dart' as _i69;
 export 'attachment.dart';
 export 'audit_log.dart';
 export 'calendar_event.dart';
@@ -963,6 +965,13 @@ class Protocol extends _i1.SerializationManagerServer {
           columnDefault: 'false',
         ),
         _i2.ColumnDefinition(
+          name: 'version',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '1',
+        ),
+        _i2.ColumnDefinition(
           name: 'createdAt',
           columnType: _i2.ColumnType.timestampWithoutTimeZone,
           isNullable: false,
@@ -973,6 +982,18 @@ class Protocol extends _i1.SerializationManagerServer {
           columnType: _i2.ColumnType.timestampWithoutTimeZone,
           isNullable: false,
           dartType: 'DateTime',
+        ),
+        _i2.ColumnDefinition(
+          name: 'deletedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'deletedByUserInfoId',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
         ),
       ],
       foreignKeys: [
@@ -4172,6 +4193,12 @@ class Protocol extends _i1.SerializationManagerServer {
           dartType: 'int?',
         ),
         _i2.ColumnDefinition(
+          name: 'uiJson',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
           name: 'updatedAt',
           columnType: _i2.ColumnType.timestampWithoutTimeZone,
           isNullable: false,
@@ -4672,52 +4699,62 @@ class Protocol extends _i1.SerializationManagerServer {
               .toList()
           as T;
     }
-    if (t == List<_i59.IntakeRequest>) {
+    if (t == List<_i59.FieldConfig>) {
       return (data as List)
-              .map((e) => deserialize<_i59.IntakeRequest>(e))
+              .map((e) => deserialize<_i59.FieldConfig>(e))
               .toList()
           as T;
     }
-    if (t == List<_i60.MeetingAgenda>) {
+    if (t == List<_i60.IntakeRequest>) {
       return (data as List)
-              .map((e) => deserialize<_i60.MeetingAgenda>(e))
+              .map((e) => deserialize<_i60.IntakeRequest>(e))
               .toList()
           as T;
     }
-    if (t == List<_i61.MeetingItem>) {
+    if (t == List<_i61.MeetingAgenda>) {
       return (data as List)
-              .map((e) => deserialize<_i61.MeetingItem>(e))
+              .map((e) => deserialize<_i61.MeetingAgenda>(e))
               .toList()
           as T;
     }
-    if (t == List<_i62.OnboardingTemplate>) {
+    if (t == List<_i62.MeetingItem>) {
       return (data as List)
-              .map((e) => deserialize<_i62.OnboardingTemplate>(e))
+              .map((e) => deserialize<_i62.MeetingItem>(e))
               .toList()
           as T;
     }
-    if (t == List<_i63.Organization>) {
+    if (t == List<_i63.OnboardingTemplate>) {
       return (data as List)
-              .map((e) => deserialize<_i63.Organization>(e))
+              .map((e) => deserialize<_i63.OnboardingTemplate>(e))
               .toList()
           as T;
     }
-    if (t == List<_i64.Membership>) {
-      return (data as List).map((e) => deserialize<_i64.Membership>(e)).toList()
-          as T;
-    }
-    if (t == List<_i65.Partnership>) {
+    if (t == List<_i64.Organization>) {
       return (data as List)
-              .map((e) => deserialize<_i65.Partnership>(e))
+              .map((e) => deserialize<_i64.Organization>(e))
               .toList()
           as T;
     }
-    if (t == List<_i66.Project>) {
-      return (data as List).map((e) => deserialize<_i66.Project>(e)).toList()
+    if (t == List<_i65.Membership>) {
+      return (data as List).map((e) => deserialize<_i65.Membership>(e)).toList()
           as T;
     }
-    if (t == List<_i67.Task>) {
-      return (data as List).map((e) => deserialize<_i67.Task>(e)).toList() as T;
+    if (t == List<_i66.Partnership>) {
+      return (data as List)
+              .map((e) => deserialize<_i66.Partnership>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i67.Project>) {
+      return (data as List).map((e) => deserialize<_i67.Project>(e)).toList()
+          as T;
+    }
+    if (t == List<_i68.Task>) {
+      return (data as List).map((e) => deserialize<_i68.Task>(e)).toList() as T;
+    }
+    if (t == List<_i69.CustomView>) {
+      return (data as List).map((e) => deserialize<_i69.CustomView>(e)).toList()
+          as T;
     }
     try {
       return _i3.Protocol().deserialize<T>(data, t);

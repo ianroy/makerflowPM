@@ -66,16 +66,18 @@ import 'user_profile.dart' as _i53;
 import 'package:makerflow_client/src/protocol/item_comment.dart' as _i54;
 import 'package:makerflow_client/src/protocol/consumable.dart' as _i55;
 import 'package:makerflow_client/src/protocol/equipment_asset.dart' as _i56;
-import 'package:makerflow_client/src/protocol/intake_request.dart' as _i57;
-import 'package:makerflow_client/src/protocol/meeting_agenda.dart' as _i58;
-import 'package:makerflow_client/src/protocol/meeting_item.dart' as _i59;
-import 'package:makerflow_client/src/protocol/onboarding_template.dart' as _i60;
-import 'package:makerflow_client/src/protocol/organization.dart' as _i61;
-import 'package:makerflow_client/src/protocol/membership.dart' as _i62;
-import 'package:makerflow_client/src/protocol/partnership.dart' as _i63;
-import 'package:makerflow_client/src/protocol/project.dart' as _i64;
-import 'package:makerflow_client/src/protocol/task.dart' as _i65;
-import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i66;
+import 'package:makerflow_client/src/protocol/field_config.dart' as _i57;
+import 'package:makerflow_client/src/protocol/intake_request.dart' as _i58;
+import 'package:makerflow_client/src/protocol/meeting_agenda.dart' as _i59;
+import 'package:makerflow_client/src/protocol/meeting_item.dart' as _i60;
+import 'package:makerflow_client/src/protocol/onboarding_template.dart' as _i61;
+import 'package:makerflow_client/src/protocol/organization.dart' as _i62;
+import 'package:makerflow_client/src/protocol/membership.dart' as _i63;
+import 'package:makerflow_client/src/protocol/partnership.dart' as _i64;
+import 'package:makerflow_client/src/protocol/project.dart' as _i65;
+import 'package:makerflow_client/src/protocol/task.dart' as _i66;
+import 'package:makerflow_client/src/protocol/custom_view.dart' as _i67;
+import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i68;
 export 'attachment.dart';
 export 'audit_log.dart';
 export 'calendar_event.dart';
@@ -508,55 +510,65 @@ class Protocol extends _i1.SerializationManager {
               .toList()
           as T;
     }
-    if (t == List<_i57.IntakeRequest>) {
+    if (t == List<_i57.FieldConfig>) {
       return (data as List)
-              .map((e) => deserialize<_i57.IntakeRequest>(e))
+              .map((e) => deserialize<_i57.FieldConfig>(e))
               .toList()
           as T;
     }
-    if (t == List<_i58.MeetingAgenda>) {
+    if (t == List<_i58.IntakeRequest>) {
       return (data as List)
-              .map((e) => deserialize<_i58.MeetingAgenda>(e))
+              .map((e) => deserialize<_i58.IntakeRequest>(e))
               .toList()
           as T;
     }
-    if (t == List<_i59.MeetingItem>) {
+    if (t == List<_i59.MeetingAgenda>) {
       return (data as List)
-              .map((e) => deserialize<_i59.MeetingItem>(e))
+              .map((e) => deserialize<_i59.MeetingAgenda>(e))
               .toList()
           as T;
     }
-    if (t == List<_i60.OnboardingTemplate>) {
+    if (t == List<_i60.MeetingItem>) {
       return (data as List)
-              .map((e) => deserialize<_i60.OnboardingTemplate>(e))
+              .map((e) => deserialize<_i60.MeetingItem>(e))
               .toList()
           as T;
     }
-    if (t == List<_i61.Organization>) {
+    if (t == List<_i61.OnboardingTemplate>) {
       return (data as List)
-              .map((e) => deserialize<_i61.Organization>(e))
+              .map((e) => deserialize<_i61.OnboardingTemplate>(e))
               .toList()
           as T;
     }
-    if (t == List<_i62.Membership>) {
-      return (data as List).map((e) => deserialize<_i62.Membership>(e)).toList()
-          as T;
-    }
-    if (t == List<_i63.Partnership>) {
+    if (t == List<_i62.Organization>) {
       return (data as List)
-              .map((e) => deserialize<_i63.Partnership>(e))
+              .map((e) => deserialize<_i62.Organization>(e))
               .toList()
           as T;
     }
-    if (t == List<_i64.Project>) {
-      return (data as List).map((e) => deserialize<_i64.Project>(e)).toList()
+    if (t == List<_i63.Membership>) {
+      return (data as List).map((e) => deserialize<_i63.Membership>(e)).toList()
           as T;
     }
-    if (t == List<_i65.Task>) {
-      return (data as List).map((e) => deserialize<_i65.Task>(e)).toList() as T;
+    if (t == List<_i64.Partnership>) {
+      return (data as List)
+              .map((e) => deserialize<_i64.Partnership>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i65.Project>) {
+      return (data as List).map((e) => deserialize<_i65.Project>(e)).toList()
+          as T;
+    }
+    if (t == List<_i66.Task>) {
+      return (data as List).map((e) => deserialize<_i66.Task>(e)).toList() as T;
+    }
+    if (t == List<_i67.CustomView>) {
+      return (data as List).map((e) => deserialize<_i67.CustomView>(e)).toList()
+          as T;
     }
     try {
-      return _i66.Protocol().deserialize<T>(data, t);
+      return _i68.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     return super.deserialize<T>(data, t);
   }
@@ -734,7 +746,7 @@ class Protocol extends _i1.SerializationManager {
       case _i53.UserProfile():
         return 'UserProfile';
     }
-    className = _i66.Protocol().getClassNameForObject(data);
+    className = _i68.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth.$className';
     }
@@ -905,7 +917,7 @@ class Protocol extends _i1.SerializationManager {
     }
     if (dataClassName.startsWith('serverpod_auth.')) {
       data['className'] = dataClassName.substring(15);
-      return _i66.Protocol().deserializeByClassName(data);
+      return _i68.Protocol().deserializeByClassName(data);
     }
     return super.deserializeByClassName(data);
   }
@@ -920,7 +932,7 @@ class Protocol extends _i1.SerializationManager {
       return null;
     }
     try {
-      return _i66.Protocol().mapRecordToJson(record);
+      return _i68.Protocol().mapRecordToJson(record);
     } catch (_) {}
     throw Exception('Unsupported record type ${record.runtimeType}');
   }
