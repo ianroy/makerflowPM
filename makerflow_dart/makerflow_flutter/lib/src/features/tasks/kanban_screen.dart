@@ -567,7 +567,7 @@ class _BoardToolbar extends ConsumerWidget {
           // drag-only), so it lives on the always-visible toolbar.
           Builder(builder: (context) {
             final hidden =
-                ref.watch(taskColumnPrefsProvider).where((p) => p.hidden).length;
+                effectiveTaskColumns(ref).where((p) => p.hidden).length;
             return Semantics(
               label: 'Columns'
                   '${hidden > 0 ? ', $hidden hidden' : ''}. Show, hide, or reorder table columns',

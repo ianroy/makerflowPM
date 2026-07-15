@@ -17,6 +17,21 @@ import '../../state/providers.dart';
 /// A11y: group titles are semantic headers; every cell action is a focusable
 /// button; the popover provides non-pointer equivalents for resize-adjacent
 /// operations (hide) and reorder (Up/Down).
+/// The columns to render, in order: the user's LOCAL edits when they've
+/// touched the layout this session, else the saved server layout once it
+/// loads, else registry defaults — always merged over the registry.
+///
+/// This is a pure derivation (`ref.watch` on both sources), NOT a listen-and-
+/// copy: a `ref.listen` hydration misses loads that complete while the table
+/// is unmounted (e.g. swapped for the tasks spinner), because listen only
+/// fires on transitions. Watching rebuilds whenever either source lands.
+List<ColumnPref> effectiveTaskColumns(WidgetRef ref) {
+  final local = ref.watch(taskColumnPrefsProvider);
+  if (local.isNotEmpty) return _MainTableViewState.effectivePrefs(local);
+  final loaded = ref.watch(taskColumnLoadProvider).valueOrNull ?? const [];
+  return _MainTableViewState.effectivePrefs(loaded);
+}
+
 class MainTableView extends ConsumerStatefulWidget {
   const MainTableView({
     super.key,
@@ -124,8 +139,7 @@ class _MainTableViewState extends ConsumerState<MainTableView> {
     return out;
   }
 
-  List<ColumnPref> get _prefs =>
-      effectivePrefs(ref.watch(taskColumnPrefsProvider));
+  List<ColumnPref> get _prefs => effectiveTaskColumns(ref);
 
   void _updatePrefs(List<ColumnPref> next) => setTaskColumnPrefs(ref, next);
 
@@ -229,14 +243,6 @@ class _MainTableViewState extends ConsumerState<MainTableView> {
   @override
   Widget build(BuildContext context) {
     final c = MakerflowTheme.of(context).colors;
-
-    // Hydrate the saved layout once it loads (org-scoped; listen = build-safe).
-    ref.listen(taskColumnLoadProvider, (prev, next) {
-      final loaded = next.valueOrNull;
-      if (loaded != null && loaded.isNotEmpty) {
-        ref.read(taskColumnPrefsProvider.notifier).state = loaded;
-      }
-    });
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(MndSpace.s16, MndSpace.s8, MndSpace.s16, MndSpace.s48),
@@ -415,8 +421,7 @@ Future<void> showColumnsPopover(BuildContext context, WidgetRef ref) {
   return showDialog<void>(
     context: context,
     builder: (ctx) => Consumer(builder: (ctx2, popRef, _) {
-      final prefs = _MainTableViewState.effectivePrefs(
-          popRef.watch(taskColumnPrefsProvider));
+      final prefs = effectiveTaskColumns(popRef);
       void update(List<ColumnPref> next) => setTaskColumnPrefs(popRef, next);
 
       return AlertDialog(

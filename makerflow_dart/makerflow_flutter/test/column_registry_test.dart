@@ -172,4 +172,35 @@ void main() {
     final due = tester.getCenter(find.text('Due date').first);
     expect(pri.dx, lessThan(due.dx));
   });
+
+  testWidgets(
+      'a layout that finished loading BEFORE the table mounts still applies '
+      '(regression: listen-based hydration missed it live)', (tester) async {
+    final repo = InMemoryViewRepository();
+    await repo.saveTaskColumns(1, const [
+      ColumnPref(key: 'status', width: 102),
+      ColumnPref(key: 'due', width: 104),
+      ColumnPref(key: 'priority', width: 92),
+    ]);
+    final container = ProviderContainer(
+        overrides: [viewRepositoryProvider.overrideWithValue(repo)]);
+    addTearDown(container.dispose);
+    // The load resolves while NO table is on screen (live: the table is
+    // swapped out for the tasks spinner when tasksProvider refreshes).
+    await container.read(taskColumnLoadProvider.future);
+
+    tester.view.physicalSize = const Size(1000, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+            theme: MakerflowThemeBuilder.light(), home: const KanbanScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.getSize(find.byType(StatusLabel).first).width, 102);
+  });
 }

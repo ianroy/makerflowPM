@@ -50,10 +50,18 @@ final viewRepositoryProvider = Provider<ViewRepository>((ref) => useLiveBackend
     ? ServerpodViewRepository(ref.watch(serverpodClientProvider))
     : InMemoryViewRepository());
 
-/// Current column prefs (order/width/hidden). Empty = registry defaults.
-final taskColumnPrefsProvider = StateProvider<List<ColumnPref>>((_) => const []);
+/// LOCAL column edits this session (order/width/hidden). Empty = defer to the
+/// saved server layout ([taskColumnLoadProvider]), then registry defaults —
+/// see `effectiveTaskColumns` in main_table_view.dart. Watching the active org
+/// makes an org switch reset local edits to that org's saved layout.
+final taskColumnPrefsProvider = StateProvider<List<ColumnPref>>((ref) {
+  ref.watch(activeOrgIdProvider);
+  return const [];
+});
 
-/// Saved layout for the active org; the table ref.listens and applies it.
+/// Saved layout for the active org, merged in by `effectiveTaskColumns` via a
+/// plain watch (derive-don't-copy — a listen-based hydration misses loads
+/// that complete while the table is unmounted).
 final taskColumnLoadProvider = FutureProvider<List<ColumnPref>>((ref) {
   final orgId = ref.watch(activeOrgIdProvider);
   return ref.watch(viewRepositoryProvider).loadTaskColumns(orgId);
