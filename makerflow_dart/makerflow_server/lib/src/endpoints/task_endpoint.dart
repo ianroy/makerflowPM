@@ -2,6 +2,7 @@ import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
 import '../business/audit.dart';
+import '../business/custom_fields.dart';
 import '../business/rbac.dart';
 
 /// Task CRUD + kanban move. Every method enforces the security contract:
@@ -36,6 +37,8 @@ class TaskEndpoint extends Endpoint {
   Future<Task> create(Session session, Task draft) async {
     final ctx = await RbacGuard.requireRole(
         session, draft.organizationId, MembershipRole.staff);
+    await CustomFields.validate(
+        session, draft.organizationId, 'task', draft.customFieldsJson);
     final now = DateTime.now().toUtc();
     final toInsert = draft.copyWith(
       version: 1,
@@ -70,6 +73,8 @@ class TaskEndpoint extends Endpoint {
       throw MakerflowConflictException(message: 'Task was modified by someone else. Reload and retry.',
       );
     }
+    await CustomFields.validate(
+        session, existing.organizationId, 'task', incoming.customFieldsJson);
 
     final updated = incoming.copyWith(
       organizationId: existing.organizationId, // tenancy cannot be reassigned

@@ -679,8 +679,9 @@ class _FieldConfigEndpoint {
 
   _i3.Future<_i9.FieldConfig> save(
     _i1.TestSessionBuilder sessionBuilder,
-    _i9.FieldConfig draft,
-  ) async {
+    _i9.FieldConfig draft, {
+    required bool coerceValues,
+  }) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
           (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
@@ -692,7 +693,10 @@ class _FieldConfigEndpoint {
           createSessionCallback: (_) => _localUniqueSession,
           endpointPath: 'fieldConfig',
           methodName: 'save',
-          parameters: _i1.testObjectToJson({'draft': draft}),
+          parameters: _i1.testObjectToJson({
+            'draft': draft,
+            'coerceValues': coerceValues,
+          }),
           serializationManager: _serializationManager,
         );
         var _localReturnValue =

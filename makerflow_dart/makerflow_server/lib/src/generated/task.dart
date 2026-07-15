@@ -33,6 +33,7 @@ abstract class Task implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     this.spaceId,
     this.teamId,
     double? sortOrder,
+    this.customFieldsJson,
     int? version,
     required this.createdAt,
     required this.updatedAt,
@@ -58,6 +59,7 @@ abstract class Task implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     int? spaceId,
     int? teamId,
     double? sortOrder,
+    String? customFieldsJson,
     int? version,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -87,6 +89,7 @@ abstract class Task implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       spaceId: jsonSerialization['spaceId'] as int?,
       teamId: jsonSerialization['teamId'] as int?,
       sortOrder: (jsonSerialization['sortOrder'] as num?)?.toDouble(),
+      customFieldsJson: jsonSerialization['customFieldsJson'] as String?,
       version: jsonSerialization['version'] as int?,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
@@ -137,6 +140,8 @@ abstract class Task implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
 
   double sortOrder;
 
+  String? customFieldsJson;
+
   int version;
 
   DateTime createdAt;
@@ -171,6 +176,7 @@ abstract class Task implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     int? spaceId,
     int? teamId,
     double? sortOrder,
+    String? customFieldsJson,
     int? version,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -197,6 +203,7 @@ abstract class Task implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       if (spaceId != null) 'spaceId': spaceId,
       if (teamId != null) 'teamId': teamId,
       'sortOrder': sortOrder,
+      if (customFieldsJson != null) 'customFieldsJson': customFieldsJson,
       'version': version,
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
@@ -227,6 +234,7 @@ abstract class Task implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       if (spaceId != null) 'spaceId': spaceId,
       if (teamId != null) 'teamId': teamId,
       'sortOrder': sortOrder,
+      if (customFieldsJson != null) 'customFieldsJson': customFieldsJson,
       'version': version,
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
@@ -287,6 +295,7 @@ class _TaskImpl extends Task {
     int? spaceId,
     int? teamId,
     double? sortOrder,
+    String? customFieldsJson,
     int? version,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -309,6 +318,7 @@ class _TaskImpl extends Task {
          spaceId: spaceId,
          teamId: teamId,
          sortOrder: sortOrder,
+         customFieldsJson: customFieldsJson,
          version: version,
          createdAt: createdAt,
          updatedAt: updatedAt,
@@ -337,6 +347,7 @@ class _TaskImpl extends Task {
     Object? spaceId = _Undefined,
     Object? teamId = _Undefined,
     double? sortOrder,
+    Object? customFieldsJson = _Undefined,
     int? version,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -366,6 +377,9 @@ class _TaskImpl extends Task {
       spaceId: spaceId is int? ? spaceId : this.spaceId,
       teamId: teamId is int? ? teamId : this.teamId,
       sortOrder: sortOrder ?? this.sortOrder,
+      customFieldsJson: customFieldsJson is String?
+          ? customFieldsJson
+          : this.customFieldsJson,
       version: version ?? this.version,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -457,6 +471,12 @@ class TaskUpdateTable extends _i1.UpdateTable<TaskTable> {
     table.sortOrder,
     value,
   );
+
+  _i1.ColumnValue<String, String> customFieldsJson(String? value) =>
+      _i1.ColumnValue(
+        table.customFieldsJson,
+        value,
+      );
 
   _i1.ColumnValue<int, int> version(int value) => _i1.ColumnValue(
     table.version,
@@ -554,6 +574,10 @@ class TaskTable extends _i1.Table<int?> {
       this,
       hasDefault: true,
     );
+    customFieldsJson = _i1.ColumnString(
+      'customFieldsJson',
+      this,
+    );
     version = _i1.ColumnInt(
       'version',
       this,
@@ -611,6 +635,8 @@ class TaskTable extends _i1.Table<int?> {
 
   late final _i1.ColumnDouble sortOrder;
 
+  late final _i1.ColumnString customFieldsJson;
+
   late final _i1.ColumnInt version;
 
   late final _i1.ColumnDateTime createdAt;
@@ -640,6 +666,7 @@ class TaskTable extends _i1.Table<int?> {
     spaceId,
     teamId,
     sortOrder,
+    customFieldsJson,
     version,
     createdAt,
     updatedAt,

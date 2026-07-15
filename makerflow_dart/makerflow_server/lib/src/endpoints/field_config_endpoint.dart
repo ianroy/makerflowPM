@@ -2,6 +2,7 @@ import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
 import '../business/audit.dart';
+import '../business/custom_fields.dart';
 import '../business/rbac.dart';
 
 /// Custom-field DEFINITIONS (fl-8-view-field-endpoints). Members read them to
@@ -31,7 +32,14 @@ class FieldConfigEndpoint extends Endpoint {
 
   /// Create or update a definition (workspaceAdmin+). Validates the field type
   /// and guards the (org, entityType, key) uniqueness with a typed conflict.
-  Future<FieldConfig> save(Session session, FieldConfig draft) async {
+  ///
+  /// Changing an existing field's TYPE while tasks hold values for it is a
+  /// two-step confirm (the Airtable pattern): the first save throws a typed
+  /// Conflict stating how many values are affected; retrying with
+  /// [coerceValues] converts them (safe conversions per
+  /// [CustomFields.coerceValue]; unconvertible values are cleared).
+  Future<FieldConfig> save(Session session, FieldConfig draft,
+      {bool coerceValues = false}) async {
     final ctx = await RbacGuard.requireRole(
         session, draft.organizationId, MembershipRole.workspaceAdmin);
     if (!allowedFieldTypes.contains(draft.fieldType)) {
@@ -43,6 +51,7 @@ class FieldConfigEndpoint extends Endpoint {
 
     final draftId = draft.id;
     final FieldConfig saved;
+    var coercedCount = 0;
     if (draftId == null) {
       final dup = await FieldConfig.db.findFirstRow(
         session,
@@ -63,6 +72,19 @@ class FieldConfigEndpoint extends Endpoint {
       if (existing == null || existing.organizationId != draft.organizationId) {
         throw MakerflowNotFoundException(message: 'Field not found.');
       }
+      // Warn-before-write: the affected-values check must precede the row
+      // update, or an unconfirmed type change would already be persisted.
+      final typeChanged = existing.fieldType != draft.fieldType;
+      if (typeChanged && existing.entityType == 'task' && !coerceValues) {
+        final affected = await CustomFields.countTaskValues(session, existing);
+        if (affected > 0) {
+          throw MakerflowConflictException(
+              message: 'Changing "${existing.key}" from ${existing.fieldType} '
+                  'to ${draft.fieldType} affects $affected existing value'
+                  '${affected == 1 ? '' : 's'}. Retry with coerceValues to '
+                  'convert them (unconvertible values are cleared).');
+        }
+      }
       saved = await FieldConfig.db.updateRow(
         session,
         draft.copyWith(
@@ -73,13 +95,17 @@ class FieldConfigEndpoint extends Endpoint {
           updatedAt: now,
         ),
       );
+      if (typeChanged && existing.entityType == 'task') {
+        coercedCount = await CustomFields.coerceTaskValues(session, saved);
+      }
     }
     await Audit.record(session,
         ctx: ctx,
         entityType: 'fieldConfig',
         entityId: saved.id,
         action: draftId == null ? 'create' : 'update',
-        summary: '${saved.entityType}.${saved.key} (${saved.fieldType})');
+        summary: '${saved.entityType}.${saved.key} (${saved.fieldType})'
+            '${coercedCount > 0 ? ' — coerced $coercedCount values' : ''}');
     return saved;
   }
 

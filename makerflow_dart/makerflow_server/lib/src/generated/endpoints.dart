@@ -438,6 +438,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<_i23.FieldConfig>(),
               nullable: false,
             ),
+            'coerceValues': _i1.ParameterDescription(
+              name: 'coerceValues',
+              type: _i1.getType<bool>(),
+              nullable: false,
+            ),
           },
           call:
               (
@@ -447,6 +452,7 @@ class Endpoints extends _i1.EndpointDispatch {
                   (endpoints['fieldConfig'] as _i5.FieldConfigEndpoint).save(
                     session,
                     params['draft'],
+                    coerceValues: params['coerceValues'],
                   ),
         ),
         'delete': _i1.MethodConnector(

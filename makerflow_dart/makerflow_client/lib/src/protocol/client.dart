@@ -196,12 +196,23 @@ class EndpointFieldConfig extends _i1.EndpointRef {
 
   /// Create or update a definition (workspaceAdmin+). Validates the field type
   /// and guards the (org, entityType, key) uniqueness with a typed conflict.
-  _i2.Future<_i8.FieldConfig> save(_i8.FieldConfig draft) =>
-      caller.callServerEndpoint<_i8.FieldConfig>(
-        'fieldConfig',
-        'save',
-        {'draft': draft},
-      );
+  ///
+  /// Changing an existing field's TYPE while tasks hold values for it is a
+  /// two-step confirm (the Airtable pattern): the first save throws a typed
+  /// Conflict stating how many values are affected; retrying with
+  /// [coerceValues] converts them (safe conversions per
+  /// [CustomFields.coerceValue]; unconvertible values are cleared).
+  _i2.Future<_i8.FieldConfig> save(
+    _i8.FieldConfig draft, {
+    required bool coerceValues,
+  }) => caller.callServerEndpoint<_i8.FieldConfig>(
+    'fieldConfig',
+    'save',
+    {
+      'draft': draft,
+      'coerceValues': coerceValues,
+    },
+  );
 
   /// Remove a definition (workspaceAdmin+). Hard delete is acceptable while no
   /// value storage exists; fl-8-custom-fields upgrades this to retire.

@@ -3813,6 +3813,12 @@ class Protocol extends _i1.SerializationManagerServer {
           columnDefault: '0',
         ),
         _i2.ColumnDefinition(
+          name: 'customFieldsJson',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
           name: 'version',
           columnType: _i2.ColumnType.bigint,
           isNullable: false,
