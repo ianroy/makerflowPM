@@ -6,7 +6,10 @@ import '../data/models.dart';
 import '../data/feature_models.dart';
 import '../data/task_repository.dart';
 import '../data/serverpod_task_repository.dart';
+import 'dart:async';
+
 import '../data/preference_repository.dart';
+import '../data/view_repository.dart';
 import '../data/trash_repository.dart';
 import '../data/serverpod_trash_repository.dart';
 import '../data/api_client.dart';
@@ -41,6 +44,35 @@ final preferenceRepositoryProvider = Provider<PreferenceRepository>((ref) =>
 /// (not modifying) is the build-safe way to hydrate.
 final prefsLoadProvider = FutureProvider<PrefsVm>(
     (ref) => ref.watch(preferenceRepositoryProvider).load());
+
+// --- Main-Table column layout (fl-8-column-registry) ---
+final viewRepositoryProvider = Provider<ViewRepository>((ref) => useLiveBackend
+    ? ServerpodViewRepository(ref.watch(serverpodClientProvider))
+    : InMemoryViewRepository());
+
+/// Current column prefs (order/width/hidden). Empty = registry defaults.
+final taskColumnPrefsProvider = StateProvider<List<ColumnPref>>((_) => const []);
+
+/// Saved layout for the active org; the table ref.listens and applies it.
+final taskColumnLoadProvider = FutureProvider<List<ColumnPref>>((ref) {
+  final orgId = ref.watch(activeOrgIdProvider);
+  return ref.watch(viewRepositoryProvider).loadTaskColumns(orgId);
+});
+
+Timer? _columnSaveDebounce;
+
+/// Update column prefs and persist them (debounced ~500ms per the spec, so a
+/// drag-resize doesn't write on every frame).
+void setTaskColumnPrefs(WidgetRef ref, List<ColumnPref> prefs) {
+  ref.read(taskColumnPrefsProvider.notifier).state = prefs;
+  final repo = ref.read(viewRepositoryProvider);
+  final orgId = ref.read(activeOrgIdProvider);
+  _columnSaveDebounce?.cancel();
+  _columnSaveDebounce = Timer(const Duration(milliseconds: 500), () {
+    // ignore: discarded_futures
+    repo.saveTaskColumns(orgId, prefs).catchError((_) {});
+  });
+}
 
 /// Persist the current theme + sidebar state (fire-and-forget).
 void persistPrefs(WidgetRef ref) {

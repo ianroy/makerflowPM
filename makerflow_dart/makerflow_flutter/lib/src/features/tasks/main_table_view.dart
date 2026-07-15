@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:makerflow_design/makerflow_design.dart';
 
 import '../../data/models.dart';
+import '../../data/view_repository.dart';
+import '../../state/providers.dart';
 
-/// UI-3: monday's signature **Main Table** view.
-/// Groups (by status, in board-column order) with colored, collapsible headers;
-/// ~36px rows carrying a 4px group-colored bar on their left edge; inline
-/// editing (status cell → label picker, due-date cell → date picker, row tap →
-/// the edit dialog); a ghost "+ Add item" row per group (Enter creates and
-/// keeps focus for rapid entry); and a board-level status battery.
+/// UI-3 + fl-8-column-registry: monday's signature **Main Table** view with a
+/// column SYSTEM — columns are specs in a registry, rendered in a per-user
+/// order with per-user widths, resizable (drag the header boundary;
+/// double-tap = autofit), reorderable (drag a header; the item-name column is
+/// pinned first), and hideable (the Columns popover — which is also the
+/// keyboard/AT path for reorder). Layout persists via [setTaskColumnPrefs]
+/// (debounced) into the user's default CustomView.
 ///
 /// A11y: group titles are semantic headers; every cell action is a focusable
-/// button with an explicit label; the battery carries a text equivalent.
-class MainTableView extends StatefulWidget {
+/// button; the popover provides non-pointer equivalents for resize-adjacent
+/// operations (hide) and reorder (Up/Down).
+class MainTableView extends ConsumerStatefulWidget {
   const MainTableView({
     super.key,
     required this.tasks,
@@ -29,15 +34,35 @@ class MainTableView extends StatefulWidget {
   final void Function(String status, String title) onAddItem;
 
   @override
-  State<MainTableView> createState() => _MainTableViewState();
+  ConsumerState<MainTableView> createState() => _MainTableViewState();
 }
 
-class _MainTableViewState extends State<MainTableView> {
-  final Set<String> _collapsed = {};
+/// One column the table knows how to render. The registry is the single
+/// source; user prefs (order/width/hidden) overlay it.
+class _TaskColumnSpec {
+  const _TaskColumnSpec({
+    required this.key,
+    required this.label,
+    required this.defaultWidth,
+    required this.minWidth,
+    required this.textOf,
+    required this.cellBuilder,
+  });
 
-  static const _statusColWidth = 150.0;
-  static const _dueColWidth = 104.0;
-  static const _priorityColWidth = 92.0;
+  final String key;
+  final String label;
+  final double defaultWidth;
+  final double minWidth;
+
+  /// Plain-text value of a cell — powers double-tap autofit (and sorting later).
+  final String Function(TaskVm) textOf;
+  final Widget Function(BuildContext, TaskVm, _MainTableViewState) cellBuilder;
+
+  static const maxWidth = 420.0;
+}
+
+class _MainTableViewState extends ConsumerState<MainTableView> {
+  final Set<String> _collapsed = {};
 
   static String _label(String s) => StatusLabel.labels[s] ?? s;
 
@@ -45,6 +70,66 @@ class _MainTableViewState extends State<MainTableView> {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return '${months[d.month - 1]} ${d.day}';
   }
+
+  /// The column registry (item-name is pinned/flexible and lives outside it).
+  static final List<_TaskColumnSpec> registry = [
+    _TaskColumnSpec(
+      key: 'status',
+      label: 'Status',
+      defaultWidth: 150,
+      minWidth: 90,
+      textOf: (t) => _label(t.status),
+      cellBuilder: (context, t, s) => StatusLabel.cell(
+          status: t.status, onTap: () => s._pickStatus(context, t)),
+    ),
+    _TaskColumnSpec(
+      key: 'due',
+      label: 'Due date',
+      defaultWidth: 104,
+      minWidth: 80,
+      textOf: (t) => t.dueAt == null ? '—' : _fmtDate(t.dueAt!),
+      cellBuilder: (context, t, s) => s._dueCell(context, t),
+    ),
+    _TaskColumnSpec(
+      key: 'priority',
+      label: 'Priority',
+      defaultWidth: 92,
+      minWidth: 60,
+      textOf: (t) => t.priority,
+      cellBuilder: (context, t, s) => Center(
+        child: Text(t.priority,
+            style: TextStyle(
+                fontSize: 13, color: MakerflowTheme.of(context).colors.muted)),
+      ),
+    ),
+  ];
+
+  static _TaskColumnSpec specFor(String key) =>
+      registry.firstWhere((c) => c.key == key);
+
+  /// Stored prefs merged over the registry: stored order first (unknown keys
+  /// dropped), then any registry columns the prefs don't know yet.
+  static List<ColumnPref> effectivePrefs(List<ColumnPref> stored) {
+    final known = registry.map((c) => c.key).toSet();
+    final out = <ColumnPref>[
+      for (final p in stored)
+        if (known.contains(p.key)) p,
+    ];
+    final present = out.map((p) => p.key).toSet();
+    for (final spec in registry) {
+      if (!present.contains(spec.key)) {
+        out.add(ColumnPref(key: spec.key, width: spec.defaultWidth));
+      }
+    }
+    return out;
+  }
+
+  List<ColumnPref> get _prefs =>
+      effectivePrefs(ref.watch(taskColumnPrefsProvider));
+
+  void _updatePrefs(List<ColumnPref> next) => setTaskColumnPrefs(ref, next);
+
+  // --- cell interactions (unchanged from UI-3a) ---
 
   Future<void> _pickStatus(BuildContext context, TaskVm task) async {
     final picked = await showStatusPicker(context, current: task.status);
@@ -63,9 +148,96 @@ class _MainTableViewState extends State<MainTableView> {
     if (picked != null) widget.onSetDue(task, picked);
   }
 
+  Widget _dueCell(BuildContext context, TaskVm t) {
+    final c = MakerflowTheme.of(context).colors;
+    final overdue =
+        t.dueAt != null && t.status != 'done' && t.dueAt!.isBefore(DateTime.now());
+    return Semantics(
+      button: true,
+      label: t.dueAt == null
+          ? 'Set due date for ${t.title}'
+          : 'Due ${_fmtDate(t.dueAt!)}${overdue ? ', overdue' : ''}. Change due date',
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: () => _pickDue(context, t),
+        child: Center(
+          child: overdue
+              ? Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.error_outline, size: 14, color: c.danger),
+                  const SizedBox(width: MndSpace.s4),
+                  Text(_fmtDate(t.dueAt!),
+                      style: TextStyle(
+                          fontSize: 13, color: c.danger, fontWeight: FontWeight.w600)),
+                ])
+              : Text(t.dueAt == null ? '—' : _fmtDate(t.dueAt!),
+                  style: TextStyle(
+                      fontSize: 13, color: t.dueAt == null ? c.muted : c.text)),
+        ),
+      ),
+    );
+  }
+
+  // --- column operations ---
+
+  void _resizeColumn(String key, double delta) {
+    final spec = specFor(key);
+    final next = [
+      for (final p in _prefs)
+        p.key == key
+            ? p.copyWith(
+                width: (p.width + delta)
+                    .clamp(spec.minWidth, _TaskColumnSpec.maxWidth))
+            : p,
+    ];
+    _updatePrefs(next);
+  }
+
+  /// Double-tap autofit: widest cell/header text + padding, clamped.
+  void _autofitColumn(String key) {
+    final spec = specFor(key);
+    var widest = _measure(spec.label, FontWeight.w400, 12);
+    for (final t in widget.tasks) {
+      final w = _measure(spec.textOf(t), FontWeight.w600, 13);
+      if (w > widest) widest = w;
+    }
+    final target =
+        (widest + MndSpace.s24 + MndSpace.s8).clamp(spec.minWidth, _TaskColumnSpec.maxWidth);
+    _updatePrefs([
+      for (final p in _prefs) p.key == key ? p.copyWith(width: target) : p,
+    ]);
+  }
+
+  double _measure(String text, FontWeight weight, double size) {
+    final painter = TextPainter(
+      text: TextSpan(
+          text: text, style: TextStyle(fontSize: size, fontWeight: weight)),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    return painter.width;
+  }
+
+  void _moveColumn(String key, String beforeKey) {
+    if (key == beforeKey) return;
+    final prefs = List.of(_prefs);
+    final moving = prefs.firstWhere((p) => p.key == key);
+    prefs.removeWhere((p) => p.key == key);
+    final at = prefs.indexWhere((p) => p.key == beforeKey);
+    prefs.insert(at < 0 ? prefs.length : at, moving);
+    _updatePrefs(prefs);
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = MakerflowTheme.of(context).colors;
+
+    // Hydrate the saved layout once it loads (org-scoped; listen = build-safe).
+    ref.listen(taskColumnLoadProvider, (prev, next) {
+      final loaded = next.valueOrNull;
+      if (loaded != null && loaded.isNotEmpty) {
+        ref.read(taskColumnPrefsProvider.notifier).state = loaded;
+      }
+    });
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(MndSpace.s16, MndSpace.s8, MndSpace.s16, MndSpace.s48),
       children: [
@@ -80,9 +252,9 @@ class _MainTableViewState extends State<MainTableView> {
     final groupColor = MndLabelColors.status[status] ?? MndLabelColors.blank;
     final rows = widget.tasks.where((t) => t.status == status).toList();
     final collapsed = _collapsed.contains(status);
+    final visibleCols = _prefs.where((p) => !p.hidden).toList();
 
     return [
-      // Group header: chevron + title in the group color + count.
       Padding(
         padding: const EdgeInsets.only(top: MndSpace.s12, bottom: MndSpace.s4),
         child: Row(children: [
@@ -106,19 +278,8 @@ class _MainTableViewState extends State<MainTableView> {
         ]),
       ),
       if (!collapsed) ...[
-        // Column header row.
-        Container(
-          height: 30,
-          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: c.line))),
-          child: Row(children: [
-            const SizedBox(width: MndSpace.s8),
-            Expanded(child: Text('Item', style: TextStyle(fontSize: 12, color: c.muted))),
-            SizedBox(width: _statusColWidth, child: Center(child: Text('Status', style: TextStyle(fontSize: 12, color: c.muted)))),
-            SizedBox(width: _dueColWidth, child: Center(child: Text('Due date', style: TextStyle(fontSize: 12, color: c.muted)))),
-            SizedBox(width: _priorityColWidth, child: Center(child: Text('Priority', style: TextStyle(fontSize: 12, color: c.muted)))),
-          ]),
-        ),
-        for (final t in rows) _row(context, c, groupColor, t),
+        _headerRow(context, c, visibleCols),
+        for (final t in rows) _row(context, c, groupColor, t, visibleCols),
         _AddItemRow(
           status: status,
           groupColor: groupColor,
@@ -128,10 +289,87 @@ class _MainTableViewState extends State<MainTableView> {
     ];
   }
 
-  Widget _row(BuildContext context, MakerflowColors c, Color groupColor, TaskVm t) {
-    final overdue = t.dueAt != null &&
-        t.status != 'done' &&
-        t.dueAt!.isBefore(DateTime.now());
+  /// Column headers: draggable (reorder), with a resize handle on each right
+  /// boundary (drag = resize, double-tap = autofit).
+  Widget _headerRow(BuildContext context, MakerflowColors c, List<ColumnPref> cols) {
+    return Container(
+      height: 30,
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: c.line))),
+      child: Row(children: [
+        const SizedBox(width: MndSpace.s8),
+        Expanded(child: Text('Item', style: TextStyle(fontSize: 12, color: c.muted))),
+        for (final p in cols) ...[
+          _headerCell(context, c, p),
+          _resizeHandle(context, c, p),
+        ],
+      ]),
+    );
+  }
+
+  Widget _headerCell(BuildContext context, MakerflowColors c, ColumnPref p) {
+    final spec = specFor(p.key);
+    final header = SizedBox(
+      width: p.width - 6, // the resize handle owns the last 6px
+      child: Center(
+        child: Text(spec.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 12, color: c.muted)),
+      ),
+    );
+    // Drag a header onto another to reorder (drop inserts BEFORE the target).
+    // The drop indicator is a foregroundDecoration so it never shifts layout
+    // (headers must stay pixel-aligned with the data cells below).
+    return DragTarget<String>(
+      onWillAcceptWithDetails: (d) => d.data != p.key,
+      onAcceptWithDetails: (d) => _moveColumn(d.data, p.key),
+      builder: (context, candidates, _) => Container(
+        foregroundDecoration: candidates.isEmpty
+            ? null
+            : BoxDecoration(
+                border: Border(left: BorderSide(color: c.brand, width: 2)),
+              ),
+        child: Draggable<String>(
+          data: p.key,
+          feedback: Material(
+            color: Colors.transparent,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: MndSpace.s12, vertical: MndSpace.s4),
+              decoration: BoxDecoration(
+                color: c.card,
+                borderRadius: BorderRadius.circular(MakerflowShape.radiusSmall),
+                boxShadow: MndShadows.medium,
+              ),
+              child: Text(spec.label, style: TextStyle(fontSize: 12, color: c.text)),
+            ),
+          ),
+          child: header,
+        ),
+      ),
+    );
+  }
+
+  Widget _resizeHandle(BuildContext context, MakerflowColors c, ColumnPref p) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.resizeColumn,
+      child: GestureDetector(
+        key: ValueKey('resize:${p.key}'),
+        behavior: HitTestBehavior.opaque,
+        onHorizontalDragUpdate: (d) => _resizeColumn(p.key, d.delta.dx),
+        onDoubleTap: () => _autofitColumn(p.key),
+        child: SizedBox(
+          width: 6,
+          height: 30,
+          child: Center(
+            child: Container(width: 1, color: c.borderControl),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _row(BuildContext context, MakerflowColors c, Color groupColor, TaskVm t,
+      List<ColumnPref> cols) {
     return Container(
       height: 36,
       decoration: BoxDecoration(
@@ -142,7 +380,6 @@ class _MainTableViewState extends State<MainTableView> {
       ),
       child: Row(children: [
         const SizedBox(width: MndSpace.s8),
-        // Item name — tap opens the edit dialog (same flow as the kanban card).
         Expanded(
           child: Semantics(
             button: true,
@@ -160,48 +397,102 @@ class _MainTableViewState extends State<MainTableView> {
             ),
           ),
         ),
-        // Status cell — full-bleed label, click → picker.
-        SizedBox(
-          width: _statusColWidth,
-          height: 36,
-          child: StatusLabel.cell(status: t.status, onTap: () => _pickStatus(context, t)),
-        ),
-        // Due-date cell (deadline mode: red when overdue and not done).
-        SizedBox(
-          width: _dueColWidth,
-          height: 36,
-          child: Semantics(
-            button: true,
-            label: t.dueAt == null
-                ? 'Set due date for ${t.title}'
-                : 'Due ${_fmtDate(t.dueAt!)}${overdue ? ', overdue' : ''}. Change due date',
-            excludeSemantics: true,
-            child: InkWell(
-              onTap: () => _pickDue(context, t),
-              child: Center(
-                child: overdue
-                    ? Row(mainAxisSize: MainAxisSize.min, children: [
-                        Icon(Icons.error_outline, size: 14, color: c.danger),
-                        const SizedBox(width: MndSpace.s4),
-                        Text(_fmtDate(t.dueAt!),
-                            style: TextStyle(fontSize: 13, color: c.danger, fontWeight: FontWeight.w600)),
-                      ])
-                    : Text(t.dueAt == null ? '—' : _fmtDate(t.dueAt!),
-                        style: TextStyle(fontSize: 13, color: t.dueAt == null ? c.muted : c.text)),
-              ),
-            ),
+        for (final p in cols)
+          SizedBox(
+            width: p.width,
+            height: 36,
+            child: specFor(p.key).cellBuilder(context, t, this),
           ),
-        ),
-        SizedBox(
-          width: _priorityColWidth,
-          child: Center(
-            child: Text(t.priority,
-                style: TextStyle(fontSize: 13, color: c.muted)),
-          ),
-        ),
       ]),
     );
   }
+}
+
+/// The Columns popover — show/hide toggles plus Up/Down reorder buttons.
+/// This is the REQUIRED keyboard/AT path for column reorder (headers are
+/// pointer-draggable only) and the discoverability hub for the column system.
+Future<void> showColumnsPopover(BuildContext context, WidgetRef ref) {
+  return showDialog<void>(
+    context: context,
+    builder: (ctx) => Consumer(builder: (ctx2, popRef, _) {
+      final prefs = _MainTableViewState.effectivePrefs(
+          popRef.watch(taskColumnPrefsProvider));
+      void update(List<ColumnPref> next) => setTaskColumnPrefs(popRef, next);
+
+      return AlertDialog(
+        title: const Text('Columns'),
+        content: SizedBox(
+          width: 320,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (var i = 0; i < prefs.length; i++)
+                Row(children: [
+                  Expanded(
+                    child: Text(_MainTableViewState.specFor(prefs[i].key).label,
+                        style: const TextStyle(fontSize: 14)),
+                  ),
+                  IconButton(
+                    tooltip: 'Move ${_MainTableViewState.specFor(prefs[i].key).label} up',
+                    iconSize: 18,
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(Icons.arrow_upward),
+                    onPressed: i == 0
+                        ? null
+                        : () {
+                            final next = List.of(prefs);
+                            final p = next.removeAt(i);
+                            next.insert(i - 1, p);
+                            update(next);
+                          },
+                  ),
+                  IconButton(
+                    tooltip: 'Move ${_MainTableViewState.specFor(prefs[i].key).label} down',
+                    iconSize: 18,
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(Icons.arrow_downward),
+                    onPressed: i == prefs.length - 1
+                        ? null
+                        : () {
+                            final next = List.of(prefs);
+                            final p = next.removeAt(i);
+                            next.insert(i + 1, p);
+                            update(next);
+                          },
+                  ),
+                  Semantics(
+                    label:
+                        '${_MainTableViewState.specFor(prefs[i].key).label} visible',
+                    child: Switch(
+                      value: !prefs[i].hidden,
+                      onChanged: (v) => update([
+                        for (final p in prefs)
+                          p.key == prefs[i].key ? p.copyWith(hidden: !v) : p,
+                      ]),
+                    ),
+                  ),
+                ]),
+              const SizedBox(height: MndSpace.s8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: () => update([
+                    for (final spec in _MainTableViewState.registry)
+                      ColumnPref(key: spec.key, width: spec.defaultWidth),
+                  ]),
+                  child: const Text('Reset columns'),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(ctx2).pop(), child: const Text('Done')),
+        ],
+      );
+    }),
+  );
 }
 
 /// The ghost "+ Add item" row: type + Enter creates in this group and keeps

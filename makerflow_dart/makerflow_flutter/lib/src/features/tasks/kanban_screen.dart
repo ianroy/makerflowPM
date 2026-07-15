@@ -562,6 +562,24 @@ class _BoardToolbar extends ConsumerWidget {
           stub(Icons.person_outline, 'Person'),
           stub(Icons.swap_vert, 'Sort'),
           stub(Icons.layers_outlined, 'Group by'),
+          // fl-8-column-registry: show/hide + keyboard reorder for Main-Table
+          // columns. The popover is the non-pointer path (headers are
+          // drag-only), so it lives on the always-visible toolbar.
+          Builder(builder: (context) {
+            final hidden =
+                ref.watch(taskColumnPrefsProvider).where((p) => p.hidden).length;
+            return Semantics(
+              label: 'Columns'
+                  '${hidden > 0 ? ', $hidden hidden' : ''}. Show, hide, or reorder table columns',
+              excludeSemantics: true,
+              child: TextButton.icon(
+                key: const ValueKey('board-columns'),
+                onPressed: () => showColumnsPopover(context, ref),
+                icon: const Icon(Icons.visibility_outlined, size: 16),
+                label: Text(hidden > 0 ? 'Columns ($hidden hidden)' : 'Columns'),
+              ),
+            );
+          }),
         ]),
       ),
     );

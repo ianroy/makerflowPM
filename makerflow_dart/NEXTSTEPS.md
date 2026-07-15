@@ -8,20 +8,24 @@ prioritized milestone view. Effort: S≈hours · M≈1–2d · L≈3–5d · XL�
 
 ![Rebuild roadmap: M0–M6 milestones, blockers, and sequence](../docs/diagrams/12-rebuild-roadmap.svg)
 
-## Where we are (paused 2026-07-14, end of session — resume point below)
-**Suites: server 29/29 · app 28/28 · design 7/7 · CI green.** The app wears the
+## Where we are (2026-07-15)
+**Suites: server 29/29 · app 35/35 · design 7/7 · CI green.** The app wears the
 monday-style UI through **UI-3a** (Vibe design system, grey-frame shell +
 boards sidebar, board chrome with view tabs/toolbar, the grouped inline-editing
 **Main Table** as the default view, no page transitions). Full CRUD for tasks
-(+Trash) and projects (+Archive); ops features create/edit; **Phase 8 opened**:
-CustomView/FieldConfig/UserPreference endpoints live, **theme + sidebar persist
-across restarts**. Deploy-ready; PR #6 open.
+(+Trash) and projects (+Archive); ops features create/edit; **Phase 8 rolling**:
+CustomView/FieldConfig/UserPreference endpoints live, theme + sidebar persist,
+and the **Main Table columns are now a real column system** — resizable (drag
+the header boundary, double-tap to autofit), reorderable (drag a header, or
+Up/Down in the toolbar **Columns** popover — the keyboard/AT path), hideable,
+name column pinned — persisted per user (debounced) to `CustomView.columnsJson`
+via the ViewEndpoint. Deploy-ready; PR #6 open.
 
-**▶ RESUME POINT: `fl-8-column-registry`** (resizable / reorderable / hideable /
-pinnable Main-Table columns, persisted to `CustomView.columnsJson` via the new
-ViewEndpoint) — spec in FLUTTER_REBUILD_PLAN.md §13 Phase 8; then
-fl-8-custom-fields (D6). Owner-blocked items unchanged: doctl token (live
-deploy), human AT pass (R1), PR #6 merge. Local demo stack may still be running
+**▶ NEXT CARD: `fl-8-custom-fields`** (D6 — custom field definitions →
+`customFieldsJson` property-bag values on tasks → cells rendered through the
+new column registry) — spec in FLUTTER_REBUILD_PLAN.md §13 Phase 8; then
+fl-8-saved-views. Owner-blocked items unchanged: doctl token (live deploy),
+human AT pass (R1), PR #6 merge. Local demo stack may still be running
 (:8085 web · :8080 API · :8090 PG · :8091 Redis — kill/teardown commands in the
 2026-07-14 session notes; the PG cluster is disposable /tmp).
 
@@ -118,7 +122,7 @@ models exist with **no endpoints and no value storage**; Main Table columns are 
 | Order | Card | Effort | What it unlocks |
 |---|---|---|---|
 | ~~1~~ ✅ | ~~fl-8-view-field-endpoints~~ done 2026-07-14 | M | endpoints live; theme+sidebar persist across restarts |
-| 2 | fl-8-column-registry | L | resize · reorder · show/hide · pin, persisted per view |
+| ~~2~~ ✅ | ~~fl-8-column-registry~~ done 2026-07-15 | L | resize · autofit · reorder · show/hide · pin shipped, persisted per user |
 | 3 | fl-8-custom-fields | XL | tier-1 field types on tasks (labels w/ colors, person, multi-select…) |
 | 4 | fl-8-saved-views | M | view tabs = saved/shared/default views |
 | 5 | fl-8-filter-sort-group | L | filter builder · multi-sort · group-by-any-field |
@@ -151,4 +155,4 @@ SAML, SCIM, seat billing (universities buy site licenses on PO).
 Production seed flag · ops-feature edit paths · equipment space-name resolution
 (Space join) · password-reset flow · validate/refresh a restored session key.
 
-_Last updated: 2026-07-14 (paused; Phase 8 opened with fl-8-view-field-endpoints done — resume at fl-8-column-registry)._
+_Last updated: 2026-07-15 (fl-8-column-registry done — the Main Table column system; next card fl-8-custom-fields)._
