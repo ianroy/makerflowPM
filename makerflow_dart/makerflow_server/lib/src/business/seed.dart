@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_server/serverpod_auth_server.dart' as auth;
 
@@ -12,7 +14,12 @@ import '../generated/protocol.dart';
 class Seed {
   static const orgSlug = 'default';
   static const adminEmail = 'admin@makerflow.local';
-  static const adminPassword = 'ChangeMeMeow!2026'; // rotate immediately
+
+  /// Owner password: `SEED_ADMIN_PASSWORD` from the environment when set
+  /// (REQUIRED for any public deployment — set it as an encrypted secret),
+  /// falling back to the well-known dev password for local stacks only.
+  static String get adminPassword =>
+      Platform.environment['SEED_ADMIN_PASSWORD'] ?? 'ChangeMeMeow!2026';
 
   static Future<void> run(Session session) async {
     final existing = await Organization.db.findFirstRow(

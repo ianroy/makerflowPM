@@ -1,21 +1,30 @@
 # Deploying the MakerFlow PM Dart rebuild to DigitalOcean
 
-The Serverpod server ships as a container to **DigitalOcean App Platform** with
-a managed PostgreSQL + Redis. Everything except the one-time `doctl` auth is
-prepared and verified; this runbook is the exact sequence to take it live.
+The **full demo** ships to **DigitalOcean App Platform**: the Serverpod API +
+the Flutter web app on one domain, with managed PostgreSQL + Valkey. Everything
+except the one-time `doctl` auth is prepared; this runbook is the exact
+sequence to take it live and retire the local demo stack.
 
-> **Status (2026-06-25):** spec valid, `dart compile exe` (the image build step)
-> green on current code, `entrypoint.sh` syntax-checked, migrations present in
-> the image, all five packages resolve, and the production **`--seed` path is
-> verified** against a local PG (see step 6). The only thing that needs you is a
-> DigitalOcean account + API token — the steps below are otherwise copy-paste.
+> **Status (2026-07-16):** spec updated for the demo cutover — two components
+> (`api` + `webapp`) behind one domain (`/api` prefix stripped for Serverpod),
+> seed password now env-driven (`SEED_ADMIN_PASSWORD`). Server image build
+> (`dart compile exe`) green on current code; the web image
+> ([`makerflow_flutter/Dockerfile.web`](makerflow_flutter/Dockerfile.web))
+> gets its first build on DO (no local docker on this machine). The only thing
+> that needs you is a DigitalOcean account + API token — the steps below are
+> otherwise copy-paste.
 
 ---
 
 ## 0. What deploys, and from where
 
-- **App spec:** [`.do/app.yaml`](.do/app.yaml) — one web service (the Serverpod
-  monolith) + managed `makerflow-db` (PG 17) + `makerflow-redis` (**Valkey** — DO discontinued managed Redis in 2025; protocol-compatible, the `REDIS_*` bindings work unchanged).
+- **App spec:** [`.do/app.yaml`](.do/app.yaml) — TWO services on one domain:
+  `api` (the Serverpod monolith, routed under **`/api`** with the prefix
+  stripped) and `webapp` (nginx serving the Flutter web bundle at **`/`**,
+  built in-platform by [`makerflow_flutter/Dockerfile.web`](makerflow_flutter/Dockerfile.web))
+  + managed `makerflow-db` (PG 17) + `makerflow-redis` (**Valkey** — DO
+  discontinued managed Redis in 2025; protocol-compatible, the `REDIS_*`
+  bindings work unchanged).
 - **Image:** [`makerflow_server/Dockerfile`](makerflow_server/Dockerfile) —
   multi-stage `dart compile exe` → `debian-slim`. Build context is
   `makerflow_dart/` (the server path-depends on `../makerflow_client` +
@@ -39,18 +48,21 @@ doctl auth init                         # paste a token from https://cloud.digit
 doctl account get                       # sanity check
 ```
 
-## 2. Generate the one secret the spec needs
+## 2. Generate the two secrets the spec needs
 
 The spec binds DB/Redis credentials automatically from the managed components.
-The only secret you must supply is Serverpod's `SERVICE_SECRET`:
+You supply Serverpod's `SERVICE_SECRET` and — because this deployment is
+public — the seed's owner password:
 
 ```sh
-openssl rand -hex 32                    # 64 hex chars — copy this
+openssl rand -hex 32                    # 64 hex chars -> SERVICE_SECRET
+openssl rand -base64 18                 # -> SEED_ADMIN_PASSWORD (keep it!)
 ```
 
-Either paste it into `.do/app.yaml` (replacing `REPLACE_WITH_64_CHAR_SECRET`)
-before creating the app, or set it after creation (step 4) so it never lands in
-git. Setting it post-create is preferred.
+Set both after creation (step 4) as encrypted env vars on the `api` component
+so they never land in git. **`SEED_ADMIN_PASSWORD` must be set before you run
+the seed (step 6)** — without it the seed falls back to the well-known dev
+password, which must never reach a public URL.
 
 ## 3. Create the app
 
@@ -63,22 +75,24 @@ doctl apps list                         # note the APP_ID
 DO provisions the managed PG + Redis, builds the image from the Dockerfile, and
 starts the service. First build ~5–8 min (Dart AOT compile + image).
 
-## 4. Set the service secret (if not inlined)
+## 4. Set the secrets
 
 ```sh
 APP_ID=<from step 3>
-# In the dashboard: App → Settings → web → Environment Variables → SERVICE_SECRET
-# (encrypted), or update the spec with the real value and:
+# In the dashboard: App → Settings → api → Environment Variables → add
+#   SERVICE_SECRET        (encrypted)  — from step 2
+#   SEED_ADMIN_PASSWORD   (encrypted)  — from step 2
+# or update the spec with the real values and:
 doctl apps update "$APP_ID" --spec makerflow_dart/.do/app.yaml
 ```
 
-## 5. Verify
+## 5. Verify the API
 
 ```sh
 doctl apps get "$APP_ID"                                  # status, default ingress URL
 APP_URL=$(doctl apps get "$APP_ID" --format DefaultIngress --no-header)
-curl -sS -o /dev/null -w "GET / -> %{http_code}\n" "$APP_URL/"   # expect 200 (Serverpod liveness)
-doctl apps logs "$APP_ID" --type run --follow              # watch boot + migration apply
+curl -sS -o /dev/null -w "GET /api/ -> %{http_code}\n" "$APP_URL/api/"  # expect 200 (Serverpod liveness through the prefix)
+doctl apps logs "$APP_ID" api --type run --follow          # watch boot + migration apply
 ```
 
 Expected in the logs: the entrypoint renders the config, `--apply-migrations`
@@ -93,30 +107,54 @@ org already exists) and does **not** start the HTTP servers, so it's safe to run
 inside the already-serving `web` instance:
 
 ```sh
-doctl apps console "$APP_ID" web
+doctl apps console "$APP_ID" api
 # in the console, either:
 /app/server --mode production --seed     # config was already rendered on boot
 # …or, to (re)render config from the injected env first (more robust):
 /app/entrypoint.sh seed
 ```
 
-This creates the default org, the owner login `admin@makerflow.local`
-(password `ChangeMeMeow!2026` — **rotate immediately**), a sample project, six
-tasks, and one equipment + consumable row. Re-running prints
-`seed: "default" already exists — skipping` and changes nothing.
+This creates the default org, the owner login `admin@makerflow.local` with the
+password from **`SEED_ADMIN_PASSWORD`** (verify it is set in the console:
+`test -n "$SEED_ADMIN_PASSWORD" && echo ok` — without it the seed uses the
+well-known dev password), a sample project, six tasks, and one equipment +
+consumable row. Re-running prints `seed: "default" already exists — skipping`
+and changes nothing.
 
 > The same path runs in dev as `dart run bin/seed.dart`; `bin/seed.dart` and the
 > runtime `--seed` flag share one `runSeed` bootstrap in `makerflow_server/lib/server.dart`.
 
-## 7. Point the Flutter client at the deployment
+## 7. Wire the web demo to its own domain (one-time)
 
-Build the app against the live API:
+The `webapp` component bakes the API base URL into the Flutter bundle at build
+time, and the domain isn't known until the app exists — so after the first
+create, set it and let DO rebuild the web component:
 
 ```sh
-flutter build web --release \
-  --dart-define=MAKERFLOW_LIVE=true \
-  --dart-define=MAKERFLOW_API=https://<your-app>.ondigitalocean.app/
+# In the dashboard: App → Settings → webapp → Environment Variables →
+#   MAKERFLOW_API = https://<the DefaultIngress domain from step 5>/api/
+# (scope: Build & Run) — or edit the spec's placeholder and:
+doctl apps update "$APP_ID" --spec makerflow_dart/.do/app.yaml
 ```
+
+When the rebuild finishes, `https://<domain>/` serves the demo UI and signs in
+against `https://<domain>/api/` — the demo now lives entirely on DO and
+redeploys on every push to `staging`.
+
+## 8. Retire the local demo stack (optional)
+
+```sh
+kill $(lsof -ti tcp:8080) $(lsof -ti tcp:8085)             # local API + web
+redis-cli -p 8091 -a makerflow_dev_redis shutdown nosave    # local Redis
+pg_ctl -D /tmp/mf_pgdata stop                               # disposable local PG
+```
+
+For local development you can still bring the stack back any time
+([`README.md`](README.md) bring-up); nothing about the DO app depends on it.
+
+> Note: DO's Postgres starts from the seed — anything created only in the
+> local demo (custom fields, saved views, test tasks) stays local. Recreate
+> what you want in the live demo through the UI.
 
 ---
 
@@ -132,10 +170,12 @@ and drop `--apply-migrations` from the entrypoint).
 
 | Step | State |
 |---|---|
-| `dart compile exe` (image build) | ✅ green on current code (15 MB binary) |
+| `dart compile exe` (API image build) | ✅ green on current code |
 | `entrypoint.sh` renders config + serves in production mode | ✅ dry-run verified (prior session) |
 | `entrypoint.sh` `serve`/`seed` dispatch | ✅ `sh -n` + traced both paths to a stub server |
-| Spec is valid YAML, correct bindings | ✅ |
-| Migrations present + apply (56 tables) | ✅ (locally, via the compiled binary) |
-| `--seed` creates org + owner + sample data, idempotent | ✅ compiled binary vs. local PG, **ports 8080–82 occupied** (proves no bind) |
-| Live `doctl apps create` + managed PG/Redis | ⏳ needs your token |
+| Spec is valid YAML, correct bindings | ✅ (revalidate live: `doctl apps spec validate makerflow_dart/.do/app.yaml`) |
+| Migrations present + apply | ✅ (locally, via the compiled binary) |
+| `--seed` creates org + owner + sample data, idempotent | ✅ compiled binary vs. local PG; owner password env-driven (`SEED_ADMIN_PASSWORD`) |
+| Web image (`Dockerfile.web`: Flutter build → nginx) | ⏳ first build happens on DO (no local docker); the same `flutter build web` command is CI-green |
+| Ingress split (`/` → webapp, `/api` → api w/ prefix strip) | ⏳ verified on first deploy (step 5 curl + sign-in) |
+| Live `doctl apps create` + managed PG/Valkey | ⏳ needs your token (`doctl auth init`) |
