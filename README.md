@@ -3,7 +3,8 @@
 [![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11.9-blue.svg)](runtime.txt)
 [![Status](https://img.shields.io/badge/status-active-success.svg)](#)
-[![Dart rebuild](https://img.shields.io/badge/Dart%20rebuild-planned-21d1aa.svg)](FLUTTER_REBUILD_PLAN.md)
+[![Dart rebuild](https://img.shields.io/badge/Dart%20rebuild-active-21d1aa.svg)](FLUTTER_REBUILD_PLAN.md)
+[![Dart CI](https://github.com/ianroy/makerflowPM/actions/workflows/dart-ci.yml/badge.svg?branch=staging)](https://github.com/ianroy/makerflowPM/actions/workflows/dart-ci.yml)
 
 > **MakerFlow PM** is an open-source project management and operations platform built for makerspaces, labs, and service teams that need to track work, equipment, consumables, partnerships, and people enablement in one self-hostable, low-cost system.
 
@@ -13,7 +14,7 @@
 
 > ### Two codebases in this repo
 > 1. **MakerFlow PM (Python)** — the **current, shipping** product: a server-rendered WSGI app (web only). Everything below the "Pivot" section documents it.
-> 2. **MakerFlow PM (Dart rebuild)** — a **greenfield Flutter + Serverpod** rebuild for web, mobile, and desktop, with offline/push/camera/biometric. Currently a planned **walking skeleton** under [`makerflow_dart/`](makerflow_dart/), tracked in [`FLUTTER_REBUILD_PLAN.md`](FLUTTER_REBUILD_PLAN.md). It is **new deployments only** — it does not replace the Python app for existing installs. See [Pivot to Flutter / Dart](#pivot-to-flutter--dart).
+> 2. **MakerFlow PM (Dart rebuild)** — a **greenfield Flutter + Serverpod** rebuild for web, mobile, and desktop, with offline/push/camera/biometric. **Actively developed** under [`makerflow_dart/`](makerflow_dart/): a **monday.com-style interface** (Vibe-derived design system, boards sidebar, the grouped inline-editing Main Table) with a live **customization platform** — resizable/reorderable/hideable columns, nine custom-field types with server-validated values, and saved/shared views. CI-gated (server + app suites green over live PostgreSQL), and the **entire demo deploys to DigitalOcean App Platform from one spec** (API + web UI on one domain). Tracked in [`FLUTTER_REBUILD_PLAN.md` §14.1](FLUTTER_REBUILD_PLAN.md) and [`makerflow_dart/NEXTSTEPS.md`](makerflow_dart/NEXTSTEPS.md). It is **new deployments only** — it does not replace the Python app for existing installs. See [Pivot to Flutter / Dart](#pivot-to-flutter--dart).
 
 ---
 
@@ -73,7 +74,6 @@ MakerFlow PM is built by **[Ian Roy](https://github.com/ianroy)**, leveraging th
 | Framework shell | **Flask ≥ 3.0** + **Werkzeug ≥ 3.0** | thin WSGI bridge in [`app/flask_app.py`](app/flask_app.py); core logic remains stdlib |
 | Default DB | **SQLite** (stdlib, WAL mode) | [`data/makerspace_ops.db`](data/) |
 | Production DB | **PostgreSQL** via **psycopg ≥ 3.1.18** (binary) | enabled by setting `MAKERSPACE_DATABASE_URL` |
-| Document import | **pypdf ≥ 4.3.1** | used by [`scripts/import_project_notes.py`](scripts/import_project_notes.py) |
 | Frontend | **server-rendered HTML + vanilla JS + hand-rolled CSS** | no build step, no framework |
 | Edge (Droplet) | **nginx + certbot + systemd** on Ubuntu 24.04 LTS | provisioned by [`scripts/deploy_production.sh`](scripts/deploy_production.sh) |
 | Managed runtime | **DigitalOcean App Platform + DO Managed PostgreSQL** | spec in [`.do/app.yaml`](.do/app.yaml), deploy-on-push |
@@ -207,7 +207,7 @@ python3 scripts/sync_website_content.py
 
 ### 3) Recommended GitHub Actions (suggested)
 
-The repo does not yet ship a `.github/workflows/` directory. A reasonable starter pipeline runs the verification scripts on PRs to `main`. The roadmap (see [`FEATUREROADMAP_workplan.md`](FEATUREROADMAP_workplan.md)) tracks this as an explicit P1 task — `ci-smoke-and-security` — with a complete spec.
+The repo-root `.github/workflows/` directory is being established; the Dart CI workflow is being moved there from `makerflow_dart/.github/workflows/` (a nested location GitHub never read). For the Python app, a reasonable starter pipeline runs the verification scripts on PRs to `main`. The roadmap (see [`FEATUREROADMAP_workplan.md`](FEATUREROADMAP_workplan.md)) tracks this as an explicit P1 task — `ci-smoke-and-security` — with a complete spec.
 
 ## Deploying on DigitalOcean
 
@@ -333,6 +333,8 @@ There is currently no `pytest` suite — testing is script-based. Introducing on
 
 MakerFlow PM ships its roadmap as a resumable, agent-executable file: [`FEATUREROADMAP_workplan.md`](FEATUREROADMAP_workplan.md). It contains a recursive regeneration prompt (to seed new tasks), an execution prompt (to build the top-ready task), 45 seeded task cards across P0–P3 (22 general + 23 accessibility), and a checkpoint log so any agent or human can pick the work up cold.
 
+New **feature** work now targets the Dart rebuild — task cards live in [`FLUTTER_REBUILD_PLAN.md` §13](FLUTTER_REBUILD_PLAN.md#13-phased-task-cards). [`FEATUREROADMAP_workplan.md`](FEATUREROADMAP_workplan.md) remains the queue for Python-app maintenance and security work.
+
 <p align="center">
   <img src="docs/diagrams/08-roadmap-loop.svg" alt="MakerFlow PM — Roadmap loop" width="100%"/>
 </p>
@@ -350,7 +352,7 @@ The diagram below maps regulatory requirements to the 23 accessibility task card
   <img src="docs/diagrams/10-ada-504-compliance.svg" alt="MakerFlow PM — ADA Title II + Section 504 compliance map" width="100%"/>
 </p>
 
-See also [`docs/ACCESSIBILITY.md`](docs/ACCESSIBILITY.md) once it lands as part of `P0-a11y-policy-baseline`.
+See also `docs/ACCESSIBILITY.md` once it lands — planned under `P0-a11y-policy-baseline`.
 
 ## Pivot to Flutter / Dart
 
@@ -364,35 +366,40 @@ MakerFlow is being rebuilt as a **single-language Dart stack** — a **Flutter**
 
 **Four locked decisions** ([`FLUTTER_REBUILD_PLAN.md` §1](FLUTTER_REBUILD_PLAN.md#1-decisions-of-record)): Serverpod backend · all six platforms · greenfield (new deployments only, no data migration) · full parity **plus** native-only features.
 
-**Status — walking skeleton that compiles.** Phase 0 + a Phase 1 vertical slice live under [`makerflow_dart/`](makerflow_dart/) (37 Serverpod models + 14 endpoints with the RBAC/tenancy/audit contract; ported design tokens; a keyboard-accessible kanban + feature screens). On Dart 3.12.2 / Flutter 3.44.2 / Serverpod 3.4.10 it **builds green**: `serverpod generate`, `dart analyze` + server tests, `flutter analyze` + widget test, `flutter build web`, and the first DB migration (112 tables) all pass. Not yet run against a live database. See [`makerflow_dart/BUILD_STATUS.md`](makerflow_dart/BUILD_STATUS.md).
+**Status — actively developed; the customization platform is live.** The rebuild lives under [`makerflow_dart/`](makerflow_dart/) (37 Serverpod models + 14 endpoints behind one security contract: role guard → org-scoped queries → optimistic-concurrency versioning → audit trail → soft delete). The front end wears a **monday.com-style interface** ([`makerflow_dart/UI_REDESIGN_PLAN.md`](makerflow_dart/UI_REDESIGN_PLAN.md)): the Vibe-derived design system, the grey-frame shell with a boards sidebar, and the signature **Main Table** (colored collapsible groups, inline status/date editing, ghost add-item rows, board battery) alongside keyboard-accessible kanban and List views. **[Phase 8](FLUTTER_REBUILD_PLAN.md) — PoC → customizable tool — is shipping:** the Main Table is a real **column system** (drag-resize with double-click autofit, drag-reorder, show/hide, per-user persisted layouts), **nine custom-field types** work end-to-end (text, long-text, number, date, dropdown, tags, person, checkbox, colored labels with AA-contrast ink) with server-side validation on a JSON property-bag storage model (decision **D6**) and an Airtable-style type-change conversion flow, and **saved views** turn the view tabs into named, shareable `CustomView`s with dirty-state save flows. Next up: the filter builder, multi-sort, and group-by-any-field, then subitems → templates → dashboards → automations; **Phase 9** (enterprise readiness ranked for university/makerspace procurement: VPAT, OIDC SSO with JIT membership, org + audit export, cohort user lifecycle, PATs, private boards/guest grants, CSV import, a public REST API + webhooks, and ops hardening) follows. Quality gates: the server integration suite runs **green over live PostgreSQL**, the app suite (including `flutter build web`) is green, and both run in CI on every push ([`.github/workflows/dart-ci.yml`](.github/workflows/dart-ci.yml)). **The full demo — Serverpod API + Flutter web UI on one domain — deploys to DigitalOcean App Platform from a single spec** with managed PostgreSQL + Valkey; the runbook is copy-paste from `doctl auth init` onward — see [`makerflow_dart/DEPLOY.md`](makerflow_dart/DEPLOY.md). Current state: [`makerflow_dart/BUILD_STATUS.md`](makerflow_dart/BUILD_STATUS.md).
+
+<p align="center">
+  <img src="docs/diagrams/12-rebuild-roadmap.svg" alt="MakerFlow PM — Dart rebuild milestone roadmap" width="100%"/>
+</p>
 
 **Honest caveat.** The Python app is server-rendered HTML — the most accessible substrate there is — and MakerFlow carries a WCAG 2.1 AA mandate (ADA Title II + § 504, above). Flutter **Web** accessibility lags real HTML, so the rebuild treats web-target conformance as a Phase-0 gate with a server-rendered fallback in reserve. Native mobile/desktop a11y is strong.
 
 **Start here:**
-- [`FLUTTER_REBUILD_PLAN.md`](FLUTTER_REBUILD_PLAN.md) — the resumable, agent-executable plan (embedded regeneration + execution prompts, 30 task cards, deep-dive appendices A–M).
+- [`FLUTTER_REBUILD_PLAN.md`](FLUTTER_REBUILD_PLAN.md) — the resumable, agent-executable plan (embedded regeneration + execution prompts, phased task cards, deep-dive appendices A–M).
+- [`makerflow_dart/NEXTSTEPS.md`](makerflow_dart/NEXTSTEPS.md) — current milestone roadmap and next steps.
 - [`Flutter_ProductSpec.md`](Flutter_ProductSpec.md) — developer onboarding for the Dart stack.
 - [`makerflow_dart/README.md`](makerflow_dart/README.md) — local bring-up.
 
 ## Deploying the Dart rebuild on GitHub
 
-The Dart rebuild is built to ship from GitHub across all six targets plus the server. (CI is scaffolded in [`makerflow_dart/.github/workflows/dart-ci.yml`](makerflow_dart/.github/workflows/dart-ci.yml); release pipelines are roadmap task `fl-7-release-pipelines`.)
+The Dart rebuild ships from GitHub across all six targets plus the server. **CI is live** at the repo root ([`.github/workflows/dart-ci.yml`](.github/workflows/dart-ci.yml)) and gates every PR and every push to `main`/`staging`; per-platform release pipelines are roadmap task `fl-7-release-pipelines`.
 
 | Target | GitHub mechanism |
 |---|---|
-| **CI** (every PR) | GitHub Actions: `melos bootstrap` → `serverpod generate` → `melos run analyze` + `melos run test` + Flutter build (web + Android), with ephemeral Postgres + Redis service containers. |
-| **Web** | `flutter build web` → **GitHub Pages** (Settings → Pages → GitHub Actions), or push the static bundle to a CDN. |
+| **CI** (every PR/push) | ✅ **Live**: server job — `dart analyze` + the integration suite against an ephemeral **PostgreSQL 17** service container; app job — `flutter analyze` + widget tests + `flutter build web`. |
+| **Web** | ✅ **Live**: the DO app spec (below) builds [`makerflow_dart/makerflow_flutter/Dockerfile.web`](makerflow_dart/makerflow_flutter/Dockerfile.web) on push and serves the bundle at the app domain. GitHub Pages/CDN remain options for standalone hosting. |
 | **Android** | `flutter build appbundle` in Actions → upload to **Play Console** (internal track) via Fastlane; attach the APK to a **GitHub Release** for sideload testing. |
 | **iOS** | `flutter build ipa` on a macOS runner (signing via Fastlane match) → **TestFlight**. |
 | **macOS / Windows / Linux** | `flutter build {macos,windows,linux}` on matching runners → notarized `.dmg` / signed MSIX / Flatpak-Snap-AppImage → **GitHub Releases**. |
-| **Server** | Build the Serverpod Docker image in Actions → push to **GitHub Container Registry (GHCR)** → a deploy job ships it to your host (DigitalOcean, etc.). |
+| **Server + web demo** | **DigitalOcean App Platform** (the required target) builds both images on every push to `staging` from one spec — the Serverpod API ([`Dockerfile`](makerflow_dart/makerflow_server/Dockerfile), routed under `/api`) and the Flutter web demo ([`Dockerfile.web`](makerflow_dart/makerflow_flutter/Dockerfile.web), served at `/`) — with DO **Managed PostgreSQL 17 + Valkey**. Spec: [`makerflow_dart/.do/app.yaml`](makerflow_dart/.do/app.yaml); runbook: [`makerflow_dart/DEPLOY.md`](makerflow_dart/DEPLOY.md). |
 
-Move [`makerflow_dart/.github/workflows/`](makerflow_dart/.github/workflows/) to the repo-root `.github/workflows/` so GitHub picks the workflows up. Per-platform store/signing requirements (privacy manifests, entitlements, notarization) are in [`FLUTTER_REBUILD_PLAN.md` Appendix K](FLUTTER_REBUILD_PLAN.md#k-platform--store-compliance).
+Per-platform store/signing requirements (privacy manifests, entitlements, notarization) are in [`FLUTTER_REBUILD_PLAN.md` Appendix K](FLUTTER_REBUILD_PLAN.md#k-platform--store-compliance).
 
 ## Documentation index
 
 - [`ProductSpec.md`](ProductSpec.md) — developer onboarding guide
 - [`FEATUREROADMAP_workplan.md`](FEATUREROADMAP_workplan.md) — recursive, resumable feature roadmap
-- [`FLUTTER_REBUILD_PLAN.md`](FLUTTER_REBUILD_PLAN.md) — resumable, agent-executable plan for the greenfield Flutter + Serverpod (Dart) rebuild across web, mobile, and desktop (embedded regen + execution prompts, 30 task cards, appendices A–M)
+- [`FLUTTER_REBUILD_PLAN.md`](FLUTTER_REBUILD_PLAN.md) — resumable, agent-executable plan for the greenfield Flutter + Serverpod (Dart) rebuild across web, mobile, and desktop (embedded regen + execution prompts, phased task cards, appendices A–M)
 - [`Flutter_ProductSpec.md`](Flutter_ProductSpec.md) — developer onboarding guide for the Dart rebuild
 - [`makerflow_dart/`](makerflow_dart/) — the Dart rebuild monorepo (Serverpod + Flutter + design) with [`BUILD_STATUS.md`](makerflow_dart/BUILD_STATUS.md)
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — system shape, request lifecycle, deployment patterns
@@ -403,12 +410,12 @@ Move [`makerflow_dart/.github/workflows/`](makerflow_dart/.github/workflows/) to
 - [`docs/TESTING.md`](docs/TESTING.md) — verification matrix
 - [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) — how to propose changes
 - [`docs/LICENSE.md`](docs/LICENSE.md) — CC BY-SA 4.0 attribution + ShareAlike requirements
-- [`docs/diagrams/`](docs/diagrams/) — eleven SVG diagrams onboarding a new developer (architecture, lifecycle, data model, RBAC, deployment, components, feature flow, roadmap loop, tech stack, ADA Title II + § 504 compliance map, Flutter/Serverpod target architecture)
+- [`docs/diagrams/`](docs/diagrams/) — twelve SVG diagrams onboarding a new developer (architecture, lifecycle, data model, RBAC, deployment, components, feature flow, roadmap loop, tech stack, ADA Title II + § 504 compliance map, Flutter/Serverpod target architecture, rebuild roadmap)
 - [`MakerFlow Website/wiki/`](MakerFlow%20Website/wiki/) — published wiki mirror
 
 ## Contributing
 
-See [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md). When proposing new features, add a task card to [`FEATUREROADMAP_workplan.md`](FEATUREROADMAP_workplan.md) using the schema documented at the top of that file — the roadmap is designed so an agent can pick the work up later without losing context.
+See [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md). When proposing new **features**, add a task card to [`FLUTTER_REBUILD_PLAN.md` §13](FLUTTER_REBUILD_PLAN.md#13-phased-task-cards) — new feature work targets the Dart rebuild. [`FEATUREROADMAP_workplan.md`](FEATUREROADMAP_workplan.md) stays open for Python-app maintenance and security cards. Both files document their card schema at the top and are designed so an agent can pick the work up later without losing context.
 
 Contributions are accepted under the same license as the project: **CC BY-SA 4.0**. By opening a pull request, you agree that your contribution is licensed accordingly.
 

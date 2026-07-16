@@ -1,6 +1,6 @@
 # Flutter Web Accessibility Spike — Report (`fl-0-a11y-web-spike`)
 
-> **Purpose.** Decide whether **Flutter Web** can meet **WCAG 2.1 Level AA** for MakerFlow's compliance-critical surfaces, or whether the web target needs a **server-rendered fallback** (see [`../../FLUTTER_REBUILD_PLAN.md` §8](../../FLUTTER_REBUILD_PLAN.md) and Risk R1). This is the **Phase-0 gate** — the web target is not declared parity-capable until this resolves.
+> **Purpose.** Decide whether **Flutter Web** can meet **WCAG 2.1 Level AA** for MakerFlow's compliance-critical surfaces, or whether the web target needs a **server-rendered fallback** (see [`../../../FLUTTER_REBUILD_PLAN.md` §8](../../../FLUTTER_REBUILD_PLAN.md) and Risk R1). This is the **Phase-0 gate** — the web target is not declared parity-capable until this resolves.
 >
 > **Status: BLOCKED on a human assistive-technology pass.** The test fixture is built ([`makerflow_flutter/lib/src/features/_spike/a11y_spike_screen.dart`](../../makerflow_flutter/lib/src/features/_spike/a11y_spike_screen.dart), route `/spike`). The empirical results below must be filled by a person running real screen readers — they cannot be produced in a headless/no-toolchain environment.
 

@@ -16,7 +16,7 @@ class DashboardScreen extends ConsumerWidget {
     final tiles = navDestinations.where((d) => d.route != '/dashboard').toList();
     return AppShell(
       routePath: '/dashboard',
-      title: 'MakerFlow PM',
+      title: 'Home',
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -24,7 +24,7 @@ class DashboardScreen extends ConsumerWidget {
           children: [
             Semantics(
               header: true,
-              child: Text('Today', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: c.text)),
+              child: Text('Quick access', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: c.text)),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -42,7 +42,10 @@ class DashboardScreen extends ConsumerWidget {
                         children: [
                           Icon(d.icon, color: c.brand),
                           const Spacer(),
-                          Text(d.label, style: TextStyle(fontWeight: FontWeight.w700, color: c.text)),
+                          Text(d.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontWeight: FontWeight.w700, color: c.text)),
                         ],
                       ),
                     ),
@@ -50,8 +53,7 @@ class DashboardScreen extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 24),
-            Text('Walking skeleton — running on in-memory repositories. '
-                'Swap to the generated Serverpod client after codegen.',
+            Text('Dashboard widgets (numbers, charts, battery) land with UI-9.',
                 style: TextStyle(color: c.muted)),
           ],
         ),

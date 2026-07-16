@@ -7,8 +7,8 @@ name: makerflow_dart
 #   dart pub global activate melos
 #   melos bootstrap
 #   (cd makerflow_server && docker compose up -d)     # Postgres + Redis
+#   cd makerflow_server && serverpod generate          # only after model/endpoint edits (output is committed)
 #   (cd makerflow_server && dart bin/main.dart --apply-migrations)
-#   cd makerflow_server && serverpod generate          # regenerates makerflow_client
 #   melos run analyze
 
 packages:
@@ -34,8 +34,15 @@ scripts:
     packageFilters:
       flutter: true
   test:
-    description: Run Dart tests across packages that have them.
+    description: Run Dart tests across non-Flutter packages that have them.
     run: melos exec --dir-exists=test -- dart test
+    packageFilters:
+      flutter: false
+  test:flutter:
+    description: Run Flutter tests across Flutter packages that have them.
+    run: melos exec --dir-exists=test -- flutter test
+    packageFilters:
+      flutter: true
   format:
     description: Format all Dart code.
     run: melos exec -- dart format .

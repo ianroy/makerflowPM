@@ -7,11 +7,15 @@ fields:
   ownerUserInfoId: int
   name: String
   entityType: String        # which list this view applies to
+  viewType: String, default='table'  # table | kanban | list | calendar (fl-8-saved-views)
   filtersJson: String
   columnsJson: String
   isShared: bool, default=false
+  version: int, default=1          # optimistic concurrency (conventions)
   createdAt: DateTime
   updatedAt: DateTime
+  deletedAt: DateTime?
+  deletedByUserInfoId: int?
 indexes:
   custom_view_org_idx:
     fields: organizationId

@@ -1,0 +1,137 @@
+# DigitalOcean App Platform spec for the MakerFlow PM Dart rebuild:
+# the Serverpod API + the Flutter web demo, one app, one domain.
+#   doctl apps create --spec makerflow_dart/.do/app.yaml
+#   doctl apps update <APP_ID> --spec makerflow_dart/.do/app.yaml
+# or connect the repo in the DO dashboard.
+#
+# Routing: the web demo serves "/" and the Serverpod API lives under "/api"
+# (the prefix is stripped before it reaches the container, which is what
+# Serverpod expects). The Flutter bundle is built with
+# MAKERFLOW_API=https://<app-domain>/api/ — set that env after the first
+# create, once the default ingress domain is known (DEPLOY.md step 7).
+#
+# Deploys from `staging` — that's where the Dart rebuild (and these deploy
+# assets) live; `main` predates the Dockerfile/spec. For a production cutover,
+# merge staging -> main and flip `branch` to main.
+# See DEPLOY.md for the full runbook.
+#
+# This is SEPARATE from the Python app's /.do/app.yaml at the repo root — the
+# two products deploy independently (rebuild is "new deployments only").
+name: makerflow-dart
+region: nyc
+
+ingress:
+  rules:
+    - component:
+        name: api
+        # default preserve_path_prefix=false strips /api before forwarding,
+        # so Serverpod sees /task, /view, ... at its root.
+      match:
+        path:
+          prefix: /api
+    - component:
+        name: webapp
+      match:
+        path:
+          prefix: /
+
+services:
+  - name: api
+    # Build the Serverpod image from the monorepo root context.
+    dockerfile_path: makerflow_dart/makerflow_server/Dockerfile
+    source_dir: makerflow_dart
+    github:
+      repo: ianroy/makerflowPM
+      branch: staging
+      deploy_on_push: true
+    http_port: 8080
+    instance_count: 1
+    instance_size_slug: basic-xs
+    health_check:
+      # Serverpod's API server answers GET / with 200 OK (built-in liveness).
+      # Health checks hit the container directly, so no /api prefix here.
+      http_path: /
+      initial_delay_seconds: 45
+      period_seconds: 10
+      timeout_seconds: 5
+      failure_threshold: 3
+    envs:
+      - key: SERVERPOD_RUN_MODE
+        value: production
+      # --- PostgreSQL (bound from the managed DB below) ---
+      - key: DATABASE_HOST
+        value: ${makerflow-db.HOSTNAME}
+      - key: DATABASE_PORT
+        value: ${makerflow-db.PORT}
+      - key: DATABASE_NAME
+        value: ${makerflow-db.DATABASE}
+      - key: DATABASE_USER
+        value: ${makerflow-db.USERNAME}
+      - key: DATABASE_PASSWORD
+        value: ${makerflow-db.PASSWORD}
+        type: SECRET
+      - key: DATABASE_REQUIRE_SSL
+        value: "true"
+      # --- Redis / Valkey (bound from the managed cache below) ---
+      - key: REDIS_HOST
+        value: ${makerflow-redis.HOSTNAME}
+      - key: REDIS_PORT
+        value: ${makerflow-redis.PORT}
+      - key: REDIS_USER
+        value: ${makerflow-redis.USERNAME}
+      - key: REDIS_PASSWORD
+        value: ${makerflow-redis.PASSWORD}
+        type: SECRET
+      - key: REDIS_REQUIRE_SSL
+        value: "true"
+      # --- App ---
+      - key: PUBLIC_HOST
+        value: ${APP_DOMAIN}
+      - key: SERVICE_SECRET
+        value: REPLACE_WITH_64_CHAR_SECRET   # set as an encrypted secret in DO
+        type: SECRET
+      # REQUIRED before running the seed on a public deployment: the owner
+      # password for admin@makerflow.local (the seed falls back to the
+      # well-known dev password without it).
+      # - key: SEED_ADMIN_PASSWORD
+      #   value: REPLACE_WITH_STRONG_PASSWORD
+      #   type: SECRET
+      # Optional but recommended BEFORE first users: serverpod_auth password
+      # pepper (cannot be rotated later without invalidating credentials).
+      # - key: EMAIL_PASSWORD_PEPPER
+      #   value: REPLACE_WITH_32_CHAR_SECRET
+      #   type: SECRET
+
+  # The Flutter web demo (fl-8 demo cutover): nginx serving the release
+  # bundle, built in-platform from Dockerfile.web.
+  - name: webapp
+    dockerfile_path: makerflow_dart/makerflow_flutter/Dockerfile.web
+    source_dir: makerflow_dart
+    github:
+      repo: ianroy/makerflowPM
+      branch: staging
+      deploy_on_push: true
+    http_port: 8080
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    health_check:
+      http_path: /
+      initial_delay_seconds: 5
+      period_seconds: 10
+    envs:
+      # Baked into the bundle at build time (Dockerfile ARG). Set to
+      # https://<app-domain>/api/ after the first create (DEPLOY.md step 7);
+      # the placeholder keeps the first build green while the domain is
+      # still unknown.
+      - key: MAKERFLOW_API
+        value: REPLACE_WITH_https://<app-domain>/api/
+        scope: RUN_AND_BUILD_TIME
+
+databases:
+  - name: makerflow-db
+    engine: PG
+    version: "17"   # matches local dev + CI (postgres:17); migrations verified on 17
+    production: false        # flip to true (+ a sized cluster) for production
+  - name: makerflow-redis
+    engine: VALKEY   # DO discontinued managed Redis (EOL 2025-06); Valkey is protocol-compatible
+    production: false

@@ -1,0 +1,19 @@
+# Test runner config for makerflow_server.
+#
+# Two tiers:
+#   - unit tests (e.g. test/rbac_rank_test.dart) — pure, no I/O, run anywhere.
+#   - integration tests — serverpod_test `withServerpod` groups, auto-tagged
+#     `integration`. They need a live Postgres on the `test` run-mode DB
+#     (config/test.yaml → makerflow_test on :8090) with migrations applied.
+#
+# Run only fast unit tests:   dart test -x integration
+# Run only integration tests: dart test -t integration
+tags:
+  integration:
+    # Declared so the runner doesn't warn; gives CI a handle to gate on a DB.
+
+# Run suites one at a time. Each `withServerpod` group boots a real Serverpod
+# that binds the config/test.yaml ports (8080/8081/8082) and shares the single
+# `makerflow_test` database; running test files in parallel (dart test's
+# default) collides on those ports. The suites are fast, so serial is cheap.
+concurrency: 1

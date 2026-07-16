@@ -2,10 +2,12 @@
 
 > Audience: a developer joining the **Flutter + Serverpod** rebuild of MakerFlow PM. By the end you can run the Dart stack locally, find anything in the monorepo, ship a small change end-to-end, and know where the work is sequenced.
 >
-> **Status (read first):** the Dart rebuild is a **walking skeleton** (Phase 0 + a Phase 1 vertical slice), not the shipping product — but it **compiles and tests pass** (Serverpod codegen + `dart analyze` + server unit tests; `flutter analyze` + widget test; `flutter build web`; first migration generated). The shipping product is the Python app at the repo root ([`ProductSpec.md`](ProductSpec.md)). This rebuild is **greenfield, new deployments only** — it does not replace the Python app for existing installs.
+> **Status (read first, updated 2026-07-14):** the Dart rebuild has grown well past the original walking skeleton. On disk and green: the **full parity data model** (37 models + 11 enums + 4 typed exceptions), **14 endpoint classes**, a **live serverpod_test integration suite** (19 green server tests: 2 unit + 17 live integration over real Postgres), the committed generated client wired into the app behind **live repositories**, **task CRUD + ops-feature create/edit from the UI**, soft-delete with a **Trash screen**, real sign-in with **persisted sessions**, a **production seed path**, and **verified DigitalOcean deploy assets**. The front end now wears the **monday.com-style interface** (UI-0…UI-3a shipped: Vibe design system w/ bundled Figtree/Poppins, grey-frame shell + boards sidebar, board chrome with view tabs + toolbar, and the grouped inline-editing **Main Table** as the default Tasks view — see [`makerflow_dart/UI_REDESIGN_PLAN.md`](makerflow_dart/UI_REDESIGN_PLAN.md) §8 for the tick-by-tick build log). It compiles green on Dart 3.12.2 / Flutter 3.44.2 / Serverpod 3.4.10 and all suites pass (server 24 · design 7 · app 26). The shipping product is still the Python app at the repo root ([`ProductSpec.md`](ProductSpec.md)); this rebuild is **greenfield, new deployments only**.
 
 - Plan & backlog: [`FLUTTER_REBUILD_PLAN.md`](FLUTTER_REBUILD_PLAN.md)
 - What's actually on disk: [`makerflow_dart/BUILD_STATUS.md`](makerflow_dart/BUILD_STATUS.md)
+- Roadmap / next milestones: [`makerflow_dart/NEXTSTEPS.md`](makerflow_dart/NEXTSTEPS.md)
+- Deploy runbook (DigitalOcean): [`makerflow_dart/DEPLOY.md`](makerflow_dart/DEPLOY.md)
 - Target architecture diagram: [`docs/diagrams/11-flutter-target-architecture.svg`](docs/diagrams/11-flutter-target-architecture.svg)
 - The product being matched (domain reference): [`ProductSpec.md`](ProductSpec.md)
 - License: [CC BY-SA 4.0](LICENSE)
@@ -51,7 +53,7 @@ Built by [Ian Roy](https://github.com/ianroy). The Python original was built wit
 
 The Python app is a server-rendered WSGI monolith — excellent for cheap self-hosting and accessibility, but web-only and single-language (Python + JS + CSS). The rebuild trades that for one Dart codebase across every platform plus native features.
 
-Four decisions are **locked** (see [`FLUTTER_REBUILD_PLAN.md` §1](FLUTTER_REBUILD_PLAN.md#1-decisions-of-record)):
+Four decisions are **locked** (see [`FLUTTER_REBUILD_PLAN.md` §1](FLUTTER_REBUILD_PLAN.md#1-decisions-of-record); a fifth, D5, requires the server to deploy on DigitalOcean):
 
 | # | Decision | Choice |
 |---|---|---|
@@ -59,17 +61,20 @@ Four decisions are **locked** (see [`FLUTTER_REBUILD_PLAN.md` §1](FLUTTER_REBUI
 | D2 | Platforms | **Web + iOS + Android + macOS + Windows + Linux** |
 | D3 | Migration | **Greenfield, new deployments only** (no data migration; Python app stays) |
 | D4 | Scope | **Full parity + native-only features** (offline, push, camera, biometric) |
+| D5 | Hosting | **Must deploy on DigitalOcean App Platform** (managed PG + Redis) |
 
 ## 3. Current status — what's built
 
-A walking skeleton that **compiles and passes its tests** (Dart 3.12.2 / Flutter 3.44.2 / Serverpod 3.4.10 — see [`makerflow_dart/BUILD_STATUS.md`](makerflow_dart/BUILD_STATUS.md)):
+Everything below **compiles and passes its tests** (Dart 3.12.2 / Flutter 3.44.2 / Serverpod 3.4.10; re-verified green 2026-07-11 — authoritative detail in [`makerflow_dart/BUILD_STATUS.md`](makerflow_dart/BUILD_STATUS.md)):
 
-- **Server:** `Organization` / `Membership` / `Project` / `Task` / `AuditLog` models + enums; the security contract (`RbacGuard.requireRole`, `AuthContext`, `Tenancy`, `Audit`); `TaskEndpoint` (CRUD + kanban move + optimistic version + soft-delete + audit), `ProjectEndpoint`, `HealthEndpoint`; `serverpod_auth` bootstrap; an RBAC unit test.
+- **Server:** the full parity data model — **37 models + 11 enums + 4 serializable exceptions** (`lib/src/models/`); **14 endpoint classes** (`task`, `project`, `health`, `org`, `collab`, `equipment`, `consumable`, `meeting`, `partnership`, `intake`, `onboarding`, `trash`, `realtime`, `sync`); the security contract (`RbacGuard.requireRole`, `AuthContext`, `Tenancy`, `Audit`) **proven by a live 17-case serverpod_test integration suite** (role matrix · audit/soft-delete/version/tenancy contract · feature read-paths) plus 2 unit tests; `serverpod_auth` sign-in proven end-to-end; a production `--seed` path.
 - **Design:** `makerflow_design` — the 12 color tokens (dark + light) ported from the Python `style.css`, `ThemeData`, `MfCard`, and a non-color `StatusBadge`.
-- **App:** `makerflow_flutter` — Riverpod + go_router, login, dashboard, and a **keyboard-accessible kanban** (drag **and** keyboard move + live-region announcements) running on an in-memory repository seam, plus a widget smoke test.
-- **Infra/docs:** `docker-compose` (Postgres + Redis), a CI workflow, the monorepo README + BUILD_STATUS.
+- **App:** `makerflow_flutter` — Riverpod + go_router; **real sign-in with persisted sessions** (`flutter_secure_storage` + a startup `restore()` gate); an app shell with a **live org switcher** (active org defaults to the caller's first membership); dashboard; tasks as a **keyboard-accessible kanban + a List view** (Board/List toggle) with accessible create/edit dialogs and soft-delete; projects, equipment, consumables, and meetings screens with **create and non-destructive (fetch-merge) edit**; a **Trash screen** (restore / confirm-gated purge). The UI talks to a repository seam with in-memory impls (default) and **live `Serverpod*Repository` impls** wrapping the generated client, selected by `--dart-define=MAKERFLOW_LIVE=true`. **10 widget/unit tests** across three files.
+- **Infra/docs:** `docker-compose` (Postgres + Redis), the committed first migration, seed tooling (`bin/seed.dart` + the production `--seed` flag), **verified DO deploy assets** (`Dockerfile`, `deploy/entrypoint.sh` with a `serve|seed` dispatch, `.do/app.yaml`) with the [`DEPLOY.md`](makerflow_dart/DEPLOY.md) runbook, smoke scripts under `tool/` (`client_smoke`, `auth_smoke`, `ui_writepath_smoke` — the last proves the full UI write path over auth → RBAC → HTTP → Postgres), plus README, BUILD_STATUS, and [`NEXTSTEPS.md`](makerflow_dart/NEXTSTEPS.md).
 
-**Not built:** everything from Phase 2 on — meetings, inventory, onboarding, reports, calendar sync, offline sync, push, camera, biometric, cross-platform a11y conformance, and the release pipelines. The **Flutter Web accessibility gate** (`fl-0-a11y-web-spike`) is unstarted and is the highest-priority next task.
+**Not built:** the offline client (Drift cache + mutation queue), push, camera, biometric, calendar-sync jobs, reports/admin/settings UI, partnerships/intake screens, agenda detail (items + convert-to-task), store compliance, and release pipelines. Meetings and inventory have endpoints and screens with create/edit; onboarding, realtime, and sync exist **server-side** with client work TODO.
+
+**The a11y web gate** (`fl-0-a11y-web-spike`): the fixture (`/spike` route) and report instrument are **built**; the empirical screen-reader/keyboard pass is human-gated and still open — it decides the web target's fate (see §13).
 
 ## 4. Architecture
 
@@ -77,9 +82,9 @@ A walking skeleton that **compiles and passes its tests** (Dart 3.12.2 / Flutter
   <img src="docs/diagrams/11-flutter-target-architecture.svg" alt="Flutter + Serverpod target architecture" width="100%"/>
 </p>
 
-- **Client (`makerflow_flutter`)** — one widget tree → six targets. Layered: `go_router` → screens/widgets → **Riverpod** state → repositories → generated client. Local **Drift** cache for offline; native plugins for biometric/camera/push.
-- **Transport (`makerflow_client`)** — Serverpod's generated, type-safe client. `Future<T>` over HTTP; `Stream<T>` over WebSocket for realtime + sync. Bearer-token auth (no cookies → **no CSRF**).
-- **Server (`makerflow_server`)** — Serverpod. Endpoint classes replace the Python app's 103 route branches; `serverpod_auth` replaces the sessions table + PBKDF2 + CSRF. A central RBAC + tenancy guard and an audit interceptor wrap business logic; `FutureCall`s run scheduled jobs (calendar sync, reminders); the ORM is generated from model YAML.
+- **Client (`makerflow_flutter`)** — one widget tree → six targets. Layered: `go_router` → screens/widgets → **Riverpod** state → repositories → generated client. Local **Drift** cache for offline (planned); native plugins for biometric/camera/push (planned).
+- **Transport (`makerflow_client`)** — Serverpod's generated, type-safe client (committed). `Future<T>` over HTTP; `Stream<T>` over WebSocket for realtime + sync. Bearer-token auth (no cookies → **no CSRF**).
+- **Server (`makerflow_server`)** — Serverpod. Endpoint classes replace the Python app's 103 route branches; `serverpod_auth` replaces the sessions table + PBKDF2 + CSRF. A central RBAC + tenancy guard and an audit interceptor wrap business logic; `FutureCall`s will run scheduled jobs (calendar sync, reminders); the ORM is generated from model YAML.
 - **Data** — PostgreSQL (primary), Redis (cache + pub/sub for streaming), object storage (DO Spaces / S3) for attachments.
 
 Full Python→Dart mapping: [`FLUTTER_REBUILD_PLAN.md` §3](FLUTTER_REBUILD_PLAN.md#3-stack-translation-python--dart). Endpoint map: [Appendix A](FLUTTER_REBUILD_PLAN.md#a-endpoint-map-103-routes--serverpod-endpoints).
@@ -89,18 +94,27 @@ Full Python→Dart mapping: [`FLUTTER_REBUILD_PLAN.md` §3](FLUTTER_REBUILD_PLAN
 ```
 makerflow_dart/                  # Melos workspace
 ├── melos.yaml
+├── .do/app.yaml                 # DO App Platform spec (deploys from `staging`)
+├── DEPLOY.md                    # DigitalOcean runbook
+├── NEXTSTEPS.md                 # milestone roadmap (M0–M6)
 ├── makerflow_server/            # Serverpod backend
-│   ├── config/                  # dev config + passwords.example.yaml
-│   ├── docker-compose.yaml      # Postgres + Redis
-│   ├── lib/server.dart          # bootstrap (serverpod_auth + /healthz)
-│   ├── lib/src/models/          # *.spy.yaml model defs + enums/
-│   ├── lib/src/business/        # rbac, auth_context, tenancy, audit
-│   ├── lib/src/endpoints/       # task, project, health (+ more per phase)
-│   └── lib/src/generated/       # serverpod generate output (do not hand-edit)
-├── makerflow_client/            # generated client (populated by codegen)
+│   ├── config/                  # development.yaml, test.yaml, generator.yaml, passwords.example.yaml
+│   ├── docker-compose.yaml      # Postgres :8090 + Redis :8091
+│   ├── Dockerfile               # multi-stage dart compile exe → debian-slim
+│   ├── deploy/entrypoint.sh     # renders config from env; `serve` | `seed`
+│   ├── migrations/              # committed migrations (applied = 56 tables)
+│   ├── bin/{main,seed}.dart
+│   ├── lib/server.dart          # bootstrap (serverpod_auth) + shared runSeed() (--seed flag)
+│   ├── lib/src/models/          # 37 *.spy.yaml + enums/ + exceptions/
+│   ├── lib/src/business/        # rbac, auth_context, tenancy, audit, pagination, channels, seed, observability
+│   ├── lib/src/endpoints/       # 14 endpoints (task…sync)
+│   ├── lib/src/generated/       # committed codegen output (regen on model changes)
+│   ├── test/                    # 2 unit + 17 live integration (test/integration/)
+│   └── tool/                    # client_smoke, auth_smoke, ui_writepath_smoke
+├── makerflow_client/            # generated client (committed; never hand-edit)
 ├── makerflow_design/            # tokens, ThemeData, MfCard, StatusBadge
 ├── makerflow_flutter/           # the app
-│   └── lib/src/{data,state,features,router.dart}
+│   └── lib/src/{data,state,features}/
 └── makerflow_shared/            # non-generated shared constants
 ```
 
@@ -111,8 +125,9 @@ makerflow_dart/                  # Melos workspace
 | The RBAC gate | `makerflow_server/lib/src/business/rbac.dart` |
 | The audit interceptor | `makerflow_server/lib/src/business/audit.dart` |
 | A screen | `makerflow_flutter/lib/src/features/<area>/` |
-| App state / providers | `makerflow_flutter/lib/src/state/providers.dart` |
-| The repository seam | `makerflow_flutter/lib/src/data/task_repository.dart` |
+| App state / providers / routes | `makerflow_flutter/lib/src/state/providers.dart` |
+| The repository seam | `makerflow_flutter/lib/src/data/*_repository.dart` (in-memory + `serverpod_*` live impls) |
+| Create/edit dialogs | `features/tasks/new_task_dialog.dart`, `features/inventory/feature_create_dialogs.dart` |
 | Design tokens / theme | `makerflow_design/lib/src/{tokens,theme}.dart` |
 
 ## 6. Run it locally
@@ -132,48 +147,48 @@ cd makerflow_server
 cp config/passwords.example.yaml config/passwords.yaml
 docker compose up -d                 # Postgres :8090, Redis :8091
 
-# code generation (produces makerflow_client + ORM the server imports)
-serverpod generate
-dart bin/main.dart --apply-migrations
+dart bin/main.dart --apply-migrations --role maintenance   # 56 tables
+dart bin/seed.dart                   # default org + owner (admin@makerflow.local) + demo data (idempotent)
 dart bin/main.dart                   # serves on :8080
 
-# run the app on any target
+# run the app on any target — LIVE against the local server:
 cd ../makerflow_flutter
-flutter run -d chrome                # or macos | windows | linux | <device>
+flutter run -d chrome --dart-define=MAKERFLOW_LIVE=true
+# …or omit the define to run on in-memory demo data (no server needed)
 ```
 
-**Codegen is not optional.** `makerflow_server/lib/src/generated/**` and `makerflow_client/lib/**` do not exist until `serverpod generate` runs — that's why the server's `generated/` imports and the `MembershipRole`/`TaskStatus` enums resolve only after codegen. The Flutter app, however, runs **before** codegen because the UI talks to a repository seam (`InMemoryTaskRepository`) — swap to the real client later (§10).
+**Generated code is committed.** `makerflow_server/lib/src/generated/**` and `makerflow_client/lib/**` are in the repo, so a fresh clone compiles immediately. Re-run `serverpod generate` whenever you change model YAML or endpoint signatures, and commit the regenerated output. The app runs in two modes: in-memory repositories by default (demo data, serverless), or the live `Serverpod*Repository` impls behind `--dart-define=MAKERFLOW_LIVE=true` (selection in `lib/src/state/providers.dart`).
 
 ## 7. Request lifecycle
 
 A typical authenticated call:
 
-1. **Client** invokes a generated method, e.g. `client.task.move(id, status, order)`. The auth token (from `flutter_secure_storage`) rides the request — no CSRF.
+1. **Client** invokes a generated method, e.g. `client.task.move(id, status, order)`. The serverpod_auth session key (persisted in `flutter_secure_storage`) rides the request as a Bearer header — no CSRF.
 2. **Serverpod** routes to `TaskEndpoint.move(session, …)`; `session.authenticated` resolves the signed-in user.
-3. **Guard** — `RbacGuard.requireRole(session, orgId, MembershipRole.staff)` loads the caller's `Membership`, confirms the role, and returns an `AuthContext`. Missing/under-privileged/cross-org → throws (surfaces as a typed error).
+3. **Guard** — `RbacGuard.requireRole(session, orgId, MembershipRole.staff)` loads the caller's `Membership`, confirms the role, and returns an `AuthContext`. Missing/under-privileged/cross-org → throws a typed exception.
 4. **Tenancy** — every query is scoped `organizationId == ctx.organizationId`; `Tenancy` guards block org reassignment.
-5. **Mutation + version** — `Task` carries a `version`; a stale `version` throws `MakerflowConflictException` (offline-safe).
+5. **Mutation + version** — `Task` carries a `version`; a stale `version` throws `MakerflowConflictException` (surfaced in the edit dialog; offline-safe).
 6. **Audit** — `Audit.record(...)` writes an append-only `AuditLog` row (actor, org, entity, action, payload hash).
 7. **Response** — the typed result returns to the client; **streaming** endpoints push deltas over WebSocket (activity feed, sync).
 
-Health: `/healthz` (cheap liveness, no DB) and `HealthEndpoint.ready` (DB round-trip readiness).
+Health: `GET /` (Serverpod's built-in liveness, no DB — the old `/healthz` route was dropped in the Serverpod 3.x move; a string route is tracked as `fl-0-health-route`, deferred) and `HealthEndpoint.ready` (DB round-trip readiness).
 
 ## 8. Data model
 
-Serverpod generates the Dart class + table + ORM from YAML. Conventions: `organizationId` on every org-scoped row; `createdAt/updatedAt/createdByUserInfoId`; `deletedAt/deletedByUserInfoId` for soft-delete; `version` + `clientUuid` on offline-writable rows; keyset/cursor pagination on every list.
+Serverpod generates the Dart class + table + ORM from YAML. Conventions: `organizationId` on every org-scoped row; `createdAt/updatedAt/createdByUserInfoId`; `deletedAt/deletedByUserInfoId` for soft-delete; `version` + `clientUuid` on offline-writable rows; keyset/cursor pagination on lists (the `Cursor`/`Page` helper exists; rollout across all lists is pending).
 
-The full 39-table → ~38-model + 3-new mapping (with soft-delete / offline / tenancy flags, ID strategy, polymorphic associations, and the enum inventory) is in [`FLUTTER_REBUILD_PLAN.md` §4](FLUTTER_REBUILD_PLAN.md#4-data-model-translation-39-tables--serverpod-models). The skeleton ships `organization`, `membership`, `project`, `task`, `audit_log` + three enums; the rest land per phase.
+The full 39-table mapping (with soft-delete / offline / tenancy flags, ID strategy, polymorphic associations, and the enum inventory) is in [`FLUTTER_REBUILD_PLAN.md` §4](FLUTTER_REBUILD_PLAN.md#4-data-model-translation-39-tables--serverpod-models). **All 37 parity models + 11 enums + 4 typed exceptions are authored and generated**, and the first migration is committed and verified against live Postgres (56 tables). Remaining schema work is incremental (new fields per feature), not new-entity buildout.
 
 ## 9. Auth, RBAC, tenancy, audit
 
-The Python app's security contract is reproduced exactly, not approximated ([`docs/SECURITY.md`](docs/SECURITY.md)).
+The Python app's security contract is reproduced exactly, not approximated ([`docs/SECURITY.md`](docs/SECURITY.md)) — and **proven by the live integration suite** (`test/integration/`).
 
-- **Auth:** `serverpod_auth` email/password (register/sign-in/reset). Tokens in secure storage; bearer transport.
-- **Roles:** `viewer < student < staff < manager < workspaceAdmin < owner`, as a `MembershipRole` enum with integer rank. Platform-level `superuser` is a serverpod_auth scope and the only path across orgs; `workspaceAdmin` is pinned to one org.
-- **Guard:** `RbacGuard.requireRole(session, orgId, minRole)` is called first in every mutating endpoint.
-- **Tenancy:** repository-level org scoping + `Tenancy` guards; cross-org access is impossible by construction.
-- **Audit:** `Audit.record` centralizes the append-only trail so no endpoint forgets it.
-- **Soft-delete:** `deletedAt` is set; default reads exclude it; a trash screen restores or purges.
+- **Auth:** `serverpod_auth` email/password. Session keys persist in secure storage (Keychain/Keystore native, Web Crypto + localStorage web); bearer transport. Register + password-reset flows are still TODO.
+- **Roles:** `viewer < student < staff < manager < workspaceAdmin < owner`, as a `MembershipRole` enum with integer rank. Platform-level `superuser` is a serverpod_auth scope and the only path across orgs; `workspaceAdmin` is pinned to one org (integration-tested).
+- **Guard:** `RbacGuard.requireRole(session, orgId, minRole)` is called first in every endpoint method.
+- **Tenancy:** repository-level org scoping + `Tenancy` guards; cross-org access rejected (integration-tested).
+- **Audit:** `Audit.record` centralizes the append-only trail (create → one org-scoped row with actor + payload hash; integration-tested).
+- **Soft-delete:** `deletedAt` is set; default reads exclude it; `TrashEndpoint` + the Trash screen restore or purge (integration- and widget-tested).
 
 Deep dives: auth/session ([Appendix B](FLUTTER_REBUILD_PLAN.md#b-auth--session-architecture)), security hardening ([Appendix G](FLUTTER_REBUILD_PLAN.md#g-security-hardening-threat-model-port)).
 
@@ -182,24 +197,24 @@ Deep dives: auth/session ([Appendix B](FLUTTER_REBUILD_PLAN.md#b-auth--session-a
 To add an entity (say `widget`) end-to-end:
 
 1. **Model** — add `makerflow_server/lib/src/models/widget.spy.yaml` with the tenancy + soft-delete + (if offline) `version`/`clientUuid` conventions; add any enum YAML.
-2. **Generate** — `serverpod generate` (creates the Dart class, table, ORM, and client types).
-3. **Migrate** — `serverpod create-migration` then `dart bin/main.dart --apply-migrations`.
+2. **Generate** — `serverpod generate` (creates the Dart class, table, ORM, and client types; commit the output).
+3. **Migrate** — `serverpod create-migration` then `dart bin/main.dart --apply-migrations --role maintenance`.
 4. **Endpoint** — `widget_endpoint.dart`: each method calls `RbacGuard.requireRole(...)` first, scopes queries by org, writes `Audit.record(...)` on mutations, soft-deletes (never hard-deletes), and bumps `version`. Paginate lists by cursor.
-5. **Repository** — define a `WidgetRepository` interface + a `Serverpod` impl wrapping the generated client (and an in-memory impl for tests/early UI). Register a Riverpod provider.
-6. **Screen** — build the feature under `makerflow_flutter/lib/src/features/widget/`, using `makerflow_design` widgets and the optimistic-update + rollback helper.
+5. **Repository** — define a `WidgetRepository` interface + an in-memory impl and a `ServerpodWidgetRepository` wrapping the generated client; select by `useLiveBackend` in `state/providers.dart`. **Edits are fetch-merge**: read the current row, `copyWith` only the edited fields, save — so thin view-models never wipe server-only fields.
+6. **Screen** — build the feature under `makerflow_flutter/lib/src/features/widget/`, using `makerflow_design` widgets, the shared accessible-dialog pattern (`feature_create_dialogs.dart` is the reference), and a FAB + tap-to-edit wiring.
 7. **Accessibility** — `Semantics` on custom widgets, visible focus, keyboard paths, non-color status cues, live-region announcements for async results. **Required** for any UI (the rebuild's WCAG 2.1 AA mandate).
-8. **Tests** — serverpod_test endpoint test + the role-matrix assertion + a widget test.
+8. **Tests** — a live `withServerpod` integration test (see `test/integration/feature_reads_test.dart` for the pattern) + a widget test of the dialog flow.
 9. **Plan** — record the work as an `fl-` task card in [`FLUTTER_REBUILD_PLAN.md` §13](FLUTTER_REBUILD_PLAN.md#13-phased-task-cards).
 
 ## 11. State management & navigation conventions
 
 Full detail in [Appendix E](FLUTTER_REBUILD_PLAN.md#e-state-management--navigation-conventions). In short:
 
-- **Riverpod:** `Provider` for singletons (repositories, client); `Future`/`StreamProvider` for reads; `AsyncNotifier` for mutations. No `setState` for server data.
-- **Repository seam:** UI talks to a repository interface, never the generated client directly — keeps the UI testable and runnable before codegen.
-- **Optimistic updates:** mutate local state immediately, call the endpoint, roll back + announce on error.
-- **Navigation:** `go_router` with a central auth redirect (in `providers.dart`) and deep/universal links so a push opens the right screen.
-- **Forms:** one reusable form-field widget bundles label + `autofillHints` + validator + accessible error wiring.
+- **Riverpod:** `Provider` for singletons (repositories, client); `FutureProvider` for org-scoped reads; invalidate after writes. No `setState` for server data.
+- **Repository seam:** UI talks to a repository interface, never the generated client directly — keeps the UI testable and serverless-runnable.
+- **Errors:** typed server exceptions surface in dialogs with a live-region announcement (the conflict case is user-visible: "modified by someone else — reload and retry").
+- **Navigation:** `go_router` with a central auth redirect (in `providers.dart`); the first frame is gated on session `restore()` so a persisted login doesn't flash the login screen.
+- **Forms:** the shared dialog pattern bundles labels, validation with identified errors, busy state, and announcements.
 
 ## 12. Design system
 
@@ -208,63 +223,94 @@ Full detail in [Appendix E](FLUTTER_REBUILD_PLAN.md#e-state-management--navigati
 - 12 color tokens (`bg`, `card`, `brand`, `brand2`, `focus`, `danger`, …) for dark + light, surfaced via `ThemeData` + a `ThemeExtension` (`MakerflowTheme.of(context).colors`).
 - Shape: 16 px card radius, 999 px pills, the signature flat `0 3px 0` offset shadow (`MfCard`).
 - `StatusBadge` carries a **non-color** cue (icon + label) — the single source for the status icon↔meaning map (WCAG 1.4.1).
-- Typography: Avenir Next (bundle the font in `makerflow_flutter/fonts/`).
+- Typography: Avenir Next (bundling the font in `makerflow_flutter/fonts/` is still TODO).
 
 Keep docs and app visually unified — the SVG diagrams use the same palette.
 
 ## 13. Accessibility
 
-The rebuild inherits a **WCAG 2.1 AA mandate** (ADA Title II + Section 504 — see the Python program in [`FEATUREROADMAP_workplan.md`](FEATUREROADMAP_workplan.md#accessibility-compliance-program-ada-title-ii--section-504)). The honest risk: **Flutter Web's accessibility lags server-rendered HTML.** Native targets are strong; the web target must be **proven** via the Phase-0 gate `fl-0-a11y-web-spike`, with a server-rendered web fallback kept in reserve. Per-criterion Flutter mechanisms are in [`FLUTTER_REBUILD_PLAN.md` §8](FLUTTER_REBUILD_PLAN.md#8-accessibility--the-hard-part).
+The rebuild inherits a **WCAG 2.1 AA mandate** (ADA Title II + Section 504 — see the Python program in [`FEATUREROADMAP_workplan.md`](FEATUREROADMAP_workplan.md#accessibility-compliance-program-ada-title-ii--section-504)). The honest risk: **Flutter Web's accessibility lags server-rendered HTML.** Native targets are strong; the web target must be **proven** via the Phase-0 gate `fl-0-a11y-web-spike`, with a server-rendered web fallback kept in reserve.
 
-What's already wired in the skeleton: keyboard-accessible kanban + live-region announcements + visible focus + non-color status badges. Treat any new UI as a11y-incomplete until it passes axe (web) and a manual screen-reader pass.
+Gate status: the AT test fixture (`/spike` route) and the WCAG report instrument are **built**; the empirical NVDA/VoiceOver/keyboard pass is **human-gated and open**. Wired throughout the app already: keyboard-accessible kanban (pick-up/move/drop plus `E`-to-edit and an SR "Edit" action), focus-trapped dialogs with labelled fields and identified errors, live-region announcements, visible focus, and non-color status badges. Treat any new UI as a11y-incomplete until it passes axe (web) and a manual screen-reader pass.
 
 ## 14. Offline & realtime
 
-Designed in [Appendix C](FLUTTER_REBUILD_PLAN.md#c-realtime--offline-sync-architecture); built in Phase 5. Realtime rides a Serverpod streaming endpoint over org-scoped Redis pub/sub channels. Offline: a Drift local cache, a mutation queue keyed by `clientUuid` + idempotency key, server deltas pulled by `SyncCursor`, and **version-based conflict resolution that never silently drops a write** (it surfaces conflicts). Ships read-only-offline first, then per-entity offline writes.
+Designed in [Appendix C](FLUTTER_REBUILD_PLAN.md#c-realtime--offline-sync-architecture); the **server side is scaffolded**: `SyncEndpoint` (keyset deltas + tombstones + `SyncCursor` ack), `RealtimeEndpoint` over org-scoped Redis pub/sub (`business/channels.dart`), and the `ChangeEvent`/`SyncCursor`/`TaskDeltaPage` models. The client half — Drift cache, mutation queue, reconciler, stream subscription — is Phase 5 work and not started. Version-based conflict resolution **never silently drops a write** (it surfaces conflicts; the dialog already shows the conflict case).
 
 ## 15. Testing
 
-The pyramid ([Appendix F](FLUTTER_REBUILD_PLAN.md#f-testing-strategy)): unit (business guards), serverpod_test integration against ephemeral Postgres, the **role-matrix test** (port of the Python security suite), Flutter widget + golden, `integration_test`/Patrol E2E, and axe-core on the web build. Run `melos run analyze` + `melos run test`; CI gates PRs.
+What exists today, all green (re-verified 2026-07-11):
+
+- **Server (19):** 2 unit tests (`rbac_rank_test.dart`) + a **17-case live serverpod_test integration suite** — rollback-per-test against a dedicated `makerflow_test` DB (`config/test.yaml`, Postgres :8090): `role_matrix_test.dart` (6 — RBAC allow/deny incl. cross-org + owner-grant), `contract_test.dart` (5 — audit rows, soft-delete→trash→restore, optimistic-concurrency conflict, tenant-scoped reads, NotFound on deleted), `feature_reads_test.dart` (6 — the read paths the live repositories call). `dart_test.yaml` tags them `integration` (`concurrency: 1`).
+- **App (10):** kanban board render / create / edit / delete / list-toggle (5), ops create/edit dialog flows (3), trash-coordination unit tests (2).
+- **Proof scripts** (`tool/`): `auth_smoke.dart` (sign-in → authed list) and `ui_writepath_smoke.dart` (the exact `client.task.*` calls the UI makes: create/update/move + stale-edit conflict, against a live server).
+
+Still TODO: golden tests, `integration_test`/Patrol E2E, axe-core on the web build — and **CI is currently inert** (see §18).
 
 ## 16. Debugging cookbook
 
 | Symptom | Likely cause | Look at |
 |---|---|---|
-| `generated/...` imports unresolved | codegen not run | `serverpod generate` from `makerflow_server` |
-| Enum/`Client` types missing in the app | client not generated / not depended on | run codegen; uncomment `makerflow_client` dep in the app pubspec |
+| `generated/...` imports unresolved | model/endpoint changed without regen (output is otherwise committed) | `serverpod generate` from `makerflow_server`; commit the output |
+| Live mode shows demo data | app built without the live flag | rebuild with `--dart-define=MAKERFLOW_LIVE=true` |
 | Server won't start | Postgres/Redis down or wrong passwords | `docker compose ps`; `config/passwords.yaml` vs compose |
-| `requireRole` always 403 | no `Membership` row for the user/org | seed data (`fl-0-seed-data`); check active org |
-| Conflict on save | stale `version` (offline reconcile) | reload entity; see Appendix C |
+| `requireRole` always 403 | no `Membership` row for the user/org | seed: `dart bin/seed.dart` locally, or `entrypoint.sh seed` in production; check the active org in the switcher |
+| Conflict on save | stale `version` (concurrent edit) | reload the entity; the dialog surfaces this by design |
+| Auth header 400 "Invalid header format" | raw `keyId:key` sent without wrapping | `wrapAsBearerAuthHeaderValue` (see `MakerflowKeyManager`) |
+| Integration tests: "Database is not enabled" or missing endpoints | stale generated test tools | `server_test_tools_path` must be set in `config/generator.yaml`; re-run `serverpod generate` |
 | Web a11y failures | Flutter Web semantics gaps | the `fl-0-a11y-web-spike` findings; consider fallback |
 | Migrations out of sync | model YAML changed without migration | `serverpod create-migration` then `--apply-migrations` |
 
 ## 17. Deployment
 
-Six client targets + a server image. Details in [`FLUTTER_REBUILD_PLAN.md` §11](FLUTTER_REBUILD_PLAN.md#11-infrastructure--deployment) and [Appendix K](FLUTTER_REBUILD_PLAN.md#k-platform--store-compliance); GitHub specifics in the [README](README.md#deploying-the-dart-rebuild-on-github).
+Six client targets + a server image. Details in [`FLUTTER_REBUILD_PLAN.md` §11](FLUTTER_REBUILD_PLAN.md#11-infrastructure--deployment) and [Appendix K](FLUTTER_REBUILD_PLAN.md#k-platform--store-compliance).
 
-- **Server** → Docker image (server + Postgres + Redis) on DO / any container host; or GHCR + a deploy job.
-- **Web** → `flutter build web` → GitHub Pages or a CDN.
-- **iOS/Android** → TestFlight / Play internal → stores (signing in CI).
-- **macOS/Windows/Linux** → notarized `.dmg` / signed MSIX / Flatpak-Snap-AppImage → GitHub Releases.
+- **Server** → **DigitalOcean App Platform (D5)**: builds [`makerflow_server/Dockerfile`](makerflow_dart/makerflow_server/Dockerfile) on push to the **`staging`** branch via [`makerflow_dart/.do/app.yaml`](makerflow_dart/.do/app.yaml), with DO Managed PostgreSQL + Redis. [`deploy/entrypoint.sh`](makerflow_dart/makerflow_server/deploy/entrypoint.sh) renders config from the managed-DB bindings, applies migrations, and serves — or seeds (`entrypoint.sh seed` ≡ `/app/server --mode production --seed`) so the managed DB gets its first org + owner post-deploy. All assets validated (`dart compile exe` green, spec + entrypoint checked); **only the live `doctl apps create` remains** (needs an owner token). Full runbook: [`makerflow_dart/DEPLOY.md`](makerflow_dart/DEPLOY.md).
+- **Web** → `flutter build web --release --dart-define=MAKERFLOW_LIVE=true --dart-define=MAKERFLOW_API=https://<app>.ondigitalocean.app/` → GitHub Pages or a CDN.
+- **iOS/Android** → TestFlight / Play internal → stores (signing in CI). Not started.
+- **macOS/Windows/Linux** → notarized `.dmg` / signed MSIX / Flatpak-Snap-AppImage → GitHub Releases. Not started.
 
 Two infra profiles (self-host single-node vs managed) with rough cost bands: [Appendix L](FLUTTER_REBUILD_PLAN.md#l-cost-infra-sizing--effort).
 
 ## 18. Known gaps and not-yet-built
 
-- The skeleton **has not been compiled** (authored without a toolchain) — expect to resolve analyzer findings on first `melos bootstrap` + `serverpod generate`.
-- Only ~5 of ~38 models, 3 of ~19 endpoint classes, and 3 screens exist.
-- No codegen output committed; the app runs on an in-memory repository until the client is generated and wired.
-- The Flutter Web accessibility question is **open** (the gate).
-- No release pipelines, no native features, no offline/realtime yet.
+Everything committed compiles green and is test-covered; the gaps are **unbuilt features, not broken builds**:
+
+- **The live DO deploy has not been executed** — needs an owner `doctl` token; everything else is copy-paste ([`DEPLOY.md`](makerflow_dart/DEPLOY.md)).
+- **CI is inert:** [`dart-ci.yml`](makerflow_dart/.github/workflows/dart-ci.yml) sits at `makerflow_dart/.github/workflows/`, but **GitHub Actions only reads root-level `.github/workflows/`** — it has never run. Move it to the repo root and update it for the current layout (integration tag, PG service, test-tools path).
+- **The a11y web gate awaits a human AT pass** (NVDA/VoiceOver/keyboard on `/spike`) — it decides the web target.
+- No register/password-reset flows; a restored session key is trusted until the first authed call fails.
+- No `getById` endpoints — fetch-merge edits do a full `list` round-trip; clearing an optional field via edit is a no-op (`copyWith` limitation).
+- Equipment `space` shows null until a Space-name join exists; cursor pagination isn't rolled out across lists yet.
+- No partnerships/intake/onboarding/reports/admin/settings screens; no agenda detail (items, convert-to-task); no task calendar view (`dueAt` plumbing pending).
+- Offline/realtime are **server-side only** (endpoints + models exist; the client Drift cache, mutation queue, and stream wiring do not).
+- No push, camera, biometric, store compliance, or release pipelines; the Avenir Next font isn't bundled yet.
 
 Authoritative, always-current status: [`makerflow_dart/BUILD_STATUS.md`](makerflow_dart/BUILD_STATUS.md).
 
 ## 19. Where to go next
 
-1. Install the toolchain and bring the skeleton up (§6); fix analyzer findings.
-2. Run the accessibility gate `fl-0-a11y-web-spike` — it decides the web target's fate.
-3. Finish `fl-0-auth-rbac-tenancy` (real sign-in, org switch, role-matrix tests).
-4. Swap the kanban onto the generated client (`ServerpodTaskRepository`).
-5. Open [`FLUTTER_REBUILD_PLAN.md`](FLUTTER_REBUILD_PLAN.md), pick the top `[ ] ready` card, and run the execution prompt in [§0.3](FLUTTER_REBUILD_PLAN.md#03-the-execution-prompt-build-the-next-task).
+The near-term milestone roadmap (with effort + blockers) lives in [`makerflow_dart/NEXTSTEPS.md`](makerflow_dart/NEXTSTEPS.md). As of 2026-07-11:
+
+**Track A — make it a working product (finish M0/M1):**
+1. **Go live (M0):** run the DO deploy per [`DEPLOY.md`](makerflow_dart/DEPLOY.md) (owner: `doctl` token) → `entrypoint.sh seed` → build the web client against the live API. *Everything else on this list is testable against a real URL afterward.*
+2. **Resume the build at M1.4 — project CRUD:** add `ProjectEndpoint.update`/`softDelete` (+ integration test + `serverpod generate`), project create/edit UI, and a project filter on the task views. Then **M1.5 — detail screens:** agenda detail (items + `convertItemToTask`), intake (+ `convertToProject`), partnerships. Then **M1.3b** — the task calendar view (`dueAt` plumbing + date picker).
+3. **Fix CI** (move `dart-ci.yml` to the repo root, update for the current layout, gate the 19 + 10 tests) and **run the a11y gate** (human AT pass on `/spike`).
+
+**Track B — expand it to run a makerspace team** (ranked by operational value ÷ effort; from the 2026-07-11 capability review):
+1. **Low-stock alerts + reorder queue** (S) — dashboard "needs reorder" panel, quick stock adjust, one-tap reorder task; builds on the derived `ConsumableStatus`.
+2. **Onboarding / training checklist UI** (S) — the server side (`OnboardingEndpoint`, templates/assignments) is done; pure client work; becomes the substrate for certifications.
+3. **Comments, watchers + activity stream UI** (S) — `CollabEndpoint` is done; mounts in the task edit dialog; makes the kanban multi-player.
+4. **Equipment maintenance scheduling + service log** (M) — act on `nextMaintenanceAt` (FutureCall sweep → auto-task), per-asset service history.
+5. **Member certifications / badging with equipment gating** (M) — put teeth behind `certificationRequired`; grant via completed onboarding checklists.
+6. **Intake + partnerships screens** (S) — endpoints exist incl. `convertToProject`; copies the equipment screen pattern.
+7. **Incident / safety log** (M) — new org-scoped entity + corrective-action tasks; university EHS need.
+8. **Equipment reservation / booking** (L) — slot booking on `CalendarEvent`, cert-gated, conflict-rejected via the version pattern.
+9. **Member check-in + volunteer hours** (M) — kiosk check-in screen + hour rollups for institutional reporting.
+10. **Reports & insights dashboard** (M) — utilization/uptime/burn/training rollups; consumes everything above; accessible charts (non-color encodings + data tables).
+
+Then the native edge (offline client, push, camera, biometric — NEXTSTEPS M4) and release readiness (M6).
+
+**To resume cold:** read [`makerflow_dart/BUILD_STATUS.md`](makerflow_dart/BUILD_STATUS.md), then [`FLUTTER_REBUILD_PLAN.md` §15](FLUTTER_REBUILD_PLAN.md#15-checkpoint-log) (checkpoint log) and §13 statuses, and pick up the top item above — or run the execution prompt in [§0.3](FLUTTER_REBUILD_PLAN.md#03-the-execution-prompt-build-the-next-task).
 
 Welcome aboard.

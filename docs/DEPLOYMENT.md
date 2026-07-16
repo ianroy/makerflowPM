@@ -16,7 +16,6 @@ Primary site: [https://makerflow.org](https://makerflow.org)
 - Flask: `>=3.0.0`
 - Werkzeug: `>=3.0.0`
 - psycopg[binary]: `>=3.1.18`
-- pypdf: `>=4.3.1`
 
 ## 3) Local Test Environment Setup
 

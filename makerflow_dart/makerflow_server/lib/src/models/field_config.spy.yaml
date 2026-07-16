@@ -6,8 +6,9 @@ fields:
   entityType: String
   key: String
   label: String
-  fieldType: String         # text | number | date | select | bool
-  optionsJson: String?       # for select
+  fieldType: String         # FieldConfigEndpoint.allowedFieldTypes (tier-1 set)
+  optionsJson: String?       # select/multiSelect/label: JSON array of "value"
+                             # or {"value": ..., "color": "#RRGGBB"} entries
   required: bool, default=false
   sortOrder: double, default=0
   createdAt: DateTime

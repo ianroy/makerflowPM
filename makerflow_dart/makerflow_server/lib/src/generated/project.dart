@@ -26,12 +26,13 @@ abstract class Project
     this.ownerUserInfoId,
     this.teamId,
     this.spaceId,
+    int? version,
     required this.createdAt,
     required this.updatedAt,
     this.createdByUserInfoId,
     this.deletedAt,
     this.deletedByUserInfoId,
-  });
+  }) : version = version ?? 1;
 
   factory Project({
     int? id,
@@ -43,6 +44,7 @@ abstract class Project
     int? ownerUserInfoId,
     int? teamId,
     int? spaceId,
+    int? version,
     required DateTime createdAt,
     required DateTime updatedAt,
     int? createdByUserInfoId,
@@ -63,6 +65,7 @@ abstract class Project
       ownerUserInfoId: jsonSerialization['ownerUserInfoId'] as int?,
       teamId: jsonSerialization['teamId'] as int?,
       spaceId: jsonSerialization['spaceId'] as int?,
+      version: jsonSerialization['version'] as int?,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -100,6 +103,8 @@ abstract class Project
 
   int? spaceId;
 
+  int version;
+
   DateTime createdAt;
 
   DateTime updatedAt;
@@ -126,6 +131,7 @@ abstract class Project
     int? ownerUserInfoId,
     int? teamId,
     int? spaceId,
+    int? version,
     DateTime? createdAt,
     DateTime? updatedAt,
     int? createdByUserInfoId,
@@ -145,6 +151,7 @@ abstract class Project
       if (ownerUserInfoId != null) 'ownerUserInfoId': ownerUserInfoId,
       if (teamId != null) 'teamId': teamId,
       if (spaceId != null) 'spaceId': spaceId,
+      'version': version,
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
       if (createdByUserInfoId != null)
@@ -168,6 +175,7 @@ abstract class Project
       if (ownerUserInfoId != null) 'ownerUserInfoId': ownerUserInfoId,
       if (teamId != null) 'teamId': teamId,
       if (spaceId != null) 'spaceId': spaceId,
+      'version': version,
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
       if (createdByUserInfoId != null)
@@ -221,6 +229,7 @@ class _ProjectImpl extends Project {
     int? ownerUserInfoId,
     int? teamId,
     int? spaceId,
+    int? version,
     required DateTime createdAt,
     required DateTime updatedAt,
     int? createdByUserInfoId,
@@ -236,6 +245,7 @@ class _ProjectImpl extends Project {
          ownerUserInfoId: ownerUserInfoId,
          teamId: teamId,
          spaceId: spaceId,
+         version: version,
          createdAt: createdAt,
          updatedAt: updatedAt,
          createdByUserInfoId: createdByUserInfoId,
@@ -257,6 +267,7 @@ class _ProjectImpl extends Project {
     Object? ownerUserInfoId = _Undefined,
     Object? teamId = _Undefined,
     Object? spaceId = _Undefined,
+    int? version,
     DateTime? createdAt,
     DateTime? updatedAt,
     Object? createdByUserInfoId = _Undefined,
@@ -275,6 +286,7 @@ class _ProjectImpl extends Project {
           : this.ownerUserInfoId,
       teamId: teamId is int? ? teamId : this.teamId,
       spaceId: spaceId is int? ? spaceId : this.spaceId,
+      version: version ?? this.version,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       createdByUserInfoId: createdByUserInfoId is int?
@@ -330,6 +342,11 @@ class ProjectUpdateTable extends _i1.UpdateTable<ProjectTable> {
 
   _i1.ColumnValue<int, int> spaceId(int? value) => _i1.ColumnValue(
     table.spaceId,
+    value,
+  );
+
+  _i1.ColumnValue<int, int> version(int value) => _i1.ColumnValue(
+    table.version,
     value,
   );
 
@@ -398,6 +415,11 @@ class ProjectTable extends _i1.Table<int?> {
       'spaceId',
       this,
     );
+    version = _i1.ColumnInt(
+      'version',
+      this,
+      hasDefault: true,
+    );
     createdAt = _i1.ColumnDateTime(
       'createdAt',
       this,
@@ -438,6 +460,8 @@ class ProjectTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt spaceId;
 
+  late final _i1.ColumnInt version;
+
   late final _i1.ColumnDateTime createdAt;
 
   late final _i1.ColumnDateTime updatedAt;
@@ -459,6 +483,7 @@ class ProjectTable extends _i1.Table<int?> {
     ownerUserInfoId,
     teamId,
     spaceId,
+    version,
     createdAt,
     updatedAt,
     createdByUserInfoId,

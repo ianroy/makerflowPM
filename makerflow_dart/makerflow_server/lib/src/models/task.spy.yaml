@@ -17,6 +17,7 @@ fields:
   spaceId: int?
   teamId: int?
   sortOrder: double, default=0     # within-column ordering for kanban
+  customFieldsJson: String?        # D6: JSON object keyed by FieldConfig.key
   version: int, default=1          # bumped on every update; offline reconcile
   createdAt: DateTime
   updatedAt: DateTime

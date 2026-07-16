@@ -21,12 +21,18 @@ abstract class CustomView implements _i1.SerializableModel {
     required this.ownerUserInfoId,
     required this.name,
     required this.entityType,
+    String? viewType,
     required this.filtersJson,
     required this.columnsJson,
     bool? isShared,
+    int? version,
     required this.createdAt,
     required this.updatedAt,
-  }) : isShared = isShared ?? false;
+    this.deletedAt,
+    this.deletedByUserInfoId,
+  }) : viewType = viewType ?? 'table',
+       isShared = isShared ?? false,
+       version = version ?? 1;
 
   factory CustomView({
     int? id,
@@ -34,11 +40,15 @@ abstract class CustomView implements _i1.SerializableModel {
     required int ownerUserInfoId,
     required String name,
     required String entityType,
+    String? viewType,
     required String filtersJson,
     required String columnsJson,
     bool? isShared,
+    int? version,
     required DateTime createdAt,
     required DateTime updatedAt,
+    DateTime? deletedAt,
+    int? deletedByUserInfoId,
   }) = _CustomViewImpl;
 
   factory CustomView.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -48,17 +58,23 @@ abstract class CustomView implements _i1.SerializableModel {
       ownerUserInfoId: jsonSerialization['ownerUserInfoId'] as int,
       name: jsonSerialization['name'] as String,
       entityType: jsonSerialization['entityType'] as String,
+      viewType: jsonSerialization['viewType'] as String?,
       filtersJson: jsonSerialization['filtersJson'] as String,
       columnsJson: jsonSerialization['columnsJson'] as String,
       isShared: jsonSerialization['isShared'] == null
           ? null
           : _i1.BoolJsonExtension.fromJson(jsonSerialization['isShared']),
+      version: jsonSerialization['version'] as int?,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
       updatedAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['updatedAt'],
       ),
+      deletedAt: jsonSerialization['deletedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['deletedAt']),
+      deletedByUserInfoId: jsonSerialization['deletedByUserInfoId'] as int?,
     );
   }
 
@@ -75,15 +91,23 @@ abstract class CustomView implements _i1.SerializableModel {
 
   String entityType;
 
+  String viewType;
+
   String filtersJson;
 
   String columnsJson;
 
   bool isShared;
 
+  int version;
+
   DateTime createdAt;
 
   DateTime updatedAt;
+
+  DateTime? deletedAt;
+
+  int? deletedByUserInfoId;
 
   /// Returns a shallow copy of this [CustomView]
   /// with some or all fields replaced by the given arguments.
@@ -94,11 +118,15 @@ abstract class CustomView implements _i1.SerializableModel {
     int? ownerUserInfoId,
     String? name,
     String? entityType,
+    String? viewType,
     String? filtersJson,
     String? columnsJson,
     bool? isShared,
+    int? version,
     DateTime? createdAt,
     DateTime? updatedAt,
+    DateTime? deletedAt,
+    int? deletedByUserInfoId,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -109,11 +137,16 @@ abstract class CustomView implements _i1.SerializableModel {
       'ownerUserInfoId': ownerUserInfoId,
       'name': name,
       'entityType': entityType,
+      'viewType': viewType,
       'filtersJson': filtersJson,
       'columnsJson': columnsJson,
       'isShared': isShared,
+      'version': version,
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
+      if (deletedAt != null) 'deletedAt': deletedAt?.toJson(),
+      if (deletedByUserInfoId != null)
+        'deletedByUserInfoId': deletedByUserInfoId,
     };
   }
 
@@ -132,22 +165,30 @@ class _CustomViewImpl extends CustomView {
     required int ownerUserInfoId,
     required String name,
     required String entityType,
+    String? viewType,
     required String filtersJson,
     required String columnsJson,
     bool? isShared,
+    int? version,
     required DateTime createdAt,
     required DateTime updatedAt,
+    DateTime? deletedAt,
+    int? deletedByUserInfoId,
   }) : super._(
          id: id,
          organizationId: organizationId,
          ownerUserInfoId: ownerUserInfoId,
          name: name,
          entityType: entityType,
+         viewType: viewType,
          filtersJson: filtersJson,
          columnsJson: columnsJson,
          isShared: isShared,
+         version: version,
          createdAt: createdAt,
          updatedAt: updatedAt,
+         deletedAt: deletedAt,
+         deletedByUserInfoId: deletedByUserInfoId,
        );
 
   /// Returns a shallow copy of this [CustomView]
@@ -160,11 +201,15 @@ class _CustomViewImpl extends CustomView {
     int? ownerUserInfoId,
     String? name,
     String? entityType,
+    String? viewType,
     String? filtersJson,
     String? columnsJson,
     bool? isShared,
+    int? version,
     DateTime? createdAt,
     DateTime? updatedAt,
+    Object? deletedAt = _Undefined,
+    Object? deletedByUserInfoId = _Undefined,
   }) {
     return CustomView(
       id: id is int? ? id : this.id,
@@ -172,11 +217,17 @@ class _CustomViewImpl extends CustomView {
       ownerUserInfoId: ownerUserInfoId ?? this.ownerUserInfoId,
       name: name ?? this.name,
       entityType: entityType ?? this.entityType,
+      viewType: viewType ?? this.viewType,
       filtersJson: filtersJson ?? this.filtersJson,
       columnsJson: columnsJson ?? this.columnsJson,
       isShared: isShared ?? this.isShared,
+      version: version ?? this.version,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt is DateTime? ? deletedAt : this.deletedAt,
+      deletedByUserInfoId: deletedByUserInfoId is int?
+          ? deletedByUserInfoId
+          : this.deletedByUserInfoId,
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:makerflow_design/makerflow_design.dart';
 
 import '../../state/providers.dart';
+import '../inventory/feature_create_dialogs.dart';
 import '../shell/app_shell.dart';
 
 class EquipmentScreen extends ConsumerWidget {
@@ -13,23 +14,43 @@ class EquipmentScreen extends ConsumerWidget {
     return AppShell(
       routePath: '/equipment',
       title: 'Equipment',
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final created = await showNewEquipmentDialog(context);
+          if (created != null) ref.invalidate(equipmentProvider);
+        },
+        tooltip: 'New equipment',
+        icon: const Icon(Icons.add),
+        label: const Text('New equipment'),
+      ),
       child: AsyncList(
         value: ref.watch(equipmentProvider),
-        itemBuilder: (context, e) => MfCard(
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(e.name, style: TextStyle(color: c.text, fontWeight: FontWeight.w700)),
-                    if (e.space != null)
-                      Text(e.space!, style: TextStyle(color: c.muted, fontSize: 12)),
-                  ],
-                ),
+        itemBuilder: (context, e) => Semantics(
+          button: true,
+          label: 'Edit ${e.name}',
+          child: InkWell(
+            onTap: () async {
+              final updated = await showEditEquipmentDialog(context, e);
+              if (updated != null) ref.invalidate(equipmentProvider);
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: MfCard(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(e.name, style: TextStyle(color: c.text, fontWeight: FontWeight.w700)),
+                        if (e.space != null)
+                          Text(e.space!, style: TextStyle(color: c.muted, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                  StatusBadge(status: _statusToken(e.status)),
+                ],
               ),
-              StatusBadge(status: _statusToken(e.status)),
-            ],
+            ),
           ),
         ),
       ),

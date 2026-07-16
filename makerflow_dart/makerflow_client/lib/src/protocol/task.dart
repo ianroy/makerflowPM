@@ -33,6 +33,7 @@ abstract class Task implements _i1.SerializableModel {
     this.spaceId,
     this.teamId,
     double? sortOrder,
+    this.customFieldsJson,
     int? version,
     required this.createdAt,
     required this.updatedAt,
@@ -58,6 +59,7 @@ abstract class Task implements _i1.SerializableModel {
     int? spaceId,
     int? teamId,
     double? sortOrder,
+    String? customFieldsJson,
     int? version,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -87,6 +89,7 @@ abstract class Task implements _i1.SerializableModel {
       spaceId: jsonSerialization['spaceId'] as int?,
       teamId: jsonSerialization['teamId'] as int?,
       sortOrder: (jsonSerialization['sortOrder'] as num?)?.toDouble(),
+      customFieldsJson: jsonSerialization['customFieldsJson'] as String?,
       version: jsonSerialization['version'] as int?,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
@@ -135,6 +138,8 @@ abstract class Task implements _i1.SerializableModel {
 
   double sortOrder;
 
+  String? customFieldsJson;
+
   int version;
 
   DateTime createdAt;
@@ -166,6 +171,7 @@ abstract class Task implements _i1.SerializableModel {
     int? spaceId,
     int? teamId,
     double? sortOrder,
+    String? customFieldsJson,
     int? version,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -192,6 +198,7 @@ abstract class Task implements _i1.SerializableModel {
       if (spaceId != null) 'spaceId': spaceId,
       if (teamId != null) 'teamId': teamId,
       'sortOrder': sortOrder,
+      if (customFieldsJson != null) 'customFieldsJson': customFieldsJson,
       'version': version,
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
@@ -228,6 +235,7 @@ class _TaskImpl extends Task {
     int? spaceId,
     int? teamId,
     double? sortOrder,
+    String? customFieldsJson,
     int? version,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -250,6 +258,7 @@ class _TaskImpl extends Task {
          spaceId: spaceId,
          teamId: teamId,
          sortOrder: sortOrder,
+         customFieldsJson: customFieldsJson,
          version: version,
          createdAt: createdAt,
          updatedAt: updatedAt,
@@ -278,6 +287,7 @@ class _TaskImpl extends Task {
     Object? spaceId = _Undefined,
     Object? teamId = _Undefined,
     double? sortOrder,
+    Object? customFieldsJson = _Undefined,
     int? version,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -307,6 +317,9 @@ class _TaskImpl extends Task {
       spaceId: spaceId is int? ? spaceId : this.spaceId,
       teamId: teamId is int? ? teamId : this.teamId,
       sortOrder: sortOrder ?? this.sortOrder,
+      customFieldsJson: customFieldsJson is String?
+          ? customFieldsJson
+          : this.customFieldsJson,
       version: version ?? this.version,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

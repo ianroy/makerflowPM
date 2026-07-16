@@ -1,9 +1,12 @@
 # Local dev infrastructure for the Serverpod server: PostgreSQL + Redis.
 # `docker compose up -d` then run the server with `dart bin/main.dart`.
 # Credentials here are DEV ONLY and mirror config/passwords.yaml — never use in production.
+# docker-init/ also creates the `makerflow_test` DB (used by the serverpod_test
+# integration suite via config/test.yaml). Init scripts only run on a FRESH
+# volume — for an existing one: `docker compose exec postgres createdb -U postgres makerflow_test`.
 services:
   postgres:
-    image: postgres:16
+    image: postgres:17
     ports:
       - "8090:5432"
     environment:
@@ -12,6 +15,7 @@ services:
       POSTGRES_PASSWORD: "makerflow_dev_password"
     volumes:
       - makerflow_pg:/var/lib/postgresql/data
+      - ./docker-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s

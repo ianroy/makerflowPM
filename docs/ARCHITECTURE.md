@@ -18,7 +18,6 @@ Repository: [https://github.com/ianroy/makerflowPM](https://github.com/ianroy/ma
 - Flask `>=3.0.0`
 - Werkzeug `>=3.0.0`
 - psycopg[binary] `>=3.1.18`
-- pypdf `>=4.3.1`
 
 ## Request Lifecycle
 

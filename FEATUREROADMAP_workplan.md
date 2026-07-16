@@ -1,5 +1,7 @@
 # FEATUREROADMAP_workplan.md
 
+> **Status (2026-07): the Python app is feature-frozen** — only security and compliance fixes land here. Active development is the Dart rebuild — including the 2026-07-14 customization + enterprise program (FLUTTER_REBUILD_PLAN.md §13 Phases 8–9); see [FLUTTER_REBUILD_PLAN.md](FLUTTER_REBUILD_PLAN.md) and [makerflow_dart/NEXTSTEPS.md](makerflow_dart/NEXTSTEPS.md). This file remains the queue for Python maintenance work only.
+
 > A **resumable, pause-able, context-window-aware** roadmap for MakerFlow PM.
 > Designed so an LLM agent (or a human) can pick this file up at any time, regenerate or execute, and never lose track of state. All state lives in this file; no external orchestrator is required.
 
@@ -291,7 +293,7 @@ This index is **human-maintained-by-default** but the regeneration and execution
 | [P1-pytest-scaffold](#p1-pytest-scaffold--introduce-pytest-with-shared-db-fixture) | Introduce pytest with shared DB fixture | `[ ] ready` | P1 | M | P0-roadmap-bootstrap | P2-server-modularization, P1-api-openapi-spec |
 | [P1-release-tag-flow](#p1-release-tag-flow--tag-versioned-releases-from-main) | Tag versioned releases from `main` | `[ ] backlog` | P1 | S | P1-ci-smoke-and-security | — |
 | [P1-api-openapi-spec](#p1-api-openapi-spec--openapi-spec-for-api-endpoints) | OpenAPI spec for `/api/*` endpoints | `[ ] backlog` | P1 | M | P1-pytest-scaffold | P2-api-key-auth, P3-public-api-docs |
-| [P1-observability-baseline](#p1-observability-baseline--structured-logs--request-ids) | Structured JSON logs + request_id | `[ ] ready` | P1 | S | P0-roadmap-bootstrap | P2-error-tracking |
+| [P1-observability-baseline](#p1-observability-baseline--structured-json-logs--request_id) | Structured JSON logs + request_id | `[ ] ready` | P1 | S | P0-roadmap-bootstrap | P2-error-tracking |
 | [P1-hard-purge-policy](#p1-hard-purge-policy--gdpr-grade-hard-purge-workflow) | GDPR-grade hard purge workflow | `[ ] backlog` | P1 | M | P0-roadmap-bootstrap | P2-data-retention-policies |
 | [P1-2fa-totp](#p1-2fa-totp--per-user-totp-second-factor) | Per-user TOTP second factor | `[ ] backlog` | P1 | M | P0-roadmap-bootstrap | P2-oidc-sso |
 | [P2-server-modularization](#p2-server-modularization--split-appserverpy-into-focused-modules) | Split `app/server.py` into focused modules | `[ ] backlog` | P2 | L | P1-pytest-scaffold | P2-blueprint-routes |
@@ -301,7 +303,7 @@ This index is **human-maintained-by-default** but the regeneration and execution
 | [P2-error-tracking](#p2-error-tracking--sentry-style-error-aggregation) | Sentry-style error aggregation | `[ ] backlog` | P2 | M | P1-observability-baseline | — |
 | [P2-fulltext-search](#p2-fulltext-search--unified-search-across-tasksprojectsmeetings) | Unified search across tasks/projects/meetings | `[ ] backlog` | P2 | M | — | — |
 | [P2-bulk-operations](#p2-bulk-operations--multi-select-bulk-edit-on-tasks) | Multi-select bulk edit on tasks | `[ ] backlog` | P2 | M | — | — |
-| [P2-attachments-objectstore](#p2-attachments-objectstore--attachments-to-spaces3) | Attachments to Spaces/S3 | `[ ] backlog` | P2 | L | — | — |
+| [P2-attachments-objectstore](#p2-attachments-objectstore--attachments-to-spacess3) | Attachments to Spaces/S3 | `[ ] backlog` | P2 | L | — | — |
 | [P2-data-retention-policies](#p2-data-retention-policies--per-org-retention-windows) | Per-org retention windows | `[ ] backlog` | P2 | M | P1-hard-purge-policy | — |
 | [P3-mobile-layout-pass](#p3-mobile-layout-pass--responsive-pass-on-kanban--modals) | Responsive pass on kanban + modals | `[ ] backlog` | P3 | M | — | — |
 | [P3-webhooks](#p3-webhooks--outbound-webhooks-for-mutations) | Outbound webhooks for mutations | `[ ] backlog` | P3 | M | P2-api-key-auth | — |
@@ -324,7 +326,7 @@ A dedicated track. See [§6 — Accessibility compliance program](#accessibility
 | [P1-a11y-forms-labels-errors](#p1-a11y-forms-labels-errors--programmatic-labels-error-identification-autocomplete) | Programmatic labels, error identification, autocomplete | `[ ] backlog` | P1 | M | P0-a11y-policy-baseline | — |
 | [P1-a11y-landmarks-headings](#p1-a11y-landmarks-headings--landmarks-and-heading-hierarchy-audit) | Landmarks + heading hierarchy audit | `[ ] backlog` | P1 | M | P0-a11y-policy-baseline | — |
 | [P1-a11y-focus-visible](#p1-a11y-focus-visible--standardize-focus-visible-ring-with-31-contrast) | Standardize `:focus-visible` ring with 3:1 contrast | `[ ] backlog` | P1 | S | P0-a11y-policy-baseline | — |
-| [P1-a11y-page-titles](#p1-a11y-page-titles--descriptive-page-title-per-route) | Descriptive `<title>` per route | `[ ] backlog` | P1 | S | P0-a11y-policy-baseline | — |
+| [P1-a11y-page-titles](#p1-a11y-page-titles--descriptive-title-per-route) | Descriptive `<title>` per route | `[ ] backlog` | P1 | S | P0-a11y-policy-baseline | — |
 | [P1-a11y-contrast-audit](#p1-a11y-contrast-audit--contrast-pass-on-dark--light-themes) | Contrast pass on dark + light themes | `[ ] backlog` | P1 | S | P0-a11y-policy-baseline | — |
 | [P1-a11y-session-timeout](#p1-a11y-session-timeout--warn--extend-before-session-expiry) | Warn + extend before session expiry | `[ ] backlog` | P1 | M | P0-a11y-policy-baseline | — |
 | [P1-a11y-skip-link-and-lang](#p1-a11y-skip-link-and-lang--verify-skip-link-and-set-html-lang) | Verify skip-link, set `<html lang>` | `[ ] backlog` | P1 | XS | P0-a11y-policy-baseline | — |

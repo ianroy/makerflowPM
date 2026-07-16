@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:makerflow_design/makerflow_design.dart';
 
-import '../../state/providers.dart';
+import '../../state/session.dart';
 
 /// Skeleton login. Real email/password auth via serverpod_auth lands in
 /// fl-0-auth-rbac-tenancy. Form is built accessibly: labelled fields,
@@ -26,11 +27,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  void _submit() {
-    if (_formKey.currentState?.validate() ?? false) {
-      // TODO(fl-0): replace with serverpod_auth sign-in.
-      ref.read(isSignedInProvider.notifier).state = true;
+  bool _busy = false;
+
+  Future<void> _submit() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    setState(() => _busy = true);
+    final ok = await ref
+        .read(sessionProvider.notifier)
+        .signIn(_email.text.trim(), _password.text);
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (ok) {
       context.go('/dashboard');
+    } else {
+      final msg = ref.read(sessionProvider).error ?? 'Sign-in failed';
+      if (mounted) {
+        SemanticsService.sendAnnouncement(View.of(context), msg, TextDirection.ltr); // WCAG 4.1.3
+      }
     }
   }
 
@@ -79,7 +92,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     onFieldSubmitted: (_) => _submit(),
                   ),
                   const SizedBox(height: 20),
-                  FilledButton(onPressed: _submit, child: const Text('Sign in')),
+                  FilledButton(
+                    onPressed: _busy ? null : _submit,
+                    child: _busy
+                        ? const SizedBox(
+                            height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Text('Sign in'),
+                  ),
+                  Builder(builder: (context) {
+                    final err = ref.watch(sessionProvider).error;
+                    if (err == null) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Text(err, style: TextStyle(color: c.danger)),
+                    );
+                  }),
                 ],
               ),
             ),

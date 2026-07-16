@@ -11,7 +11,9 @@ class TaskVm {
     required this.priority,
     this.projectId,
     this.assigneeName,
+    this.dueAt,
     this.sortOrder = 0,
+    this.customFields = const {},
     this.version = 1,
   });
 
@@ -22,10 +24,21 @@ class TaskVm {
   String priority;
   final int? projectId;
   final String? assigneeName;
+  final DateTime? dueAt;
   double sortOrder;
+
+  /// D6 custom-field values, keyed by FieldConfig.key (decoded from the
+  /// server's `customFieldsJson`). Value shapes per field type are documented
+  /// on the server's CustomFields validator.
+  final Map<String, dynamic> customFields;
   int version;
 
-  TaskVm copyWith({String? status, double? sortOrder, int? version}) => TaskVm(
+  TaskVm copyWith(
+          {String? status,
+          double? sortOrder,
+          Map<String, dynamic>? customFields,
+          int? version}) =>
+      TaskVm(
         id: id,
         organizationId: organizationId,
         title: title,
@@ -33,7 +46,9 @@ class TaskVm {
         priority: priority,
         projectId: projectId,
         assigneeName: assigneeName,
+        dueAt: dueAt,
         sortOrder: sortOrder ?? this.sortOrder,
+        customFields: customFields ?? this.customFields,
         version: version ?? this.version,
       );
 }

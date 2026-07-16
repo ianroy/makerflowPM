@@ -1,0 +1,2 @@
+# Matches makerflow_flutter so the declared flutter_lints dev dep is applied.
+include: package:flutter_lints/flutter.yaml

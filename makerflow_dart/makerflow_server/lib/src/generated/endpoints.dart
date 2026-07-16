@@ -14,38 +14,44 @@ import 'package:serverpod/serverpod.dart' as _i1;
 import '../endpoints/collab_endpoint.dart' as _i2;
 import '../endpoints/consumable_endpoint.dart' as _i3;
 import '../endpoints/equipment_endpoint.dart' as _i4;
-import '../endpoints/health_endpoint.dart' as _i5;
-import '../endpoints/intake_endpoint.dart' as _i6;
-import '../endpoints/meeting_endpoint.dart' as _i7;
-import '../endpoints/onboarding_endpoint.dart' as _i8;
-import '../endpoints/org_endpoint.dart' as _i9;
-import '../endpoints/partnership_endpoint.dart' as _i10;
-import '../endpoints/project_endpoint.dart' as _i11;
-import '../endpoints/realtime_endpoint.dart' as _i12;
-import '../endpoints/sync_endpoint.dart' as _i13;
-import '../endpoints/task_endpoint.dart' as _i14;
-import '../endpoints/trash_endpoint.dart' as _i15;
-import 'package:makerflow_server/src/generated/item_comment.dart' as _i16;
-import 'package:makerflow_server/src/generated/consumable.dart' as _i17;
+import '../endpoints/field_config_endpoint.dart' as _i5;
+import '../endpoints/health_endpoint.dart' as _i6;
+import '../endpoints/intake_endpoint.dart' as _i7;
+import '../endpoints/meeting_endpoint.dart' as _i8;
+import '../endpoints/onboarding_endpoint.dart' as _i9;
+import '../endpoints/org_endpoint.dart' as _i10;
+import '../endpoints/partnership_endpoint.dart' as _i11;
+import '../endpoints/preference_endpoint.dart' as _i12;
+import '../endpoints/project_endpoint.dart' as _i13;
+import '../endpoints/realtime_endpoint.dart' as _i14;
+import '../endpoints/sync_endpoint.dart' as _i15;
+import '../endpoints/task_endpoint.dart' as _i16;
+import '../endpoints/trash_endpoint.dart' as _i17;
+import '../endpoints/view_endpoint.dart' as _i18;
+import 'package:makerflow_server/src/generated/item_comment.dart' as _i19;
+import 'package:makerflow_server/src/generated/consumable.dart' as _i20;
 import 'package:makerflow_server/src/generated/enums/equipment_status.dart'
-    as _i18;
-import 'package:makerflow_server/src/generated/equipment_asset.dart' as _i19;
-import 'package:makerflow_server/src/generated/intake_request.dart' as _i20;
-import 'package:makerflow_server/src/generated/meeting_agenda.dart' as _i21;
-import 'package:makerflow_server/src/generated/meeting_item.dart' as _i22;
+    as _i21;
+import 'package:makerflow_server/src/generated/equipment_asset.dart' as _i22;
+import 'package:makerflow_server/src/generated/field_config.dart' as _i23;
+import 'package:makerflow_server/src/generated/intake_request.dart' as _i24;
+import 'package:makerflow_server/src/generated/meeting_agenda.dart' as _i25;
+import 'package:makerflow_server/src/generated/meeting_item.dart' as _i26;
 import 'package:makerflow_server/src/generated/onboarding_template.dart'
-    as _i23;
+    as _i27;
 import 'package:makerflow_server/src/generated/enums/onboarding_state.dart'
-    as _i24;
+    as _i28;
 import 'package:makerflow_server/src/generated/enums/membership_role.dart'
-    as _i25;
+    as _i29;
 import 'package:makerflow_server/src/generated/enums/partnership_stage.dart'
-    as _i26;
-import 'package:makerflow_server/src/generated/partnership.dart' as _i27;
-import 'package:makerflow_server/src/generated/project.dart' as _i28;
-import 'package:makerflow_server/src/generated/enums/task_status.dart' as _i29;
-import 'package:makerflow_server/src/generated/task.dart' as _i30;
-import 'package:serverpod_auth_server/serverpod_auth_server.dart' as _i31;
+    as _i30;
+import 'package:makerflow_server/src/generated/partnership.dart' as _i31;
+import 'package:makerflow_server/src/generated/user_preference.dart' as _i32;
+import 'package:makerflow_server/src/generated/project.dart' as _i33;
+import 'package:makerflow_server/src/generated/enums/task_status.dart' as _i34;
+import 'package:makerflow_server/src/generated/task.dart' as _i35;
+import 'package:makerflow_server/src/generated/custom_view.dart' as _i36;
+import 'package:serverpod_auth_server/serverpod_auth_server.dart' as _i37;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -69,70 +75,88 @@ class Endpoints extends _i1.EndpointDispatch {
           'equipment',
           null,
         ),
-      'health': _i5.HealthEndpoint()
+      'fieldConfig': _i5.FieldConfigEndpoint()
+        ..initialize(
+          server,
+          'fieldConfig',
+          null,
+        ),
+      'health': _i6.HealthEndpoint()
         ..initialize(
           server,
           'health',
           null,
         ),
-      'intake': _i6.IntakeEndpoint()
+      'intake': _i7.IntakeEndpoint()
         ..initialize(
           server,
           'intake',
           null,
         ),
-      'meeting': _i7.MeetingEndpoint()
+      'meeting': _i8.MeetingEndpoint()
         ..initialize(
           server,
           'meeting',
           null,
         ),
-      'onboarding': _i8.OnboardingEndpoint()
+      'onboarding': _i9.OnboardingEndpoint()
         ..initialize(
           server,
           'onboarding',
           null,
         ),
-      'org': _i9.OrgEndpoint()
+      'org': _i10.OrgEndpoint()
         ..initialize(
           server,
           'org',
           null,
         ),
-      'partnership': _i10.PartnershipEndpoint()
+      'partnership': _i11.PartnershipEndpoint()
         ..initialize(
           server,
           'partnership',
           null,
         ),
-      'project': _i11.ProjectEndpoint()
+      'preference': _i12.PreferenceEndpoint()
+        ..initialize(
+          server,
+          'preference',
+          null,
+        ),
+      'project': _i13.ProjectEndpoint()
         ..initialize(
           server,
           'project',
           null,
         ),
-      'realtime': _i12.RealtimeEndpoint()
+      'realtime': _i14.RealtimeEndpoint()
         ..initialize(
           server,
           'realtime',
           null,
         ),
-      'sync': _i13.SyncEndpoint()
+      'sync': _i15.SyncEndpoint()
         ..initialize(
           server,
           'sync',
           null,
         ),
-      'task': _i14.TaskEndpoint()
+      'task': _i16.TaskEndpoint()
         ..initialize(
           server,
           'task',
           null,
         ),
-      'trash': _i15.TrashEndpoint()
+      'trash': _i17.TrashEndpoint()
         ..initialize(
           server,
           'trash',
+          null,
+        ),
+      'view': _i18.ViewEndpoint()
+        ..initialize(
+          server,
+          'view',
           null,
         ),
     };
@@ -175,7 +199,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'draft': _i1.ParameterDescription(
               name: 'draft',
-              type: _i1.getType<_i16.ItemComment>(),
+              type: _i1.getType<_i19.ItemComment>(),
               nullable: false,
             ),
           },
@@ -275,7 +299,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'draft': _i1.ParameterDescription(
               name: 'draft',
-              type: _i1.getType<_i17.Consumable>(),
+              type: _i1.getType<_i20.Consumable>(),
               nullable: false,
             ),
           },
@@ -324,7 +348,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i18.EquipmentStatus?>(),
+              type: _i1.getType<_i21.EquipmentStatus?>(),
               nullable: true,
             ),
           },
@@ -343,7 +367,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'draft': _i1.ParameterDescription(
               name: 'draft',
-              type: _i1.getType<_i19.EquipmentAsset>(),
+              type: _i1.getType<_i22.EquipmentAsset>(),
               nullable: false,
             ),
           },
@@ -377,6 +401,81 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
+    connectors['fieldConfig'] = _i1.EndpointConnector(
+      name: 'fieldConfig',
+      endpoint: endpoints['fieldConfig']!,
+      methodConnectors: {
+        'list': _i1.MethodConnector(
+          name: 'list',
+          params: {
+            'organizationId': _i1.ParameterDescription(
+              name: 'organizationId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'entityType': _i1.ParameterDescription(
+              name: 'entityType',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['fieldConfig'] as _i5.FieldConfigEndpoint).list(
+                    session,
+                    params['organizationId'],
+                    entityType: params['entityType'],
+                  ),
+        ),
+        'save': _i1.MethodConnector(
+          name: 'save',
+          params: {
+            'draft': _i1.ParameterDescription(
+              name: 'draft',
+              type: _i1.getType<_i23.FieldConfig>(),
+              nullable: false,
+            ),
+            'coerceValues': _i1.ParameterDescription(
+              name: 'coerceValues',
+              type: _i1.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['fieldConfig'] as _i5.FieldConfigEndpoint).save(
+                    session,
+                    params['draft'],
+                    coerceValues: params['coerceValues'],
+                  ),
+        ),
+        'delete': _i1.MethodConnector(
+          name: 'delete',
+          params: {
+            'id': _i1.ParameterDescription(
+              name: 'id',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['fieldConfig'] as _i5.FieldConfigEndpoint).delete(
+                    session,
+                    params['id'],
+                  ),
+        ),
+      },
+    );
     connectors['health'] = _i1.EndpointConnector(
       name: 'health',
       endpoint: endpoints['health']!,
@@ -389,7 +488,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['health'] as _i5.HealthEndpoint).ready(session),
+                  (endpoints['health'] as _i6.HealthEndpoint).ready(session),
         ),
       },
     );
@@ -410,7 +509,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['intake'] as _i6.IntakeEndpoint).list(
+              ) async => (endpoints['intake'] as _i7.IntakeEndpoint).list(
                 session,
                 params['organizationId'],
               ),
@@ -420,7 +519,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'draft': _i1.ParameterDescription(
               name: 'draft',
-              type: _i1.getType<_i20.IntakeRequest>(),
+              type: _i1.getType<_i24.IntakeRequest>(),
               nullable: false,
             ),
           },
@@ -428,7 +527,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['intake'] as _i6.IntakeEndpoint).save(
+              ) async => (endpoints['intake'] as _i7.IntakeEndpoint).save(
                 session,
                 params['draft'],
               ),
@@ -452,7 +551,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['intake'] as _i6.IntakeEndpoint).convertToProject(
+                  (endpoints['intake'] as _i7.IntakeEndpoint).convertToProject(
                     session,
                     params['organizationId'],
                     params['requestId'],
@@ -477,7 +576,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['meeting'] as _i7.MeetingEndpoint).agendas(
+              ) async => (endpoints['meeting'] as _i8.MeetingEndpoint).agendas(
                 session,
                 params['organizationId'],
               ),
@@ -500,7 +599,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['meeting'] as _i7.MeetingEndpoint).items(
+              ) async => (endpoints['meeting'] as _i8.MeetingEndpoint).items(
                 session,
                 params['organizationId'],
                 params['agendaId'],
@@ -511,7 +610,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'draft': _i1.ParameterDescription(
               name: 'draft',
-              type: _i1.getType<_i21.MeetingAgenda>(),
+              type: _i1.getType<_i25.MeetingAgenda>(),
               nullable: false,
             ),
           },
@@ -520,7 +619,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['meeting'] as _i7.MeetingEndpoint).saveAgenda(
+                  (endpoints['meeting'] as _i8.MeetingEndpoint).saveAgenda(
                     session,
                     params['draft'],
                   ),
@@ -530,7 +629,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'draft': _i1.ParameterDescription(
               name: 'draft',
-              type: _i1.getType<_i22.MeetingItem>(),
+              type: _i1.getType<_i26.MeetingItem>(),
               nullable: false,
             ),
           },
@@ -538,7 +637,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['meeting'] as _i7.MeetingEndpoint).saveItem(
+              ) async => (endpoints['meeting'] as _i8.MeetingEndpoint).saveItem(
                 session,
                 params['draft'],
               ),
@@ -561,7 +660,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['meeting'] as _i7.MeetingEndpoint)
+              ) async => (endpoints['meeting'] as _i8.MeetingEndpoint)
                   .convertItemToTask(
                     session,
                     params['organizationId'],
@@ -588,7 +687,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['onboarding'] as _i8.OnboardingEndpoint).templates(
+                  (endpoints['onboarding'] as _i9.OnboardingEndpoint).templates(
                     session,
                     params['organizationId'],
                   ),
@@ -598,7 +697,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'draft': _i1.ParameterDescription(
               name: 'draft',
-              type: _i1.getType<_i23.OnboardingTemplate>(),
+              type: _i1.getType<_i27.OnboardingTemplate>(),
               nullable: false,
             ),
           },
@@ -606,7 +705,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['onboarding'] as _i8.OnboardingEndpoint)
+              ) async => (endpoints['onboarding'] as _i9.OnboardingEndpoint)
                   .saveTemplate(
                     session,
                     params['draft'],
@@ -641,7 +740,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['onboarding'] as _i8.OnboardingEndpoint).assign(
+                  (endpoints['onboarding'] as _i9.OnboardingEndpoint).assign(
                     session,
                     params['organizationId'],
                     params['templateId'],
@@ -659,7 +758,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'state': _i1.ParameterDescription(
               name: 'state',
-              type: _i1.getType<_i24.OnboardingState>(),
+              type: _i1.getType<_i28.OnboardingState>(),
               nullable: false,
             ),
             'progressJson': _i1.ParameterDescription(
@@ -673,7 +772,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['onboarding'] as _i8.OnboardingEndpoint).setState(
+                  (endpoints['onboarding'] as _i9.OnboardingEndpoint).setState(
                     session,
                     params['assignmentId'],
                     params['state'],
@@ -694,7 +793,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['org'] as _i9.OrgEndpoint).listMine(session),
+                  (endpoints['org'] as _i10.OrgEndpoint).listMine(session),
         ),
         'members': _i1.MethodConnector(
           name: 'members',
@@ -709,7 +808,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['org'] as _i9.OrgEndpoint).members(
+              ) async => (endpoints['org'] as _i10.OrgEndpoint).members(
                 session,
                 params['organizationId'],
               ),
@@ -729,7 +828,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'role': _i1.ParameterDescription(
               name: 'role',
-              type: _i1.getType<_i25.MembershipRole>(),
+              type: _i1.getType<_i29.MembershipRole>(),
               nullable: false,
             ),
           },
@@ -737,7 +836,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['org'] as _i9.OrgEndpoint).setRole(
+              ) async => (endpoints['org'] as _i10.OrgEndpoint).setRole(
                 session,
                 params['organizationId'],
                 params['targetUserInfoId'],
@@ -762,7 +861,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['org'] as _i9.OrgEndpoint).removeMember(
+              ) async => (endpoints['org'] as _i10.OrgEndpoint).removeMember(
                 session,
                 params['organizationId'],
                 params['targetUserInfoId'],
@@ -784,7 +883,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'stage': _i1.ParameterDescription(
               name: 'stage',
-              type: _i1.getType<_i26.PartnershipStage?>(),
+              type: _i1.getType<_i30.PartnershipStage?>(),
               nullable: true,
             ),
           },
@@ -793,7 +892,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['partnership'] as _i10.PartnershipEndpoint).list(
+                  (endpoints['partnership'] as _i11.PartnershipEndpoint).list(
                     session,
                     params['organizationId'],
                     stage: params['stage'],
@@ -804,7 +903,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'draft': _i1.ParameterDescription(
               name: 'draft',
-              type: _i1.getType<_i27.Partnership>(),
+              type: _i1.getType<_i31.Partnership>(),
               nullable: false,
             ),
           },
@@ -813,7 +912,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['partnership'] as _i10.PartnershipEndpoint).save(
+                  (endpoints['partnership'] as _i11.PartnershipEndpoint).save(
                     session,
                     params['draft'],
                   ),
@@ -831,10 +930,45 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['partnership'] as _i10.PartnershipEndpoint)
+              ) async => (endpoints['partnership'] as _i11.PartnershipEndpoint)
                   .softDelete(
                     session,
                     params['id'],
+                  ),
+        ),
+      },
+    );
+    connectors['preference'] = _i1.EndpointConnector(
+      name: 'preference',
+      endpoint: endpoints['preference']!,
+      methodConnectors: {
+        'getMine': _i1.MethodConnector(
+          name: 'getMine',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['preference'] as _i12.PreferenceEndpoint)
+                  .getMine(session),
+        ),
+        'saveMine': _i1.MethodConnector(
+          name: 'saveMine',
+          params: {
+            'draft': _i1.ParameterDescription(
+              name: 'draft',
+              type: _i1.getType<_i32.UserPreference>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['preference'] as _i12.PreferenceEndpoint).saveMine(
+                    session,
+                    params['draft'],
                   ),
         ),
       },
@@ -856,7 +990,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['project'] as _i11.ProjectEndpoint).list(
+              ) async => (endpoints['project'] as _i13.ProjectEndpoint).list(
                 session,
                 params['organizationId'],
               ),
@@ -866,7 +1000,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'draft': _i1.ParameterDescription(
               name: 'draft',
-              type: _i1.getType<_i28.Project>(),
+              type: _i1.getType<_i33.Project>(),
               nullable: false,
             ),
           },
@@ -874,10 +1008,47 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['project'] as _i11.ProjectEndpoint).create(
+              ) async => (endpoints['project'] as _i13.ProjectEndpoint).create(
                 session,
                 params['draft'],
               ),
+        ),
+        'update': _i1.MethodConnector(
+          name: 'update',
+          params: {
+            'incoming': _i1.ParameterDescription(
+              name: 'incoming',
+              type: _i1.getType<_i33.Project>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['project'] as _i13.ProjectEndpoint).update(
+                session,
+                params['incoming'],
+              ),
+        ),
+        'softDelete': _i1.MethodConnector(
+          name: 'softDelete',
+          params: {
+            'projectId': _i1.ParameterDescription(
+              name: 'projectId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['project'] as _i13.ProjectEndpoint).softDelete(
+                    session,
+                    params['projectId'],
+                  ),
         ),
       },
     );
@@ -901,7 +1072,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
                 Map<String, Stream> streamParams,
-              ) => (endpoints['realtime'] as _i12.RealtimeEndpoint).subscribe(
+              ) => (endpoints['realtime'] as _i14.RealtimeEndpoint).subscribe(
                 session,
                 params['organizationId'],
               ),
@@ -935,7 +1106,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['sync'] as _i13.SyncEndpoint).pullTasks(
+              ) async => (endpoints['sync'] as _i15.SyncEndpoint).pullTasks(
                 session,
                 params['organizationId'],
                 params['cursor'],
@@ -965,7 +1136,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['sync'] as _i13.SyncEndpoint).ackCursor(
+              ) async => (endpoints['sync'] as _i15.SyncEndpoint).ackCursor(
                 session,
                 params['organizationId'],
                 params['deviceId'],
@@ -993,7 +1164,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i29.TaskStatus?>(),
+              type: _i1.getType<_i34.TaskStatus?>(),
               nullable: true,
             ),
           },
@@ -1001,7 +1172,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['task'] as _i14.TaskEndpoint).list(
+              ) async => (endpoints['task'] as _i16.TaskEndpoint).list(
                 session,
                 params['organizationId'],
                 projectId: params['projectId'],
@@ -1013,7 +1184,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'draft': _i1.ParameterDescription(
               name: 'draft',
-              type: _i1.getType<_i30.Task>(),
+              type: _i1.getType<_i35.Task>(),
               nullable: false,
             ),
           },
@@ -1021,7 +1192,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['task'] as _i14.TaskEndpoint).create(
+              ) async => (endpoints['task'] as _i16.TaskEndpoint).create(
                 session,
                 params['draft'],
               ),
@@ -1031,7 +1202,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'incoming': _i1.ParameterDescription(
               name: 'incoming',
-              type: _i1.getType<_i30.Task>(),
+              type: _i1.getType<_i35.Task>(),
               nullable: false,
             ),
           },
@@ -1039,7 +1210,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['task'] as _i14.TaskEndpoint).update(
+              ) async => (endpoints['task'] as _i16.TaskEndpoint).update(
                 session,
                 params['incoming'],
               ),
@@ -1054,7 +1225,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'toStatus': _i1.ParameterDescription(
               name: 'toStatus',
-              type: _i1.getType<_i29.TaskStatus>(),
+              type: _i1.getType<_i34.TaskStatus>(),
               nullable: false,
             ),
             'toSortOrder': _i1.ParameterDescription(
@@ -1067,7 +1238,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['task'] as _i14.TaskEndpoint).move(
+              ) async => (endpoints['task'] as _i16.TaskEndpoint).move(
                 session,
                 params['taskId'],
                 params['toStatus'],
@@ -1087,7 +1258,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['task'] as _i14.TaskEndpoint).softDelete(
+              ) async => (endpoints['task'] as _i16.TaskEndpoint).softDelete(
                 session,
                 params['taskId'],
               ),
@@ -1112,7 +1283,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['trash'] as _i15.TrashEndpoint).deletedTasks(
+                  (endpoints['trash'] as _i17.TrashEndpoint).deletedTasks(
                     session,
                     params['organizationId'],
                   ),
@@ -1130,7 +1301,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['trash'] as _i15.TrashEndpoint).restoreTask(
+              ) async => (endpoints['trash'] as _i17.TrashEndpoint).restoreTask(
                 session,
                 params['id'],
               ),
@@ -1148,13 +1319,79 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['trash'] as _i15.TrashEndpoint).purgeTask(
+              ) async => (endpoints['trash'] as _i17.TrashEndpoint).purgeTask(
                 session,
                 params['id'],
               ),
         ),
       },
     );
-    modules['serverpod_auth'] = _i31.Endpoints()..initializeEndpoints(server);
+    connectors['view'] = _i1.EndpointConnector(
+      name: 'view',
+      endpoint: endpoints['view']!,
+      methodConnectors: {
+        'list': _i1.MethodConnector(
+          name: 'list',
+          params: {
+            'organizationId': _i1.ParameterDescription(
+              name: 'organizationId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'entityType': _i1.ParameterDescription(
+              name: 'entityType',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['view'] as _i18.ViewEndpoint).list(
+                session,
+                params['organizationId'],
+                entityType: params['entityType'],
+              ),
+        ),
+        'save': _i1.MethodConnector(
+          name: 'save',
+          params: {
+            'draft': _i1.ParameterDescription(
+              name: 'draft',
+              type: _i1.getType<_i36.CustomView>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['view'] as _i18.ViewEndpoint).save(
+                session,
+                params['draft'],
+              ),
+        ),
+        'softDelete': _i1.MethodConnector(
+          name: 'softDelete',
+          params: {
+            'id': _i1.ParameterDescription(
+              name: 'id',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['view'] as _i18.ViewEndpoint).softDelete(
+                session,
+                params['id'],
+              ),
+        ),
+      },
+    );
+    modules['serverpod_auth'] = _i37.Endpoints()..initializeEndpoints(server);
   }
 }

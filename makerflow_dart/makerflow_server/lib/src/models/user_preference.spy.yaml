@@ -9,6 +9,7 @@ fields:
   timezone: String?
   notificationsJson: String?
   sessionTimeoutSeconds: int?          # accommodation override (WCAG 2.2.1)
+  uiJson: String?                      # UI layout prefs (sidebarCollapsed, …)
   updatedAt: DateTime
 indexes:
   user_preference_unique_idx:

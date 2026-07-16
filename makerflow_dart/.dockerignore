@@ -1,0 +1,9 @@
+# Keep the build context small + never ship local state into the image.
+**/.dart_tool/
+**/build/
+**/.git/
+**/pubspec.lock
+makerflow_server/config/passwords.yaml
+makerflow_flutter/
+makerflow_design/
+**/.DS_Store
