@@ -222,6 +222,21 @@ class _MainTableViewState extends ConsumerState<MainTableView> {
 
   void _updatePrefs(List<ColumnPref> next) => setTaskColumnPrefs(ref, next);
 
+  /// Field descriptors matching the column keys (summaries need kinds).
+  List<FieldDescriptor> get _fieldDescs => buildFieldDescriptors(
+        fieldConfigs:
+            ref.watch(taskFieldConfigsProvider).valueOrNull ?? const [],
+        projects: ref.watch(projectsProvider).valueOrNull ?? const [],
+        tasks: widget.tasks,
+      );
+
+  /// Set/clear a column's footer aggregation (persists with the layout).
+  void _setSummary(String key, String? op) {
+    _updatePrefs([
+      for (final p in _prefs) p.key == key ? p.withSummary(op) : p,
+    ]);
+  }
+
   // --- cell interactions (unchanged from UI-3a) ---
 
   Future<void> _pickStatus(BuildContext context, TaskVm task) async {
@@ -323,13 +338,90 @@ class _MainTableViewState extends ConsumerState<MainTableView> {
   Widget build(BuildContext context) {
     final c = MakerflowTheme.of(context).colors;
 
+    final visibleCols = _prefs.where((p) => !p.hidden).toList();
     return ListView(
       padding: const EdgeInsets.fromLTRB(MndSpace.s16, MndSpace.s8, MndSpace.s16, MndSpace.s48),
       children: [
         _StatusBattery(tasks: widget.tasks),
         const SizedBox(height: MndSpace.s12),
         for (final g in widget.groups) ..._group(context, c, g),
+        // Board grand total (fl-8-column-summaries): always rendered — the
+        // empty cells are the discoverable entry point for adding summaries.
+        const SizedBox(height: MndSpace.s12),
+        _summaryFooter(context, c, visibleCols, widget.tasks,
+            label: 'Total', alwaysShowPicker: true),
       ],
+    );
+  }
+
+  /// A footer row of per-column aggregations over [tasks]. Cells open a
+  /// picker of type-valid ops (also available per column in the Columns
+  /// popover — the keyboard/AT path shares the same state).
+  Widget _summaryFooter(BuildContext context, MakerflowColors c,
+      List<ColumnPref> cols, List<TaskVm> tasks,
+      {required String label, bool alwaysShowPicker = false}) {
+    final fields = _fieldDescs;
+    return Container(
+      height: 28,
+      decoration: BoxDecoration(border: Border(top: BorderSide(color: c.line))),
+      child: Row(children: [
+        const SizedBox(width: MndSpace.s8),
+        Expanded(
+          child: Text(label,
+              style: TextStyle(
+                  fontSize: 11, fontWeight: FontWeight.w600, color: c.muted)),
+        ),
+        for (final p in cols)
+          SizedBox(
+            width: p.width,
+            height: 28,
+            child: _summaryCell(context, c, p, fields, tasks,
+                showPickerHint: alwaysShowPicker),
+          ),
+      ]),
+    );
+  }
+
+  Widget _summaryCell(BuildContext context, MakerflowColors c, ColumnPref p,
+      List<FieldDescriptor> fields, List<TaskVm> tasks,
+      {required bool showPickerHint}) {
+    final field = descriptorFor(fields, p.key);
+    if (field == null) return const SizedBox.shrink();
+    final ops = summaryOpsFor(field.kind, field.id);
+    final summary =
+        p.summary == null ? null : computeSummary(p.summary!, field, tasks);
+
+    Widget content;
+    if (summary == null) {
+      content = showPickerHint
+          ? Text('+', style: TextStyle(fontSize: 13, color: c.muted))
+          : const SizedBox.shrink();
+    } else if (summary.statusMix != null) {
+      content = _MiniBattery(mix: summary.statusMix!, text: summary.text);
+    } else {
+      content = Text(summary.text,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+              fontSize: 12, fontWeight: FontWeight.w600, color: c.text));
+    }
+
+    return Semantics(
+      button: true,
+      label: summary == null
+          ? 'Add a summary for ${field.label}'
+          : '${field.label} ${summaryOpLabel[p.summary] ?? p.summary}: ${summary.text}. Change summary',
+      excludeSemantics: true,
+      child: PopupMenuButton<String>(
+        tooltip: 'Summary for ${field.label}',
+        onSelected: (op) => _setSummary(p.key, op == 'none' ? null : op),
+        itemBuilder: (_) => [
+          for (final op in ops)
+            PopupMenuItem(value: op, child: Text(summaryOpLabel[op] ?? op)),
+          const PopupMenuItem(value: 'none', child: Text('None')),
+        ],
+        child: Center(child: content),
+      ),
     );
   }
 
@@ -369,6 +461,9 @@ class _MainTableViewState extends ConsumerState<MainTableView> {
           groupColor: g.color,
           onSubmit: (title) => widget.onAddItem(g.key, title),
         ),
+        // Per-group footer: only once any column has a summary selected.
+        if (visibleCols.any((p) => p.summary != null))
+          _summaryFooter(context, c, visibleCols, g.tasks, label: ''),
       ],
     ];
   }
@@ -608,8 +703,36 @@ Widget _columnRow(
 ) {
   final spec = _MainTableViewState.specIn(registry, prefs[i].key)!;
   final field = spec.field;
+  // Summary picker (fl-8-column-summaries): the popover doubles as the
+  // keyboard/AT path for footer aggregations, mirroring the footer cells.
+  final desc = descriptorFor(
+      buildFieldDescriptors(
+        fieldConfigs: ref.watch(taskFieldConfigsProvider).valueOrNull ?? const [],
+        projects: ref.watch(projectsProvider).valueOrNull ?? const [],
+        tasks: ref.watch(tasksProvider).valueOrNull ?? const [],
+      ),
+      prefs[i].key);
   return Row(children: [
     Expanded(child: Text(spec.label, style: const TextStyle(fontSize: 14))),
+    if (desc != null)
+      PopupMenuButton<String>(
+        tooltip: 'Summary for ${spec.label}'
+            '${prefs[i].summary != null ? ' — ${summaryOpLabel[prefs[i].summary]}' : ''}',
+        iconSize: 16,
+        icon: Icon(Icons.functions,
+            color: prefs[i].summary != null
+                ? MakerflowTheme.of(context).colors.brand
+                : null),
+        onSelected: (op) => update([
+          for (final p in prefs)
+            p.key == prefs[i].key ? p.withSummary(op == 'none' ? null : op) : p,
+        ]),
+        itemBuilder: (_) => [
+          for (final op in summaryOpsFor(desc.kind, desc.id))
+            PopupMenuItem(value: op, child: Text(summaryOpLabel[op] ?? op)),
+          const PopupMenuItem(value: 'none', child: Text('None')),
+        ],
+      ),
     if (field != null) ...[
       IconButton(
         tooltip: 'Edit field ${spec.label}',
@@ -732,6 +855,42 @@ class _AddItemRowState extends State<_AddItemRow> {
           ),
         ),
       ]),
+    );
+  }
+}
+
+/// A compact status battery for summary footer cells (fl-8-column-summaries):
+/// the group's status mix as a stacked bar; the text equivalent lives on the
+/// cell's Semantics label.
+class _MiniBattery extends StatelessWidget {
+  const _MiniBattery({required this.mix, required this.text});
+  final Map<String, int> mix;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = mix.values.fold(0, (a, b) => a + b);
+    if (total == 0) return const SizedBox.shrink();
+    return Tooltip(
+      message: text,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: MndSpace.s8),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(MakerflowShape.radiusSmall),
+          child: SizedBox(
+            height: 8,
+            child: Row(children: [
+              for (final s in kanbanColumns)
+                if ((mix[s] ?? 0) > 0)
+                  Expanded(
+                    flex: mix[s]!,
+                    child: Container(
+                        color: MndLabelColors.status[s] ?? MndLabelColors.blank),
+                  ),
+            ]),
+          ),
+        ),
+      ),
     );
   }
 }

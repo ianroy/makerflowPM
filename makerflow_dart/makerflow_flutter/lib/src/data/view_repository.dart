@@ -5,23 +5,40 @@ import 'package:makerflow_client/makerflow_client.dart' as api;
 import 'view_config.dart';
 
 /// Column-layout persistence for the Main Table (fl-8-column-registry).
-/// One entry per visible-or-hidden column, in display order.
+/// One entry per visible-or-hidden column, in display order. [summary] is the
+/// column's footer aggregation op (fl-8-column-summaries; null = none) — it
+/// rides the same codec, so it persists everywhere columns do.
 class ColumnPref {
-  const ColumnPref({required this.key, required this.width, this.hidden = false});
+  const ColumnPref(
+      {required this.key, required this.width, this.hidden = false, this.summary});
   final String key;
   final double width;
   final bool hidden;
+  final String? summary;
 
-  ColumnPref copyWith({double? width, bool? hidden}) =>
-      ColumnPref(key: key, width: width ?? this.width, hidden: hidden ?? this.hidden);
+  ColumnPref copyWith({double? width, bool? hidden}) => ColumnPref(
+      key: key,
+      width: width ?? this.width,
+      hidden: hidden ?? this.hidden,
+      summary: summary);
 
-  Map<String, dynamic> toJson() => {'key': key, 'width': width, 'hidden': hidden};
+  /// copyWith can't null a field; summaries need explicit clearing.
+  ColumnPref withSummary(String? op) =>
+      ColumnPref(key: key, width: width, hidden: hidden, summary: op);
+
+  Map<String, dynamic> toJson() => {
+        'key': key,
+        'width': width,
+        'hidden': hidden,
+        if (summary != null) 'summary': summary,
+      };
   static ColumnPref? fromJson(Object? o) {
     if (o is! Map<String, dynamic> || o['key'] is! String) return null;
     return ColumnPref(
       key: o['key'] as String,
       width: (o['width'] as num?)?.toDouble() ?? 120,
       hidden: o['hidden'] == true,
+      summary: o['summary'] is String ? o['summary'] as String : null,
     );
   }
 

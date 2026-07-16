@@ -140,6 +140,36 @@ void main() {
     });
   });
 
+  group('column summaries', () {
+    FieldDescriptor f(String id) => descriptorFor(fields, id)!;
+
+    test('number ops', () {
+      expect(computeSummary('sum', f('cf:weight'), tasks)!.text, '16.5');
+      expect(computeSummary('avg', f('cf:weight'), tasks)!.text, '5.5');
+      expect(computeSummary('min', f('cf:weight'), tasks)!.text, '1');
+      expect(computeSummary('max', f('cf:weight'), tasks)!.text, '12');
+      expect(computeSummary('count', f('cf:weight'), tasks)!.text, '3 filled');
+    });
+
+    test('date range, checkbox percent, unique', () {
+      expect(computeSummary('range', f('due'), tasks)!.text, 'Jul 20');
+      expect(computeSummary('percent', f('cf:ok'), tasks)!.text, '33%');
+      expect(computeSummary('unique', f('cf:material'), tasks)!.text, '2 unique');
+      expect(computeSummary('unique', f('assignee'), tasks)!.text, '2 unique');
+    });
+
+    test('status battery carries the mix and a text equivalent', () {
+      final battery = computeSummary('battery', f('status'), tasks)!;
+      expect(battery.statusMix, {'todo': 1, 'inProgress': 1, 'done': 1});
+      expect(battery.text, '1 of 3 done (33%)');
+    });
+
+    test('ops invalid for the kind return null (stale prefs are safe)', () {
+      expect(computeSummary('sum', f('status'), tasks), isNull);
+      expect(computeSummary('battery', f('priority'), tasks), isNull);
+    });
+  });
+
   group('group-by', () {
     test('status default keeps all six kanban groups with bare keys', () {
       final groups = computeGroups(tasks, ViewConfig.empty, fields);

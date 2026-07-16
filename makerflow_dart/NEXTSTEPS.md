@@ -9,27 +9,23 @@ prioritized milestone view. Effort: S≈hours · M≈1–2d · L≈3–5d · XL�
 
 ![Rebuild roadmap: M0–M6 milestones, blockers, and sequence](../docs/diagrams/12-rebuild-roadmap.svg)
 
-## Where we are (2026-07-15)
-**Suites: server 33/33 · app 43/43 · design 7/7 · CI green.** The app wears the
-monday-style UI through **UI-3a** (Vibe design system, grey-frame shell +
-boards sidebar, board chrome with view tabs/toolbar, the grouped inline-editing
-**Main Table** as the default view). Full CRUD for tasks (+Trash) and projects
-(+Archive); ops features create/edit; **Phase 8 rolling**: the Main Table is a
-real **column system** (resize/autofit/reorder/hide, persisted per user via
-the ViewEndpoint) and now supports **custom fields end-to-end** — 9 tier-1
-types (text, long-text, number, date, dropdown, tags, person, checkbox,
-colored labels w/ AA ink), D6 value storage on the task row with server-side
-validation, an Airtable-style type-change coercion confirm, per-type cell
-editors in the table AND the task dialog, and a field manager inside the
-Columns popover. Verified live: add field → set value → hard reload → both
-persist from Postgres. **Merged to `main`** (PR #6, 2026-07-16); the DO demo
-spec keeps deploying from `staging` (latest work) — production cutover = flip
-`branch: main` in `.do/app.yaml`.
+## Where we are (2026-07-16)
+**Suites: server 36/36 · app 69/69 · design 7/7 · CI green.** The app wears
+the monday-style UI (Vibe design system, grey-frame shell + boards sidebar,
+board chrome, the grouped inline-editing **Main Table** as the default view).
+Full CRUD for tasks (+Trash) and projects (+Archive); ops features
+create/edit. **Phase 8 is 6/11 done**: the persisted per-user column system;
+9 custom-field types end-to-end (D6 values, server validation, type-change
+coercion, per-type editors, field manager); saved/shared views with
+dirty-state flows; the AND/OR **filter builder**, **multi-sort** (+ header
+clicks), and **group-by-any-field** with value-carrying add rows; and
+**column summaries** (footer aggregations + per-group/status batteries).
+Verified live repeatedly against the demo stack. **Merged to `main`**
+(PR #6, 2026-07-16); the DO demo spec deploys from `staging` (latest work) —
+production cutover = flip `branch: main` in `.do/app.yaml`.
 
-**▶ NEXT CARD: `fl-8-column-summaries`** (per-column footer aggregations —
-sum/avg/min/max for numbers, battery/count for status, % for checkbox — plus
-per-group footers, persisted per view) — spec in FLUTTER_REBUILD_PLAN.md §13
-Phase 8. Owner-blocked items: doctl token (live deploy — everything after
+**▶ NEXT CARD: `fl-8-subitems`** (nested rows w/ a parent progress rollup) —
+spec in FLUTTER_REBUILD_PLAN.md §13 Phase 8; Phase 8 is 6/11 done. Owner-blocked items: doctl token (live deploy — everything after
 `doctl auth init` is `deploy/do_deploy.sh`), human AT pass (R1). Local demo
 stack running (:8085 web · :8080 API · :8090 PG · :8091 Redis; the PG cluster
 is disposable /tmp). Known follow-ups: URL `?view=` param; member-directory
@@ -133,7 +129,8 @@ models exist with **no endpoints and no value storage**; Main Table columns are 
 | ~~3~~ ✅ | ~~fl-8-custom-fields~~ done 2026-07-15 | XL | 9 tier-1 field types live end-to-end: D6 values + validation + coercion, dynamic columns, per-type editors, field manager |
 | ~~4~~ ✅ | ~~fl-8-saved-views~~ done 2026-07-16 | M | tabs = built-in defaults + named saved/shared views w/ dirty-state save flows |
 | ~~5~~ ✅ | ~~fl-8-filter-sort-group~~ done 2026-07-16 | L | AND/OR filter builder w/ per-type operators · multi-sort + header clicks · group-by-any-field w/ value-carrying add rows |
-| 6–11 | summaries · subitems · drag suite · templates · dashboards · automations | S→XL | the long tail |
+| ~~6~~ ✅ | ~~fl-8-column-summaries~~ done 2026-07-16 | S | footer aggregations (sum/avg/range/%/unique/battery) · per-group + grand-total footers · persisted with the layout |
+| 7–11 | subitems · drag suite · templates · dashboards · automations | M→XL | the long tail |
 
 ## M-ENT — Enterprise readiness (Phase 9, added 2026-07-14)
 Ranked for the actual buyer (university/makerspace procurement):
@@ -161,4 +158,4 @@ SAML, SCIM, seat billing (universities buy site licenses on PO).
 Production seed flag · ops-feature edit paths · equipment space-name resolution
 (Space join) · password-reset flow · validate/refresh a restored session key.
 
-_Last updated: 2026-07-16 (fl-8 column-registry + custom-fields + saved-views done; next card fl-8-filter-sort-group)._
+_Last updated: 2026-07-16 (Phase 8 at 6/11 — column system, custom fields, saved views, filter/sort/group, summaries; next card fl-8-subitems)._

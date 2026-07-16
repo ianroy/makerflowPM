@@ -480,6 +480,104 @@ List<TaskVm> applySort(
 // Grouping
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Column summaries (fl-8-column-summaries)
+// ---------------------------------------------------------------------------
+
+/// The footer aggregations a column of [kind] supports, in menu order.
+/// The status column additionally offers the battery.
+List<String> summaryOpsFor(FieldKind kind, String fieldId) => switch (kind) {
+      FieldKind.number => const ['sum', 'avg', 'min', 'max', 'count'],
+      FieldKind.date => const ['range', 'count'],
+      FieldKind.boolean => const ['percent', 'count'],
+      FieldKind.option => fieldId == 'status'
+          ? const ['battery', 'count']
+          : const ['unique', 'count'],
+      FieldKind.multi => const ['unique', 'count'],
+      FieldKind.text => const ['count'],
+    };
+
+const summaryOpLabel = <String, String>{
+  'sum': 'Sum', 'avg': 'Average', 'min': 'Min', 'max': 'Max',
+  'count': 'Filled count', 'range': 'Date range', 'percent': 'Percent checked',
+  'unique': 'Unique values', 'battery': 'Battery',
+};
+
+/// A computed footer value: [text] is always set (the AT/text equivalent);
+/// [statusMix] is set for the battery op (status → count, kanban order).
+class ColumnSummary {
+  const ColumnSummary(this.text, {this.statusMix});
+  final String text;
+  final Map<String, int>? statusMix;
+}
+
+String _trimNum(num n) {
+  final s = n.toStringAsFixed(2);
+  return s.replaceFirst(RegExp(r'\.?0+$'), '');
+}
+
+/// Compute [op] for [field] over [tasks]. Null when the op is unknown for
+/// the kind (e.g. a stale pref after a field's type changed).
+ColumnSummary? computeSummary(
+    String op, FieldDescriptor field, List<TaskVm> tasks) {
+  if (!summaryOpsFor(field.kind, field.id).contains(op)) return null;
+  final values = [
+    for (final t in tasks)
+      if (!_isEmptyValue(field.valueOf(t))) field.valueOf(t)!,
+  ];
+  switch (op) {
+    case 'count':
+      return ColumnSummary('${values.length} filled');
+    case 'sum':
+    case 'avg':
+    case 'min':
+    case 'max':
+      final nums = values.whereType<num>().toList();
+      if (nums.isEmpty) return const ColumnSummary('—');
+      final result = switch (op) {
+        'sum' => nums.reduce((a, b) => a + b),
+        'avg' => nums.reduce((a, b) => a + b) / nums.length,
+        'min' => nums.reduce((a, b) => a < b ? a : b),
+        _ => nums.reduce((a, b) => a > b ? a : b),
+      };
+      return ColumnSummary(_trimNum(result));
+    case 'range':
+      final dates = values.whereType<String>().toList()..sort();
+      if (dates.isEmpty) return const ColumnSummary('—');
+      String pretty(String iso) {
+        final d = DateTime.tryParse(iso);
+        if (d == null) return iso;
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return '${months[d.month - 1]} ${d.day}';
+      }
+      return ColumnSummary(dates.length == 1
+          ? pretty(dates.single)
+          : '${pretty(dates.first)} – ${pretty(dates.last)}');
+    case 'percent':
+      if (tasks.isEmpty) return const ColumnSummary('—');
+      final checked = values.where((v) => v == true).length;
+      return ColumnSummary('${(checked * 100 / tasks.length).round()}%');
+    case 'unique':
+      final set = <String>{
+        for (final v in values)
+          if (v is List) ...v.whereType<String>() else v.toString(),
+      };
+      return ColumnSummary('${set.length} unique');
+    case 'battery':
+      if (tasks.isEmpty) return const ColumnSummary('—');
+      final mix = <String, int>{};
+      for (final t in tasks) {
+        mix[t.status] = (mix[t.status] ?? 0) + 1;
+      }
+      final done = mix['done'] ?? 0;
+      return ColumnSummary(
+          '$done of ${tasks.length} done (${(done * 100 / tasks.length).round()}%)',
+          statusMix: mix);
+    default:
+      return null;
+  }
+}
+
 class TaskGroup {
   const TaskGroup(
       {required this.key, required this.label, required this.color, required this.tasks});
