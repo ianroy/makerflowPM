@@ -46,12 +46,16 @@ void main() {
         )
         .build();
 
-    CustomView draftView(int orgId, {String name = 'My table', bool shared = false}) =>
+    CustomView draftView(int orgId,
+            {String name = 'My table',
+            bool shared = false,
+            String viewType = 'table'}) =>
         CustomView(
           organizationId: orgId,
           ownerUserInfoId: 0, // server pins the real owner
           name: name,
           entityType: 'task',
+          viewType: viewType,
           filtersJson: '{}',
           columnsJson: '[]',
           isShared: shared,
@@ -67,10 +71,14 @@ void main() {
 
       await views.save(sessionFor(900), draftView(orgId, name: 'private'));
       await views.save(
-          sessionFor(900), draftView(orgId, name: 'team view', shared: true));
+          sessionFor(900),
+          draftView(orgId, name: 'team view', shared: true, viewType: 'kanban'));
 
       final mine = await views.list(sessionFor(900), orgId);
       expect(mine.map((v) => v.name).toSet(), {'private', 'team view'});
+      // fl-8-saved-views: the view TYPE round-trips.
+      expect(mine.firstWhere((v) => v.name == 'team view').viewType, 'kanban');
+      expect(mine.firstWhere((v) => v.name == 'private').viewType, 'table');
 
       final theirs = await views.list(sessionFor(901), orgId);
       expect(theirs.map((v) => v.name), ['team view']); // shared only

@@ -7,6 +7,7 @@ fields:
   ownerUserInfoId: int
   name: String
   entityType: String        # which list this view applies to
+  viewType: String, default='table'  # table | kanban | list | calendar (fl-8-saved-views)
   filtersJson: String
   columnsJson: String
   isShared: bool, default=false

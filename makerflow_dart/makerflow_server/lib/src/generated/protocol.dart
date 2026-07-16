@@ -946,6 +946,13 @@ class Protocol extends _i1.SerializationManagerServer {
           dartType: 'String',
         ),
         _i2.ColumnDefinition(
+          name: 'viewType',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+          columnDefault: '\'table\'::text',
+        ),
+        _i2.ColumnDefinition(
           name: 'filtersJson',
           columnType: _i2.ColumnType.text,
           isNullable: false,

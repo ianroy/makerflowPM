@@ -23,15 +23,15 @@ editors in the table AND the task dialog, and a field manager inside the
 Columns popover. Verified live: add field → set value → hard reload → both
 persist from Postgres. Deploy-ready; PR #6 open.
 
-**▶ NEXT CARD: `fl-8-saved-views`** (view tabs become real CustomViews —
-per-user + shared + default; re-point the `__table_layout` shim at "the active
-view") — spec in FLUTTER_REBUILD_PLAN.md §13 Phase 8; then
-fl-8-filter-sort-group. Owner-blocked items unchanged: doctl token (live
-deploy), human AT pass (R1), PR #6 merge. Local demo stack running
+**▶ NEXT CARD: `fl-8-filter-sort-group`** (filter builder w/ per-type
+operators incl. custom fields · multi-sort · group-by-any-field; also picks up
+the deferred URL-carries-view-id from saved views) — spec in
+FLUTTER_REBUILD_PLAN.md §13 Phase 8. Owner-blocked items unchanged: doctl
+token (live deploy), human AT pass (R1), PR #6 merge. Local demo stack running
 (:8085 web · :8080 API · :8090 PG · :8091 Redis — kill/teardown commands in the
-2026-07-14 session notes; the PG cluster is disposable /tmp). Known follow-up:
-person fields store userInfoId and render "User #N" until a member-directory
-endpoint with display names exists.
+2026-07-14 session notes; the PG cluster is disposable /tmp). Known follow-ups:
+person fields render "User #N" until a member-directory endpoint exists;
+per-user default-view marker; calendar surface (UI-7).
 
 ---
 
@@ -128,7 +128,7 @@ models exist with **no endpoints and no value storage**; Main Table columns are 
 | ~~1~~ ✅ | ~~fl-8-view-field-endpoints~~ done 2026-07-14 | M | endpoints live; theme+sidebar persist across restarts |
 | ~~2~~ ✅ | ~~fl-8-column-registry~~ done 2026-07-15 | L | resize · autofit · reorder · show/hide · pin shipped, persisted per user |
 | ~~3~~ ✅ | ~~fl-8-custom-fields~~ done 2026-07-15 | XL | 9 tier-1 field types live end-to-end: D6 values + validation + coercion, dynamic columns, per-type editors, field manager |
-| 4 | fl-8-saved-views | M | view tabs = saved/shared/default views |
+| ~~4~~ ✅ | ~~fl-8-saved-views~~ done 2026-07-16 | M | tabs = built-in defaults + named saved/shared views w/ dirty-state save flows |
 | 5 | fl-8-filter-sort-group | L | filter builder · multi-sort · group-by-any-field |
 | 6–11 | summaries · subitems · drag suite · templates · dashboards · automations | S→XL | the long tail |
 
@@ -159,4 +159,4 @@ SAML, SCIM, seat billing (universities buy site licenses on PO).
 Production seed flag · ops-feature edit paths · equipment space-name resolution
 (Space join) · password-reset flow · validate/refresh a restored session key.
 
-_Last updated: 2026-07-15 (fl-8-column-registry + fl-8-custom-fields done — column system + custom fields live; next card fl-8-saved-views)._
+_Last updated: 2026-07-16 (fl-8 column-registry + custom-fields + saved-views done; next card fl-8-filter-sort-group)._

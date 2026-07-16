@@ -55,14 +55,15 @@ class MainTableView extends ConsumerStatefulWidget {
 /// copy: a `ref.listen` hydration misses loads that complete while the table
 /// is unmounted (e.g. swapped for the tasks spinner), because listen only
 /// fires on transitions. Watching rebuilds whenever any source lands.
-List<ColumnPref> effectiveTaskColumns(WidgetRef ref) {
+List<ColumnPref> effectiveTaskColumns(WidgetRef ref, {bool listen = true}) {
+  T sub<T>(ProviderListenable<T> p) => listen ? ref.watch(p) : ref.read(p);
   final registry = _MainTableViewState.registryWith(
-      ref.watch(taskFieldConfigsProvider).valueOrNull ?? const []);
-  final local = ref.watch(taskColumnPrefsProvider);
+      sub(taskFieldConfigsProvider).valueOrNull ?? const []);
+  final local = sub(taskColumnPrefsProvider);
   if (local.isNotEmpty) {
     return _MainTableViewState.effectivePrefs(local, registry);
   }
-  final loaded = ref.watch(taskColumnLoadProvider).valueOrNull ?? const [];
+  final loaded = sub(taskColumnLoadProvider).valueOrNull ?? const [];
   return _MainTableViewState.effectivePrefs(loaded, registry);
 }
 

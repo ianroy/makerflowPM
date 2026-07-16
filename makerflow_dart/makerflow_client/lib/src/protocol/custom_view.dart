@@ -21,6 +21,7 @@ abstract class CustomView implements _i1.SerializableModel {
     required this.ownerUserInfoId,
     required this.name,
     required this.entityType,
+    String? viewType,
     required this.filtersJson,
     required this.columnsJson,
     bool? isShared,
@@ -29,7 +30,8 @@ abstract class CustomView implements _i1.SerializableModel {
     required this.updatedAt,
     this.deletedAt,
     this.deletedByUserInfoId,
-  }) : isShared = isShared ?? false,
+  }) : viewType = viewType ?? 'table',
+       isShared = isShared ?? false,
        version = version ?? 1;
 
   factory CustomView({
@@ -38,6 +40,7 @@ abstract class CustomView implements _i1.SerializableModel {
     required int ownerUserInfoId,
     required String name,
     required String entityType,
+    String? viewType,
     required String filtersJson,
     required String columnsJson,
     bool? isShared,
@@ -55,6 +58,7 @@ abstract class CustomView implements _i1.SerializableModel {
       ownerUserInfoId: jsonSerialization['ownerUserInfoId'] as int,
       name: jsonSerialization['name'] as String,
       entityType: jsonSerialization['entityType'] as String,
+      viewType: jsonSerialization['viewType'] as String?,
       filtersJson: jsonSerialization['filtersJson'] as String,
       columnsJson: jsonSerialization['columnsJson'] as String,
       isShared: jsonSerialization['isShared'] == null
@@ -87,6 +91,8 @@ abstract class CustomView implements _i1.SerializableModel {
 
   String entityType;
 
+  String viewType;
+
   String filtersJson;
 
   String columnsJson;
@@ -112,6 +118,7 @@ abstract class CustomView implements _i1.SerializableModel {
     int? ownerUserInfoId,
     String? name,
     String? entityType,
+    String? viewType,
     String? filtersJson,
     String? columnsJson,
     bool? isShared,
@@ -130,6 +137,7 @@ abstract class CustomView implements _i1.SerializableModel {
       'ownerUserInfoId': ownerUserInfoId,
       'name': name,
       'entityType': entityType,
+      'viewType': viewType,
       'filtersJson': filtersJson,
       'columnsJson': columnsJson,
       'isShared': isShared,
@@ -157,6 +165,7 @@ class _CustomViewImpl extends CustomView {
     required int ownerUserInfoId,
     required String name,
     required String entityType,
+    String? viewType,
     required String filtersJson,
     required String columnsJson,
     bool? isShared,
@@ -171,6 +180,7 @@ class _CustomViewImpl extends CustomView {
          ownerUserInfoId: ownerUserInfoId,
          name: name,
          entityType: entityType,
+         viewType: viewType,
          filtersJson: filtersJson,
          columnsJson: columnsJson,
          isShared: isShared,
@@ -191,6 +201,7 @@ class _CustomViewImpl extends CustomView {
     int? ownerUserInfoId,
     String? name,
     String? entityType,
+    String? viewType,
     String? filtersJson,
     String? columnsJson,
     bool? isShared,
@@ -206,6 +217,7 @@ class _CustomViewImpl extends CustomView {
       ownerUserInfoId: ownerUserInfoId ?? this.ownerUserInfoId,
       name: name ?? this.name,
       entityType: entityType ?? this.entityType,
+      viewType: viewType ?? this.viewType,
       filtersJson: filtersJson ?? this.filtersJson,
       columnsJson: columnsJson ?? this.columnsJson,
       isShared: isShared ?? this.isShared,

@@ -82,12 +82,33 @@ final taskFieldConfigsProvider = FutureProvider<List<FieldConfigVm>>((ref) {
   return ref.watch(fieldRepositoryProvider).listTaskFields(orgId);
 });
 
+// --- Saved views (fl-8-saved-views) ---
+/// Named views visible to the caller (own + shared) for the active org.
+/// Invalidate after any view mutation.
+final savedTaskViewsProvider = FutureProvider<List<SavedViewVm>>((ref) {
+  final orgId = ref.watch(activeOrgIdProvider);
+  return ref.watch(viewRepositoryProvider).listTaskViews(orgId);
+});
+
+/// The selected saved view (null = the built-in quick views). Resets on org
+/// switch. Selecting a view applies its columns as LOCAL prefs and its
+/// viewType as the visible surface (kanban_screen owns that application).
+final activeSavedViewProvider = StateProvider<SavedViewVm?>((ref) {
+  ref.watch(activeOrgIdProvider);
+  return null;
+});
+
 Timer? _columnSaveDebounce;
 
 /// Update column prefs and persist them (debounced ~500ms per the spec, so a
 /// drag-resize doesn't write on every frame).
+///
+/// While a SAVED VIEW is active, edits stay local (the view goes "dirty" and
+/// is written only through its explicit Save flow) — they must not overwrite
+/// the user's default `__table_layout`.
 void setTaskColumnPrefs(WidgetRef ref, List<ColumnPref> prefs) {
   ref.read(taskColumnPrefsProvider.notifier).state = prefs;
+  if (ref.read(activeSavedViewProvider) != null) return;
   final repo = ref.read(viewRepositoryProvider);
   final orgId = ref.read(activeOrgIdProvider);
   _columnSaveDebounce?.cancel();

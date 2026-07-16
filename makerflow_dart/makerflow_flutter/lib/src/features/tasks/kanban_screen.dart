@@ -6,6 +6,7 @@ import 'package:makerflow_design/makerflow_design.dart';
 
 import '../../data/field_models.dart';
 import '../../data/models.dart';
+import '../../data/view_repository.dart';
 import '../../state/providers.dart';
 import '../shell/app_shell.dart';
 import 'main_table_view.dart';
@@ -163,6 +164,220 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
 
   String _query = '';
 
+  // --- Saved views (fl-8-saved-views) ---
+
+  static _TasksView _surfaceFor(String viewType) => switch (viewType) {
+        'kanban' => _TasksView.kanban,
+        'list' => _TasksView.list,
+        _ => _TasksView.mainTable, // calendar renders as table until UI-7
+      };
+
+  static String _viewTypeOf(_TasksView v) => switch (v) {
+        _TasksView.kanban => 'kanban',
+        _TasksView.list => 'list',
+        _TasksView.mainTable => 'table',
+      };
+
+  static String _friendly(Object e) {
+    final s = e.toString();
+    final i = s.indexOf('message: ');
+    if (i >= 0) return s.substring(i + 'message: '.length).trim();
+    return 'Something went wrong. Please try again.';
+  }
+
+  /// Select a saved view (null = back to the built-in Main table): apply its
+  /// columns as LOCAL prefs + its type as the visible surface.
+  void _selectSavedView(SavedViewVm? v) {
+    ref.read(activeSavedViewProvider.notifier).state = v;
+    ref.read(taskColumnPrefsProvider.notifier).state =
+        v == null ? const [] : List.of(v.columns);
+    setState(() => _view =
+        v == null ? _TasksView.mainTable : _surfaceFor(v.viewType));
+    _announce(v == null ? 'Main table view.' : 'View ${v.name}.');
+  }
+
+  void _selectBuiltin(_TasksView v) {
+    if (ref.read(activeSavedViewProvider) != null) {
+      // Leaving a saved view: drop its local column overrides too.
+      ref.read(activeSavedViewProvider.notifier).state = null;
+      ref.read(taskColumnPrefsProvider.notifier).state = const [];
+    }
+    setState(() => _view = v);
+  }
+
+  /// Current layout != the active view's saved layout (the dirty state).
+  bool get _viewDirty {
+    final v = ref.watch(activeSavedViewProvider);
+    if (v == null) return false;
+    final current = effectiveTaskColumns(ref);
+    return ColumnPref.encodeList(current) != ColumnPref.encodeList(v.columns);
+  }
+
+  /// Create a view from the CURRENT layout + surface ("+" and "Save as new").
+  Future<void> _addView({String? initialName}) async {
+    final controller = TextEditingController(text: initialName ?? '');
+    var share = false;
+    final created = await showDialog<SavedViewVm>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx2, setDlg) => AlertDialog(
+          title: const Text('New view'),
+          content: SizedBox(
+            width: 320,
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              TextField(
+                key: const ValueKey('view-name'),
+                controller: controller,
+                autofocus: true,
+                decoration: const InputDecoration(labelText: 'View name'),
+              ),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Share with the workspace'),
+                value: share,
+                onChanged: (v) => setDlg(() => share = v ?? false),
+              ),
+            ]),
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx2), child: const Text('Cancel')),
+            FilledButton(
+              onPressed: () async {
+                final name = controller.text.trim();
+                if (name.isEmpty) return;
+                try {
+                  final saved =
+                      await ref.read(viewRepositoryProvider).saveTaskView(
+                            ref.read(activeOrgIdProvider),
+                            name: name,
+                            viewType: _viewTypeOf(_view),
+                            columns: effectiveTaskColumns(ref, listen: false),
+                            isShared: share,
+                          );
+                  if (ctx2.mounted) Navigator.pop(ctx2, saved);
+                } catch (e) {
+                  _announce('Could not save view. ${_friendly(e)}');
+                }
+              },
+              child: const Text('Create'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (created == null) return;
+    ref.invalidate(savedTaskViewsProvider);
+    _selectSavedView(created);
+    _announce('Created view ${created.name}.');
+  }
+
+  /// Write the current layout into the active view (the dirty-chip Save).
+  Future<void> _saveActiveView() async {
+    final v = ref.read(activeSavedViewProvider);
+    if (v == null) return;
+    try {
+      final saved = await ref.read(viewRepositoryProvider).saveTaskView(
+            ref.read(activeOrgIdProvider),
+            id: v.id,
+            name: v.name,
+            viewType: v.viewType,
+            columns: effectiveTaskColumns(ref, listen: false),
+            isShared: v.isShared,
+            version: v.version,
+          );
+      ref.read(activeSavedViewProvider.notifier).state = saved;
+      ref.invalidate(savedTaskViewsProvider);
+      _announce('Saved view ${saved.name}.');
+    } catch (e) {
+      _announce('Could not save view. ${_friendly(e)}');
+    }
+  }
+
+  void _resetActiveView() {
+    final v = ref.read(activeSavedViewProvider);
+    if (v == null) return;
+    ref.read(taskColumnPrefsProvider.notifier).state = List.of(v.columns);
+    _announce('Reset to the saved layout of ${v.name}.');
+  }
+
+  Future<void> _onViewMenu(String action) async {
+    final v = ref.read(activeSavedViewProvider);
+    if (v == null) return;
+    final repo = ref.read(viewRepositoryProvider);
+    try {
+      switch (action) {
+        case 'rename':
+          final controller = TextEditingController(text: v.name);
+          final name = await showDialog<String>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Rename view'),
+              content: TextField(
+                  key: const ValueKey('view-rename'),
+                  controller: controller,
+                  autofocus: true),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                FilledButton(
+                    onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+                    child: const Text('Rename')),
+              ],
+            ),
+          );
+          if (name == null || name.isEmpty || name == v.name) return;
+          final saved = await repo.saveTaskView(ref.read(activeOrgIdProvider),
+              id: v.id,
+              name: name,
+              viewType: v.viewType,
+              columns: v.columns,
+              isShared: v.isShared,
+              version: v.version);
+          ref.read(activeSavedViewProvider.notifier).state = saved;
+          _announce('Renamed view to ${saved.name}.');
+        case 'duplicate':
+          await _addView(initialName: '${v.name} copy');
+          return; // _addView handles refresh + select
+        case 'share':
+          final saved = await repo.saveTaskView(ref.read(activeOrgIdProvider),
+              id: v.id,
+              name: v.name,
+              viewType: v.viewType,
+              columns: v.columns,
+              isShared: !v.isShared,
+              version: v.version);
+          ref.read(activeSavedViewProvider.notifier).state = saved;
+          _announce(saved.isShared
+              ? 'View ${saved.name} is now shared with the workspace.'
+              : 'View ${saved.name} is now private.');
+        case 'delete':
+          final ok = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: Text('Delete view "${v.name}"?'),
+              content: const Text('Tasks are not affected — only the view.'),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: const Text('Cancel')),
+                FilledButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: const Text('Delete')),
+              ],
+            ),
+          );
+          if (ok != true) return;
+          await repo.deleteTaskView(v.id);
+          _selectSavedView(null);
+          _announce('Deleted view ${v.name}.');
+      }
+      ref.invalidate(savedTaskViewsProvider);
+    } catch (e) {
+      _announce('Could not update view. ${_friendly(e)}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = MakerflowTheme.of(context).colors;
@@ -176,7 +391,21 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _ViewTabs(current: _view, onChanged: (v) => setState(() => _view = v)),
+          _ViewTabs(
+            current: _view,
+            activeSaved: ref.watch(activeSavedViewProvider),
+            savedViews: ref.watch(savedTaskViewsProvider).valueOrNull ?? const [],
+            dirty: _viewDirty,
+            onChanged: _selectBuiltin,
+            onSelectSaved: _selectSavedView,
+            onAddView: () => _addView(),
+            onSave: _saveActiveView,
+            onSaveAsNew: () => _addView(
+                initialName:
+                    '${ref.read(activeSavedViewProvider)?.name ?? 'My view'} copy'),
+            onReset: _resetActiveView,
+            onMenu: _onViewMenu,
+          ),
           Divider(height: 1, color: c.line),
           _BoardToolbar(
             onNewItem: _openNewTask,
@@ -466,32 +695,65 @@ class _Card extends StatelessWidget {
   }
 }
 
-/// UI-2 view-tabs row: flat monday-style tabs — active = brand text + a 2px
-/// brand underline. "Main table" (UI-3) and "Calendar" (UI-7) are announced
-/// coming-soon stubs.
+/// UI-2 + fl-8-saved-views view-tabs row: the built-in quick views (Main
+/// table / Kanban / List; Calendar = announced coming-soon stub) followed by
+/// the caller's SAVED VIEWS (own + shared) and a "+" that captures the
+/// current layout as a new named view. The active saved view carries a menu
+/// (rename / duplicate / share / delete) and — when the layout drifts from
+/// its saved state — a dirty chip with Save / Save as new / Reset.
 class _ViewTabs extends StatelessWidget {
-  const _ViewTabs({required this.current, required this.onChanged});
+  const _ViewTabs({
+    required this.current,
+    required this.activeSaved,
+    required this.savedViews,
+    required this.dirty,
+    required this.onChanged,
+    required this.onSelectSaved,
+    required this.onAddView,
+    required this.onSave,
+    required this.onSaveAsNew,
+    required this.onReset,
+    required this.onMenu,
+  });
+
   final _TasksView current;
+  final SavedViewVm? activeSaved;
+  final List<SavedViewVm> savedViews;
+  final bool dirty;
   final ValueChanged<_TasksView> onChanged;
+  final ValueChanged<SavedViewVm?> onSelectSaved;
+  final VoidCallback onAddView;
+  final VoidCallback onSave;
+  final VoidCallback onSaveAsNew;
+  final VoidCallback onReset;
+  final ValueChanged<String> onMenu;
 
   @override
   Widget build(BuildContext context) {
     final c = MakerflowTheme.of(context).colors;
 
-    Widget tab(String label, {_TasksView? view, bool soon = false}) {
-      final active = view != null && view == current;
+    Widget underlined({
+      required Key key,
+      required String label,
+      required bool active,
+      required String semantics,
+      VoidCallback? onTap,
+      bool soon = false,
+      Widget? leading,
+    }) {
       return Semantics(
-        key: ValueKey('tab:$label'),
+        key: key,
         button: !soon,
         selected: active,
-        label: soon ? '$label view — coming soon' : '$label view',
+        label: semantics,
         excludeSemantics: true,
         child: Tooltip(
           message: soon ? 'Coming soon' : '',
           child: InkWell(
-            onTap: soon || view == null ? null : () => onChanged(view),
+            onTap: onTap,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: MndSpace.s12, vertical: MndSpace.s8),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: MndSpace.s12, vertical: MndSpace.s8),
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
@@ -500,26 +762,97 @@ class _ViewTabs extends StatelessWidget {
                   ),
                 ),
               ),
-              child: Text(label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: active ? FontWeight.w600 : FontWeight.w400,
-                    color: active ? c.brand : (soon ? c.muted : c.text),
-                  )),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                if (leading != null) ...[leading, const SizedBox(width: MndSpace.s4)],
+                Text(label,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+                      color: active ? c.brand : (soon ? c.muted : c.text),
+                    )),
+              ]),
             ),
           ),
         ),
       );
     }
 
+    Widget builtin(String label, {_TasksView? view, bool soon = false}) =>
+        underlined(
+          key: ValueKey('tab:$label'),
+          label: label,
+          active: activeSaved == null && view != null && view == current,
+          semantics: soon ? '$label view — coming soon' : '$label view',
+          onTap: soon || view == null ? null : () => onChanged(view),
+          soon: soon,
+        );
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: MndSpace.s16),
-      child: Row(children: [
-        tab('Main table', view: _TasksView.mainTable),
-        tab('Kanban', view: _TasksView.kanban),
-        tab('List', view: _TasksView.list),
-        tab('Calendar', soon: true),
-      ]),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(children: [
+          builtin('Main table', view: _TasksView.mainTable),
+          builtin('Kanban', view: _TasksView.kanban),
+          builtin('List', view: _TasksView.list),
+          builtin('Calendar', soon: true),
+          for (final v in savedViews)
+            underlined(
+              key: ValueKey('tab:saved:${v.id}'),
+              label: v.name,
+              active: activeSaved?.id == v.id,
+              semantics:
+                  'Saved view ${v.name}${v.isShared ? ', shared' : ''}',
+              onTap: () => onSelectSaved(v),
+              leading: v.isShared
+                  ? Icon(Icons.people_outline, size: 14, color: c.muted)
+                  : null,
+            ),
+          Semantics(
+            key: const ValueKey('tab:add-view'),
+            button: true,
+            label: 'Add a view from the current layout',
+            excludeSemantics: true,
+            child: IconButton(
+              iconSize: 18,
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.add),
+              onPressed: onAddView,
+            ),
+          ),
+          if (activeSaved != null)
+            PopupMenuButton<String>(
+              key: const ValueKey('view-menu'),
+              tooltip: 'View options for ${activeSaved!.name}',
+              iconSize: 18,
+              onSelected: onMenu,
+              itemBuilder: (_) => [
+                const PopupMenuItem(value: 'rename', child: Text('Rename')),
+                const PopupMenuItem(value: 'duplicate', child: Text('Duplicate')),
+                PopupMenuItem(
+                    value: 'share',
+                    child: Text(activeSaved!.isShared ? 'Unshare' : 'Share')),
+                const PopupMenuItem(value: 'delete', child: Text('Delete')),
+              ],
+            ),
+          if (dirty) ...[
+            const SizedBox(width: MndSpace.s8),
+            Text('Edited', style: TextStyle(fontSize: 12, color: c.muted)),
+            TextButton(
+                key: const ValueKey('view-save'),
+                onPressed: onSave,
+                child: const Text('Save')),
+            TextButton(
+                key: const ValueKey('view-save-as'),
+                onPressed: onSaveAsNew,
+                child: const Text('Save as new')),
+            TextButton(
+                key: const ValueKey('view-reset'),
+                onPressed: onReset,
+                child: const Text('Reset')),
+          ],
+        ]),
+      ),
     );
   }
 }
