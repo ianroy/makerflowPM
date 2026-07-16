@@ -4,7 +4,7 @@
 [![Python](https://img.shields.io/badge/python-3.11.9-blue.svg)](runtime.txt)
 [![Status](https://img.shields.io/badge/status-active-success.svg)](#)
 [![Dart rebuild](https://img.shields.io/badge/Dart%20rebuild-active-21d1aa.svg)](FLUTTER_REBUILD_PLAN.md)
-[![Dart CI](https://github.com/ianroy/makerflowPM/actions/workflows/dart-ci.yml/badge.svg?branch=staging)](https://github.com/ianroy/makerflowPM/actions/workflows/dart-ci.yml)
+[![Dart CI](https://github.com/ianroy/makerflowPM/actions/workflows/dart-ci.yml/badge.svg?branch=main)](https://github.com/ianroy/makerflowPM/actions/workflows/dart-ci.yml)
 
 > **MakerFlow PM** is an open-source project management and operations platform built for makerspaces, labs, and service teams that need to track work, equipment, consumables, partnerships, and people enablement in one self-hostable, low-cost system.
 

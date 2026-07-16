@@ -32,9 +32,10 @@ sequence to take it live and retire the local demo stack.
 - **Boot:** [`makerflow_server/deploy/entrypoint.sh`](makerflow_server/deploy/entrypoint.sh)
   renders `config/<mode>.yaml` + `config/passwords.yaml` from the env vars DO
   injects (managed-DB bindings + secrets), applies migrations, then serves.
-- **Branch:** the spec deploys from **`staging`**. That's where the rebuild and
-  these deploy assets live; `main` predates the Dockerfile/spec. For a
-  production cutover, merge `staging → main` and flip `branch: main` in the spec.
+- **Branch:** the spec deploys from **`staging`** so the demo tracks the
+  latest work (every card lands there first). `main` also carries the full
+  rebuild (PR #6 merged 2026-07-16) — for a stability-first production
+  cutover, flip both `branch` fields in the spec to `main`.
 - This is **independent** of the legacy Python app's [`/.do/app.yaml`](../.do/app.yaml)
   (a different DO app). Deploying the Dart app does not touch it.
 

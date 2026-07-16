@@ -10,9 +10,9 @@
 # MAKERFLOW_API=https://<app-domain>/api/ — set that env after the first
 # create, once the default ingress domain is known (DEPLOY.md step 7).
 #
-# Deploys from `staging` — that's where the Dart rebuild (and these deploy
-# assets) live; `main` predates the Dockerfile/spec. For a production cutover,
-# merge staging -> main and flip `branch` to main.
+# Deploys from `staging` so the demo tracks the latest work (each card lands
+# there first). `main` also carries the full rebuild (PR #6, 2026-07-16) — for
+# a stability-first production cutover, flip both `branch` fields to main.
 # See DEPLOY.md for the full runbook.
 #
 # This is SEPARATE from the Python app's /.do/app.yaml at the repo root — the

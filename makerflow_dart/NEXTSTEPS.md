@@ -1,8 +1,9 @@
 # NEXTSTEPS.md — MakerFlow PM Dart rebuild
 
-The near-term, sequenced roadmap from *here* (live-tested PM + ops core,
-deploy-ready, [PR #6](https://github.com/ianroy/makerflowPM/pull/6) open) to a
-shippable v1 and beyond. The full per-card backlog lives in
+The near-term, sequenced roadmap from *here* (the rebuild is **merged to
+`main`** — [PR #6](https://github.com/ianroy/makerflowPM/pull/6), 2026-07-16 —
+with the monday-style UI, the Phase 8 customization platform, and the
+full-demo DO spec) to a shippable v1 and beyond. The full per-card backlog lives in
 [`../FLUTTER_REBUILD_PLAN.md`](../FLUTTER_REBUILD_PLAN.md); this file is the
 prioritized milestone view. Effort: S≈hours · M≈1–2d · L≈3–5d · XL≈1–2wk (one dev).
 
@@ -21,13 +22,15 @@ colored labels w/ AA ink), D6 value storage on the task row with server-side
 validation, an Airtable-style type-change coercion confirm, per-type cell
 editors in the table AND the task dialog, and a field manager inside the
 Columns popover. Verified live: add field → set value → hard reload → both
-persist from Postgres. Deploy-ready; PR #6 open.
+persist from Postgres. **Merged to `main`** (PR #6, 2026-07-16); the DO demo
+spec keeps deploying from `staging` (latest work) — production cutover = flip
+`branch: main` in `.do/app.yaml`.
 
 **▶ NEXT CARD: `fl-8-filter-sort-group`** (filter builder w/ per-type
 operators incl. custom fields · multi-sort · group-by-any-field; also picks up
 the deferred URL-carries-view-id from saved views) — spec in
-FLUTTER_REBUILD_PLAN.md §13 Phase 8. Owner-blocked items unchanged: doctl
-token (live deploy), human AT pass (R1), PR #6 merge. Local demo stack running
+FLUTTER_REBUILD_PLAN.md §13 Phase 8. Owner-blocked items: doctl
+token (live deploy), human AT pass (R1). Local demo stack running
 (:8085 web · :8080 API · :8090 PG · :8091 Redis — kill/teardown commands in the
 2026-07-14 session notes; the PG cluster is disposable /tmp). Known follow-ups:
 person fields render "User #N" until a member-directory endpoint exists;
@@ -40,7 +43,7 @@ A real URL on managed Postgres.
 
 | Task | Effort | Deps | Notes |
 |---|---|---|---|
-| M0.1 Decide PR #6: merge to `main` or keep deploying from `staging` | — | — | **Owner decision** |
+| ~~M0.1 Decide PR #6~~ ✅ merged 2026-07-16 | — | — | `main` carries the rebuild; demo spec stays on `staging` |
 | M0.2 Live DO deploy ([DEPLOY.md](DEPLOY.md)) | S | doctl token | **Blocked on owner** |
 | M0.3 Production `--seed` server flag | S | — | seed only runs in the build stage today |
 | M0.4 Deployed web build → live API; browser-smoke | S | M0.2 | `--dart-define=MAKERFLOW_API=…` |
@@ -153,7 +156,6 @@ SAML, SCIM, seat billing (universities buy site licenses on PO).
 ## Blocked on the owner
 - **doctl token** → M0.2 live deploy.
 - **A screen-reader/keyboard AT pass** (or a tester) → M3.1, or a decision to defer web.
-- **Merge call** on PR #6.
 
 ## Open follow-ups (non-blocking)
 Production seed flag · ops-feature edit paths · equipment space-name resolution
