@@ -401,12 +401,17 @@ interaction-level specs from the 2026-07-14 research pass. It builds directly on
 - ~~**fl-8-column-registry**~~ ✅ **done 2026-07-15** — replaced UI-3's hardcoded Main-Table
   columns (resize w/ 6px hit-zone + double-tap autofit, header-drag reorder w/ the name column
   pinned, toolbar Columns popover = the a11y path for hide + reorder) — persisting per user into
-  `CustomView.columnsJson` via the ViewEndpoint. Per-column settings menu deferred to
-  fl-8-custom-fields.
+  `CustomView.columnsJson` via the ViewEndpoint.
+- ~~**fl-8-custom-fields**~~ ✅ **done 2026-07-15** — 9 tier-1 field types live end-to-end: D6
+  value bags on tasks w/ server validation + type-change coercion, columns generated per
+  definition through the registry, per-type cell editors (AA-ink colored labels via
+  `MndLabelColors.textOn`), the same editors in the task dialog, and the field manager inside
+  the Columns popover. Per-column settings menu still deferred (filter/sort land with
+  fl-8-filter-sort-group).
 - **fl-8-saved-views** turns UI-2's view tabs into real saved/shared views.
 - **fl-8-filter-sort-group** makes UI-2's Person/Sort/Group-by toolbar stubs functional and
   brings per-group batteries (generalizing UI-3's board battery).
 - **fl-8-dashboard-widgets** = UI-9 grown up; **fl-8-drag-suite** pairs with UI-4.
-Sequence (actual): Phase 8 entered early — fl-8-view-field-endpoints ✅ (2026-07-14) and
-fl-8-column-registry ✅ (2026-07-15) are live; UI-5/UI-6 (item card, kanban restyle) interleave
-with fl-8-custom-fields next.
+Sequence (actual): Phase 8 entered early — fl-8-view-field-endpoints ✅, fl-8-column-registry ✅,
+fl-8-custom-fields ✅ are live; UI-5/UI-6 (item card, kanban restyle) interleave with
+fl-8-saved-views next.

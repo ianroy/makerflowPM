@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/field_models.dart';
 import '../../data/models.dart';
 import '../../state/providers.dart';
+import 'custom_field_cells.dart';
 
 /// Accessible create/edit task dialog. Writes to the active org via the
 /// repository (in-memory or live Serverpod). A Material [AlertDialog] gives us
@@ -48,6 +50,8 @@ class _TaskDialogState extends ConsumerState<_TaskDialog> {
       TextEditingController(text: widget.existing?.title ?? '');
   late String _status = widget.existing?.status ?? 'todo';
   late String _priority = widget.existing?.priority ?? 'medium';
+  late final Map<String, dynamic> _customFields =
+      Map.of(widget.existing?.customFields ?? const {});
   bool _busy = false;
   String? _error;
 
@@ -86,6 +90,7 @@ class _TaskDialogState extends ConsumerState<_TaskDialog> {
           priority: _priority,
           sortOrder: e.sortOrder,
           projectId: e.projectId,
+          customFields: _customFields,
         );
       } else {
         written = await repo.create(
@@ -93,6 +98,7 @@ class _TaskDialogState extends ConsumerState<_TaskDialog> {
           title: title,
           status: _status,
           priority: _priority,
+          customFields: _customFields.isEmpty ? null : _customFields,
         );
       }
       _announce('${_isEdit ? 'Updated' : 'Created'} task ${written.title}.');
@@ -150,6 +156,49 @@ class _TaskDialogState extends ConsumerState<_TaskDialog> {
     return 'Something went wrong. Please try again.';
   }
 
+  /// One dialog row per custom-field definition: checkbox renders inline;
+  /// everything else shows the value and opens its type editor on tap.
+  Widget _customFieldRow(FieldConfigVm f) {
+    final value = _customFields[f.key];
+    if (f.fieldType == 'checkbox') {
+      return SwitchListTile(
+        dense: true,
+        contentPadding: EdgeInsets.zero,
+        title: Text(f.label),
+        value: value == true,
+        onChanged: _busy
+            ? null
+            : (v) => setState(() =>
+                v ? _customFields[f.key] = true : _customFields.remove(f.key)),
+      );
+    }
+    return Semantics(
+      button: true,
+      label: '${f.label}: ${customFieldText(f, value)}. Edit',
+      excludeSemantics: true,
+      child: InkWell(
+        key: ValueKey('dialog-cf:${f.key}'),
+        onTap: _busy
+            ? null
+            : () async {
+                final edit = await editCustomFieldValue(context, f, value);
+                if (edit == null || !mounted) return;
+                setState(() {
+                  if (edit.value == null) {
+                    _customFields.remove(f.key);
+                  } else {
+                    _customFields[f.key] = edit.value;
+                  }
+                });
+              },
+        child: InputDecorator(
+          decoration: InputDecoration(labelText: f.label),
+          child: Text(customFieldText(f, value)),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -158,7 +207,8 @@ class _TaskDialogState extends ConsumerState<_TaskDialog> {
         key: _formKey,
         child: SizedBox(
           width: 380,
-          child: Column(
+          child: SingleChildScrollView(
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextFormField(
@@ -196,6 +246,14 @@ class _TaskDialogState extends ConsumerState<_TaskDialog> {
                 ],
                 onChanged: _busy ? null : (v) => setState(() => _priority = v!),
               ),
+              // fl-8-custom-fields: one editor row per definition. Values are
+              // staged in _customFields and saved with the task write.
+              ...?ref.watch(taskFieldConfigsProvider).valueOrNull?.map(
+                    (f) => Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: _customFieldRow(f),
+                    ),
+                  ),
               if (_error != null) ...[
                 const SizedBox(height: 16),
                 Semantics(
@@ -215,6 +273,7 @@ class _TaskDialogState extends ConsumerState<_TaskDialog> {
                 ),
               ],
             ],
+            ),
           ),
         ),
       ),

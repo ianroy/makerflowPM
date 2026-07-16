@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:makerflow_design/makerflow_design.dart';
 
+import '../../data/field_models.dart';
 import '../../data/models.dart';
 import '../../state/providers.dart';
 import '../shell/app_shell.dart';
@@ -64,6 +65,39 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
         );
     ref.invalidate(tasksProvider);
     _announce('Due date set for ${task.title}.');
+  }
+
+  /// Write one custom-field value (fl-8-custom-fields): merge into the task's
+  /// bag and persist the whole bag (D6). Server validation failures (typed
+  /// Conflict) are announced.
+  Future<void> _setCustomField(TaskVm task, FieldConfigVm field, Object? value) async {
+    final merged = Map<String, dynamic>.of(task.customFields);
+    if (value == null) {
+      merged.remove(field.key);
+    } else {
+      merged[field.key] = value;
+    }
+    try {
+      await ref.read(taskRepositoryProvider).update(
+            id: task.id,
+            version: task.version,
+            organizationId: task.organizationId,
+            title: task.title,
+            status: task.status,
+            priority: task.priority,
+            sortOrder: task.sortOrder,
+            projectId: task.projectId,
+            customFields: merged,
+          );
+      ref.invalidate(tasksProvider);
+      _announce('Updated ${field.label} for ${task.title}.');
+    } catch (e) {
+      final s = e.toString();
+      final i = s.indexOf('message: ');
+      _announce('Could not update ${field.label}. '
+          '${i >= 0 ? s.substring(i + 'message: '.length).trim() : 'Please try again.'}');
+      ref.invalidate(tasksProvider); // drop the optimistic state
+    }
   }
 
   Future<void> _addItem(String status, String title) async {
@@ -166,6 +200,7 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
                       onSetStatus: (t, status) => _commitMove(t, status),
                       onSetDue: _setDue,
                       onAddItem: _addItem,
+                      onSetCustomField: _setCustomField,
                     ),
                   _TasksView.list =>
                     _TaskListView(tasks: visible, colors: c, onEdit: _openEditTask),

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:makerflow_client/makerflow_client.dart' as api;
 
 import 'models.dart';
@@ -31,6 +33,7 @@ class ServerpodTaskRepository implements TaskRepository {
     required String status,
     required String priority,
     int? projectId,
+    Map<String, dynamic>? customFields,
   }) async {
     // The server stamps version/timestamps/createdBy; these are placeholders.
     final now = DateTime.now().toUtc();
@@ -41,6 +44,8 @@ class ServerpodTaskRepository implements TaskRepository {
       priority: api.TaskPriority.values.byName(priority),
       projectId: projectId,
       sortOrder: 0,
+      customFieldsJson:
+          (customFields == null || customFields.isEmpty) ? null : jsonEncode(customFields),
       version: 1,
       createdAt: now,
       updatedAt: now,
@@ -59,6 +64,7 @@ class ServerpodTaskRepository implements TaskRepository {
     required double sortOrder,
     int? projectId,
     DateTime? dueAt,
+    Map<String, dynamic>? customFields,
   }) async {
     // Fetch-merge: start from the current row so the edit preserves fields the
     // VM doesn't carry (description, dueAt, assignee, sortOrder, clientUuid…),
@@ -71,6 +77,9 @@ class ServerpodTaskRepository implements TaskRepository {
       status: api.TaskStatus.values.byName(status),
       priority: api.TaskPriority.values.byName(priority),
       dueAt: dueAt ?? existing.dueAt,
+      customFieldsJson: customFields == null
+          ? existing.customFieldsJson
+          : jsonEncode(customFields),
       version: version,
     ));
     return _toVm(row);
@@ -88,6 +97,18 @@ class ServerpodTaskRepository implements TaskRepository {
         projectId: t.projectId,
         dueAt: t.dueAt,
         sortOrder: t.sortOrder,
+        customFields: _decodeBag(t.customFieldsJson),
         version: t.version,
       );
+
+  /// Tolerant bag decode (malformed/absent → empty; mirrors the server).
+  static Map<String, dynamic> _decodeBag(String? json) {
+    if (json == null || json.trim().isEmpty) return const {};
+    try {
+      final raw = jsonDecode(json);
+      return raw is Map<String, dynamic> ? raw : const {};
+    } catch (_) {
+      return const {};
+    }
+  }
 }

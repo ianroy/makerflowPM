@@ -18,13 +18,15 @@ abstract class TaskRepository {
     required String status,
     required String priority,
     int? projectId,
+    Map<String, dynamic>? customFields,
   });
 
   /// Edit a task. [version] is the row the edit is based on — the server
   /// rejects a stale version with a conflict (optimistic concurrency, R5).
   /// [sortOrder] is passed through unchanged so an edit never reorders the card.
   /// [dueAt]: null = leave unchanged (clearing a date is a copyWith limitation,
-  /// tracked in the plan).
+  /// tracked in the plan). [customFields]: null = leave unchanged; a map
+  /// REPLACES the whole bag (D6 single-row reconcile — callers merge first).
   Future<TaskVm> update({
     required int id,
     required int version,
@@ -35,6 +37,7 @@ abstract class TaskRepository {
     required double sortOrder,
     int? projectId,
     DateTime? dueAt,
+    Map<String, dynamic>? customFields,
   });
 
   /// Soft-delete: the task leaves the board but is restorable from the trash.
@@ -76,6 +79,7 @@ class InMemoryTaskRepository implements TaskRepository {
     required String status,
     required String priority,
     int? projectId,
+    Map<String, dynamic>? customFields,
   }) async {
     final nextId = _tasks.fold<int>(0, (m, t) => t.id > m ? t.id : m) + 1;
     final created = TaskVm(
@@ -85,6 +89,7 @@ class InMemoryTaskRepository implements TaskRepository {
       status: status,
       priority: priority,
       projectId: projectId,
+      customFields: customFields ?? const {},
     );
     _tasks.add(created);
     return created;
@@ -101,6 +106,7 @@ class InMemoryTaskRepository implements TaskRepository {
     required double sortOrder,
     int? projectId,
     DateTime? dueAt,
+    Map<String, dynamic>? customFields,
   }) async {
     final i = _tasks.indexWhere((t) => t.id == id);
     final updated = TaskVm(
@@ -113,6 +119,7 @@ class InMemoryTaskRepository implements TaskRepository {
       assigneeName: _tasks[i].assigneeName,
       dueAt: dueAt ?? _tasks[i].dueAt,
       sortOrder: sortOrder,
+      customFields: customFields ?? _tasks[i].customFields,
       version: version + 1,
     );
     _tasks[i] = updated;

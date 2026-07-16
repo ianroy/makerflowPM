@@ -37,10 +37,14 @@ class TaskEndpoint extends Endpoint {
   Future<Task> create(Session session, Task draft) async {
     final ctx = await RbacGuard.requireRole(
         session, draft.organizationId, MembershipRole.staff);
-    await CustomFields.validate(
+    // Store the SANITIZED document, never the client's raw JSON. (copyWith
+    // can't null a field, but a null doc means draft's own value was null, so
+    // the no-op keeps the right value.)
+    final doc = await CustomFields.sanitize(
         session, draft.organizationId, 'task', draft.customFieldsJson);
     final now = DateTime.now().toUtc();
     final toInsert = draft.copyWith(
+      customFieldsJson: doc,
       version: 1,
       createdAt: now,
       updatedAt: now,
@@ -73,10 +77,15 @@ class TaskEndpoint extends Endpoint {
       throw MakerflowConflictException(message: 'Task was modified by someone else. Reload and retry.',
       );
     }
-    await CustomFields.validate(
-        session, existing.organizationId, 'task', incoming.customFieldsJson);
+    // Values carried unchanged from the existing row are exempt from
+    // re-validation (schema evolution never bricks a row); new/changed values
+    // are strictly validated. The stored doc is the canonical re-encode.
+    final doc = await CustomFields.sanitize(
+        session, existing.organizationId, 'task', incoming.customFieldsJson,
+        existingJson: existing.customFieldsJson);
 
     final updated = incoming.copyWith(
+      customFieldsJson: doc,
       organizationId: existing.organizationId, // tenancy cannot be reassigned
       version: existing.version + 1,
       createdAt: existing.createdAt,

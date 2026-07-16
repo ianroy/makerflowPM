@@ -157,6 +157,89 @@ void main() {
       expect(ok.id, isNotNull);
     });
 
+    test('UPDATE rejects invalid values too (the primary production write path)',
+        () async {
+      final orgId = await seedOrgWithMember(924, MembershipRole.workspaceAdmin,
+          slug: 'cf-org-5');
+      final admin = sessionFor(924);
+      await fields.save(admin, draftField(orgId, 'weight_kg', 'number'));
+      final task = await tasks.create(admin,
+          draftTask(orgId, customFieldsJson: jsonEncode({'weight_kg': 3.5})));
+
+      // Changed-to-invalid value → typed Conflict (carried values are exempt,
+      // changed values are not).
+      await expectLater(
+        tasks.update(admin,
+            task.copyWith(customFieldsJson: jsonEncode({'weight_kg': 'heavy'}))),
+        throwsA(isA<MakerflowConflictException>()),
+      );
+      // New unknown key via update → typed Conflict.
+      await expectLater(
+        tasks.update(
+            admin,
+            task.copyWith(
+                customFieldsJson:
+                    jsonEncode({'weight_kg': 3.5, 'mystery': 1}))),
+        throwsA(isA<MakerflowConflictException>()),
+      );
+      // Non-finite numbers are rejected (they would crash jsonEncode later).
+      await expectLater(
+        tasks.update(admin,
+            task.copyWith(customFieldsJson: '{"weight_kg": 1e999}')),
+        throwsA(isA<MakerflowConflictException>()),
+      );
+    });
+
+    test('the stored doc is sanitized: nulls removed, canonical re-encode',
+        () async {
+      final orgId = await seedOrgWithMember(925, MembershipRole.workspaceAdmin,
+          slug: 'cf-org-6');
+      final admin = sessionFor(925);
+      await fields.save(admin, draftField(orgId, 'weight_kg', 'number'));
+
+      // Duplicate keys in raw JSON: last one wins and ONLY the parsed map is
+      // stored (no raw-bytes smuggling); explicit nulls are removed entirely.
+      final created = await tasks.create(
+          admin,
+          draftTask(orgId,
+              customFieldsJson:
+                  '{"weight_kg": 1, "weight_kg": 2.5, "weight_kg": null}'));
+      expect(created.customFieldsJson, '{}'); // last duplicate = null = cleared
+
+      final withValue = await tasks.update(admin,
+          created.copyWith(customFieldsJson: jsonEncode({'weight_kg': 2.5})));
+      expect(withValue.customFieldsJson, '{"weight_kg":2.5}'); // canonical
+    });
+
+    test('deleting a definition never bricks tasks: carried orphans survive '
+        'unrelated edits, and null clears them', () async {
+      final orgId = await seedOrgWithMember(926, MembershipRole.workspaceAdmin,
+          slug: 'cf-org-7');
+      final admin = sessionFor(926);
+      final weight =
+          await fields.save(admin, draftField(orgId, 'weight_kg', 'number'));
+      final task = await tasks.create(admin,
+          draftTask(orgId, customFieldsJson: jsonEncode({'weight_kg': 3.5})));
+
+      await fields.delete(admin, weight.id!); // definition gone, value orphaned
+
+      // An unrelated edit carries the orphaned value through unchanged.
+      final retitled = await tasks.update(
+          admin, task.copyWith(title: 'renamed after field delete'));
+      expect(jsonDecode(retitled.customFieldsJson!), {'weight_kg': 3.5});
+
+      // Writing a NEW value to the dead key is still rejected...
+      await expectLater(
+        tasks.update(admin,
+            retitled.copyWith(customFieldsJson: jsonEncode({'weight_kg': 9}))),
+        throwsA(isA<MakerflowConflictException>()),
+      );
+      // ...but clearing it (null) is always allowed.
+      final cleared = await tasks.update(admin,
+          retitled.copyWith(customFieldsJson: jsonEncode({'weight_kg': null})));
+      expect(cleared.customFieldsJson, '{}');
+    });
+
     test('type change warns first, then coerces on confirm (Airtable pattern)',
         () async {
       final orgId = await seedOrgWithMember(922, MembershipRole.workspaceAdmin,

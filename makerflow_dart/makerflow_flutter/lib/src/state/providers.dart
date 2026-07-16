@@ -9,6 +9,8 @@ import '../data/serverpod_task_repository.dart';
 import 'dart:async';
 
 import '../data/preference_repository.dart';
+import '../data/field_models.dart';
+import '../data/field_repository.dart';
 import '../data/view_repository.dart';
 import '../data/trash_repository.dart';
 import '../data/serverpod_trash_repository.dart';
@@ -65,6 +67,19 @@ final taskColumnPrefsProvider = StateProvider<List<ColumnPref>>((ref) {
 final taskColumnLoadProvider = FutureProvider<List<ColumnPref>>((ref) {
   final orgId = ref.watch(activeOrgIdProvider);
   return ref.watch(viewRepositoryProvider).loadTaskColumns(orgId);
+});
+
+// --- Custom-field definitions (fl-8-custom-fields, D6) ---
+final fieldRepositoryProvider = Provider<FieldRepository>((ref) =>
+    useLiveBackend
+        ? ServerpodFieldRepository(ref.watch(serverpodClientProvider))
+        : InMemoryFieldRepository());
+
+/// The active org's task field definitions; drives the dynamic table columns
+/// and the field manager. Invalidate after any definition mutation.
+final taskFieldConfigsProvider = FutureProvider<List<FieldConfigVm>>((ref) {
+  final orgId = ref.watch(activeOrgIdProvider);
+  return ref.watch(fieldRepositoryProvider).listTaskFields(orgId);
 });
 
 Timer? _columnSaveDebounce;

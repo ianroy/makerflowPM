@@ -7,32 +7,46 @@ import '../generated/protocol.dart';
 /// D6 custom-field VALUES (fl-8-custom-fields): a JSON object on the entity
 /// (`Task.customFieldsJson`), keyed by `FieldConfig.key`. This module is the
 /// single authority for what a value bag may contain — every task write path
-/// validates through [validate], and a FieldConfig type change converts
-/// existing values through [coerceValue].
+/// runs through [sanitize], and a FieldConfig type change converts existing
+/// values through [coerceValue].
 ///
 /// Value shapes by field type:
 ///   text / longText  String
-///   number           num
+///   number           finite num
 ///   checkbox         bool
 ///   date             ISO-8601 String (parseable by DateTime.parse)
 ///   person           int (serverpod userInfoId)
 ///   select / label   String — must be one of the definition's options
 ///   multiSelect      List<String> — subset of the definition's options
-/// `null` clears a value. Keys without a definition are rejected.
+///
+/// Write rules (the schema-evolution contract):
+///   • `null` clears a value (removed from the stored document).
+///   • NEW or CHANGED values are strictly validated — unknown keys and type/
+///     option mismatches throw a typed Conflict.
+///   • Values CARRIED UNCHANGED from the existing row are kept even when the
+///     schema has moved under them (definition deleted, option removed, type
+///     changed elsewhere) — so a fetch-merge edit of an unrelated field can
+///     never brick a task. Readers render such orphans tolerantly.
+///   • The stored document is a canonical re-encode of the validated map —
+///     never the client's raw bytes (kills duplicate-key smuggling).
 class CustomFields {
-  /// Validate a value bag against the org's field definitions.
+  /// Validate [incomingJson] against the org's definitions and return the
+  /// canonical document to store (null in = null out). [existingJson] is the
+  /// row's current document; values equal to their stored counterpart are
+  /// exempt from re-validation (see the class contract above).
   /// Throws a typed [MakerflowConflictException] naming the offending field.
-  static Future<void> validate(
+  static Future<String?> sanitize(
     Session session,
     int organizationId,
     String entityType,
-    String? customFieldsJson,
-  ) async {
-    if (customFieldsJson == null || customFieldsJson.trim().isEmpty) return;
+    String? incomingJson, {
+    String? existingJson,
+  }) async {
+    if (incomingJson == null || incomingJson.trim().isEmpty) return null;
 
     final Object? decoded;
     try {
-      decoded = jsonDecode(customFieldsJson);
+      decoded = jsonDecode(incomingJson);
     } catch (_) {
       throw MakerflowConflictException(
           message: 'customFieldsJson is not valid JSON.');
@@ -41,8 +55,9 @@ class CustomFields {
       throw MakerflowConflictException(
           message: 'customFieldsJson must be a JSON object keyed by field key.');
     }
-    if (decoded.isEmpty) return;
+    if (decoded.isEmpty) return '{}';
 
+    final existing = decodeBag(existingJson);
     final configs = await FieldConfig.db.find(
       session,
       where: (f) =>
@@ -51,21 +66,42 @@ class CustomFields {
     );
     final byKey = {for (final c in configs) c.key: c};
 
+    final out = <String, dynamic>{};
     for (final entry in decoded.entries) {
+      final value = entry.value;
+      if (value == null) continue; // null clears the value
+      final carried = existing.containsKey(entry.key) &&
+          _jsonEquals(existing[entry.key], value);
+      if (carried) {
+        out[entry.key] = value; // unchanged → keep, even if schema moved
+        continue;
+      }
       final config = byKey[entry.key];
       if (config == null) {
         throw MakerflowConflictException(
             message: 'No field definition for "${entry.key}" on $entityType. '
                 'Define it first (FieldConfigEndpoint.save).');
       }
-      final value = entry.value;
-      if (value == null) continue; // null clears the value
       final problem = typeProblem(config, value);
       if (problem != null) {
         throw MakerflowConflictException(
             message: 'Field "${config.key}" (${config.fieldType}) $problem.');
       }
+      out[entry.key] = value;
     }
+    return jsonEncode(out);
+  }
+
+  /// Structural equality for JSON scalars and lists (the only value shapes).
+  static bool _jsonEquals(Object? a, Object? b) {
+    if (a is List && b is List) {
+      if (a.length != b.length) return false;
+      for (var i = 0; i < a.length; i++) {
+        if (a[i] != b[i]) return false;
+      }
+      return true;
+    }
+    return a == b;
   }
 
   /// Null when [value] fits [config]'s type; otherwise a human-readable
@@ -76,7 +112,8 @@ class CustomFields {
       case 'longText':
         return value is String ? null : 'expects a string';
       case 'number':
-        return value is num ? null : 'expects a number';
+        // Non-finite values (1e999 → Infinity) would crash jsonEncode later.
+        return (value is num && value.isFinite) ? null : 'expects a finite number';
       case 'checkbox':
         return value is bool ? null : 'expects true/false';
       case 'date':
@@ -140,8 +177,11 @@ class CustomFields {
         if (value is List) return value.join(', ');
         return value.toString();
       case 'number':
-        if (value is num) return value;
-        if (value is String) return num.tryParse(value);
+        if (value is num) return value.isFinite ? value : null;
+        if (value is String) {
+          final n = num.tryParse(value);
+          return (n != null && n.isFinite) ? n : null;
+        }
         return null;
       case 'checkbox':
         if (value is bool) return value;
