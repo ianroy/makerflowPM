@@ -49,6 +49,23 @@ doctl auth init                         # paste a token from https://cloud.digit
 doctl account get                       # sanity check
 ```
 
+## The fast path — everything else is one command
+
+```sh
+makerflow_dart/deploy/do_deploy.sh
+```
+
+[`deploy/do_deploy.sh`](deploy/do_deploy.sh) automates steps 2–7 below:
+generates the secrets into a temp copy of the spec (nothing secret lands in
+git), creates the app and waits for the first build (~10–25 min), wires the
+web bundle's `MAKERFLOW_API` to the app's own domain (second build), verifies
+both `GET /api/` and `GET /`, and prints the demo URL + the owner login —
+**the seed password is shown exactly once; store it**. Seeding itself is a
+`POST_DEPLOY` job in the spec (idempotent; skips safely while the password
+env is a placeholder), so no console step is needed. Re-running the script
+against an existing app only verifies + finishes wiring; it never rotates
+secrets. The manual steps below remain as the fallback/reference.
+
 ## 2. Generate the two secrets the spec needs
 
 The spec binds DB/Redis credentials automatically from the managed components.
@@ -99,13 +116,13 @@ doctl apps logs "$APP_ID" api --type run --follow          # watch boot + migrat
 Expected in the logs: the entrypoint renders the config, `--apply-migrations`
 brings the schema up (56 tables), then `SERVERPOD ... started`.
 
-## 6. Seed the first org + owner (once)
+## 6. Seed the first org + owner
 
-The image doesn't auto-seed (the serve path never touches the seed). After the
-service is up (step 5 — migrations applied), run the seed once against the
-managed DB via a one-off console. It's **idempotent** (a no-op if the `default`
-org already exists) and does **not** start the HTTP servers, so it's safe to run
-inside the already-serving `web` instance:
+**Automatic:** the spec ships a `seed` job (`kind: POST_DEPLOY`) that runs
+`/app/entrypoint.sh seed` after every successful deployment — idempotent (a
+no-op once the `default` org exists) and guarded (it skips, never fails, while
+`SEED_ADMIN_PASSWORD` is unset or a placeholder, so an owner account can never
+be created with a known password). Manual fallback via the console:
 
 ```sh
 doctl apps console "$APP_ID" api

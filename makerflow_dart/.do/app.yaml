@@ -88,14 +88,15 @@ services:
       - key: PUBLIC_HOST
         value: ${APP_DOMAIN}
       - key: SERVICE_SECRET
-        value: REPLACE_WITH_64_CHAR_SECRET   # set as an encrypted secret in DO
+        value: REPLACE_WITH_64_CHAR_SECRET   # deploy/do_deploy.sh substitutes this
         type: SECRET
-      # REQUIRED before running the seed on a public deployment: the owner
-      # password for admin@makerflow.local (the seed falls back to the
-      # well-known dev password without it).
-      # - key: SEED_ADMIN_PASSWORD
-      #   value: REPLACE_WITH_STRONG_PASSWORD
-      #   type: SECRET
+      # Owner password for admin@makerflow.local. deploy/do_deploy.sh
+      # substitutes a generated value; the entrypoint REFUSES to seed a
+      # production owner while this is a placeholder, so creating the app
+      # straight from this file is safe (it just skips seeding).
+      - key: SEED_ADMIN_PASSWORD
+        value: REPLACE_WITH_STRONG_PASSWORD
+        type: SECRET
       # Optional but recommended BEFORE first users: serverpod_auth password
       # pepper (cannot be rotated later without invalidating credentials).
       # - key: EMAIL_PASSWORD_PEPPER
@@ -126,6 +127,57 @@ services:
       - key: MAKERFLOW_API
         value: REPLACE_WITH_https://<app-domain>/api/
         scope: RUN_AND_BUILD_TIME
+
+# Runs after every successful deployment (API is up, migrations applied by
+# its boot path) and creates the first org + owner + sample data. Idempotent:
+# a no-op once the default org exists; skips (never fails the deploy) while
+# SEED_ADMIN_PASSWORD is a placeholder.
+jobs:
+  - name: seed
+    kind: POST_DEPLOY
+    dockerfile_path: makerflow_dart/makerflow_server/Dockerfile
+    source_dir: makerflow_dart
+    github:
+      repo: ianroy/makerflowPM
+      branch: staging
+      deploy_on_push: true
+    run_command: /app/entrypoint.sh seed
+    instance_size_slug: basic-xxs
+    envs:
+      - key: SERVERPOD_RUN_MODE
+        value: production
+      - key: DATABASE_HOST
+        value: ${makerflow-db.HOSTNAME}
+      - key: DATABASE_PORT
+        value: ${makerflow-db.PORT}
+      - key: DATABASE_NAME
+        value: ${makerflow-db.DATABASE}
+      - key: DATABASE_USER
+        value: ${makerflow-db.USERNAME}
+      - key: DATABASE_PASSWORD
+        value: ${makerflow-db.PASSWORD}
+        type: SECRET
+      - key: DATABASE_REQUIRE_SSL
+        value: "true"
+      - key: REDIS_HOST
+        value: ${makerflow-redis.HOSTNAME}
+      - key: REDIS_PORT
+        value: ${makerflow-redis.PORT}
+      - key: REDIS_USER
+        value: ${makerflow-redis.USERNAME}
+      - key: REDIS_PASSWORD
+        value: ${makerflow-redis.PASSWORD}
+        type: SECRET
+      - key: REDIS_REQUIRE_SSL
+        value: "true"
+      - key: PUBLIC_HOST
+        value: ${APP_DOMAIN}
+      - key: SERVICE_SECRET
+        value: REPLACE_WITH_64_CHAR_SECRET   # deploy/do_deploy.sh substitutes this
+        type: SECRET
+      - key: SEED_ADMIN_PASSWORD
+        value: REPLACE_WITH_STRONG_PASSWORD  # deploy/do_deploy.sh substitutes this
+        type: SECRET
 
 databases:
   - name: makerflow-db

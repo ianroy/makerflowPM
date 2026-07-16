@@ -68,8 +68,22 @@ case "${1:-serve}" in
     exec /app/server --mode "$mode" --apply-migrations --role monolith
     ;;
   seed)
-    # One-off: create the first org + owner + sample data, then exit. Idempotent.
-    # Does not start the HTTP servers, so it is safe alongside a running monolith.
+    # Create the first org + owner + sample data, then exit. Idempotent (a
+    # no-op once the default org exists) and never starts the HTTP servers, so
+    # it is safe alongside a running monolith. Runs automatically as the
+    # app's POST_DEPLOY job (.do/app.yaml) and manually via the console.
+    #
+    # Guard: never create a PUBLIC owner account with a missing/placeholder
+    # password. Skip (exit 0) rather than fail, so a deployment created
+    # without the secret still goes live — seed later once it's set.
+    if [ "$mode" = "production" ]; then
+      case "${SEED_ADMIN_PASSWORD:-}" in
+        ""|REPLACE_WITH_*)
+          echo "entrypoint: SEED_ADMIN_PASSWORD is unset or a placeholder — skipping seed (set it and redeploy or re-run seed)" >&2
+          exit 0
+          ;;
+      esac
+    fi
     exec /app/server --mode "$mode" --seed
     ;;
   *)
