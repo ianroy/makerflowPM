@@ -26,15 +26,15 @@ persist from Postgres. **Merged to `main`** (PR #6, 2026-07-16); the DO demo
 spec keeps deploying from `staging` (latest work) — production cutover = flip
 `branch: main` in `.do/app.yaml`.
 
-**▶ NEXT CARD: `fl-8-filter-sort-group`** (filter builder w/ per-type
-operators incl. custom fields · multi-sort · group-by-any-field; also picks up
-the deferred URL-carries-view-id from saved views) — spec in
-FLUTTER_REBUILD_PLAN.md §13 Phase 8. Owner-blocked items: doctl
-token (live deploy), human AT pass (R1). Local demo stack running
-(:8085 web · :8080 API · :8090 PG · :8091 Redis — kill/teardown commands in the
-2026-07-14 session notes; the PG cluster is disposable /tmp). Known follow-ups:
-person fields render "User #N" until a member-directory endpoint exists;
-per-user default-view marker; calendar surface (UI-7).
+**▶ NEXT CARD: `fl-8-column-summaries`** (per-column footer aggregations —
+sum/avg/min/max for numbers, battery/count for status, % for checkbox — plus
+per-group footers, persisted per view) — spec in FLUTTER_REBUILD_PLAN.md §13
+Phase 8. Owner-blocked items: doctl token (live deploy — everything after
+`doctl auth init` is `deploy/do_deploy.sh`), human AT pass (R1). Local demo
+stack running (:8085 web · :8080 API · :8090 PG · :8091 Redis; the PG cluster
+is disposable /tmp). Known follow-ups: URL `?view=` param; member-directory
+endpoint (person picker + Person filter chip + assignee writes); per-user
+default-view marker; default-table filter persistence; calendar surface (UI-7).
 
 ---
 
@@ -132,7 +132,7 @@ models exist with **no endpoints and no value storage**; Main Table columns are 
 | ~~2~~ ✅ | ~~fl-8-column-registry~~ done 2026-07-15 | L | resize · autofit · reorder · show/hide · pin shipped, persisted per user |
 | ~~3~~ ✅ | ~~fl-8-custom-fields~~ done 2026-07-15 | XL | 9 tier-1 field types live end-to-end: D6 values + validation + coercion, dynamic columns, per-type editors, field manager |
 | ~~4~~ ✅ | ~~fl-8-saved-views~~ done 2026-07-16 | M | tabs = built-in defaults + named saved/shared views w/ dirty-state save flows |
-| 5 | fl-8-filter-sort-group | L | filter builder · multi-sort · group-by-any-field |
+| ~~5~~ ✅ | ~~fl-8-filter-sort-group~~ done 2026-07-16 | L | AND/OR filter builder w/ per-type operators · multi-sort + header clicks · group-by-any-field w/ value-carrying add rows |
 | 6–11 | summaries · subitems · drag suite · templates · dashboards · automations | S→XL | the long tail |
 
 ## M-ENT — Enterprise readiness (Phase 9, added 2026-07-14)

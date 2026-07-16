@@ -11,6 +11,7 @@ import 'dart:async';
 import '../data/preference_repository.dart';
 import '../data/field_models.dart';
 import '../data/field_repository.dart';
+import '../data/view_config.dart';
 import '../data/view_repository.dart';
 import '../data/trash_repository.dart';
 import '../data/serverpod_trash_repository.dart';
@@ -80,6 +81,14 @@ final fieldRepositoryProvider = Provider<FieldRepository>((ref) =>
 final taskFieldConfigsProvider = FutureProvider<List<FieldConfigVm>>((ref) {
   final orgId = ref.watch(activeOrgIdProvider);
   return ref.watch(fieldRepositoryProvider).listTaskFields(orgId);
+});
+
+/// The active filter/sort/group-by (fl-8-filter-sort-group). Session state
+/// for the built-in quick views; applied from + saved into `filtersJson` for
+/// saved views. Resets on org switch.
+final taskViewConfigProvider = StateProvider<ViewConfig>((ref) {
+  ref.watch(activeOrgIdProvider);
+  return ViewConfig.empty;
 });
 
 // --- Saved views (fl-8-saved-views) ---

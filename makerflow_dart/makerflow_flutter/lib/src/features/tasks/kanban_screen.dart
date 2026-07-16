@@ -6,11 +6,13 @@ import 'package:makerflow_design/makerflow_design.dart';
 
 import '../../data/field_models.dart';
 import '../../data/models.dart';
+import '../../data/view_config.dart';
 import '../../data/view_repository.dart';
 import '../../state/providers.dart';
 import '../shell/app_shell.dart';
 import 'main_table_view.dart';
 import 'new_task_dialog.dart';
+import 'view_config_dialogs.dart';
 
 /// Kanban board with TWO equally-capable move mechanisms:
 ///   • pointer drag-and-drop (Draggable / DragTarget) for mouse + touch, and
@@ -101,16 +103,58 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
     }
   }
 
-  Future<void> _addItem(String status, String title) async {
+  /// Add an item into a group. Status groups keep today's behavior; when
+  /// grouped by another field (fl-8-filter-sort-group), the new task lands in
+  /// "To do" carrying the group's field value (monday's add-into-group).
+  /// Group keys: bare status names, or '<fieldId>:<value>'.
+  Future<void> _addItem(String groupKey, String title) async {
+    var status = 'todo';
+    String? priority;
+    int? projectId = ref.read(taskProjectFilterProvider);
+    Map<String, dynamic>? customFields;
+
+    // '<fieldId>:<value>' — custom-field ids are themselves 'cf:<key>', so
+    // the value separator is the SECOND colon for them.
+    final sep = groupKey.startsWith('cf:')
+        ? groupKey.indexOf(':', 3)
+        : groupKey.indexOf(':');
+    if (sep < 0) {
+      status = groupKey; // a status group
+    } else {
+      final fieldId = groupKey.substring(0, sep);
+      final value = groupKey.substring(sep + 1);
+      if (value.isNotEmpty) {
+        if (fieldId == 'priority') {
+          priority = value;
+        } else if (fieldId == 'project') {
+          projectId = int.tryParse(value) ?? projectId;
+        } else if (fieldId.startsWith('cf:')) {
+          final key = fieldId.substring(3);
+          final configs =
+              ref.read(taskFieldConfigsProvider).valueOrNull ?? const [];
+          final f = configs.where((f) => f.key == key).firstOrNull;
+          customFields = {
+            key: switch (f?.fieldType) {
+              'checkbox' => value == 'true',
+              'number' => num.tryParse(value) ?? value,
+              _ => value,
+            },
+          };
+        }
+        // 'assignee' groups: no assignee write path yet — plain todo.
+      }
+    }
+
     await ref.read(taskRepositoryProvider).create(
           organizationId: ref.read(activeOrgIdProvider),
           title: title,
           status: status,
-          priority: 'medium',
-          projectId: ref.read(taskProjectFilterProvider),
+          priority: priority ?? 'medium',
+          projectId: projectId,
+          customFields: customFields,
         );
     ref.invalidate(tasksProvider);
-    _announce('Created $title in ${_label(status)}.');
+    _announce('Created $title.');
   }
 
   void _onCardKey(KeyEvent e, TaskVm task, int columnIndex) {
@@ -164,6 +208,52 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
 
   String _query = '';
 
+  // --- Filter / sort / group-by (fl-8-filter-sort-group) ---
+
+  /// The current field registry (built-ins + custom fields) for filter/sort/
+  /// group operations — read-time, callback-safe.
+  List<FieldDescriptor> _fields() => buildFieldDescriptors(
+        fieldConfigs: ref.read(taskFieldConfigsProvider).valueOrNull ?? const [],
+        projects: ref.read(projectsProvider).valueOrNull ?? const [],
+        tasks: ref.read(tasksProvider).valueOrNull ?? const [],
+      );
+
+  /// Announce the result count after a filter/sort/group change (WCAG 4.1.3).
+  void _announceViewChange() {
+    final tasks = ref.read(tasksProvider).valueOrNull ?? const <TaskVm>[];
+    final config = ref.read(taskViewConfigProvider);
+    final matched = applyFilter(tasks, config, _fields()).length;
+    final filters = config.conditionCount;
+    _announce(filters == 0
+        ? 'Filters cleared — showing all ${tasks.length} items.'
+        : '$matched of ${tasks.length} items match the filters.');
+  }
+
+  /// Column-header click: asc → desc → off, replacing the sort list (the Sort
+  /// dialog is the multi-level editor).
+  void _toggleHeaderSort(String fieldId) {
+    final config = ref.read(taskViewConfigProvider);
+    final current =
+        config.sorts.length == 1 && config.sorts.single.field == fieldId
+            ? config.sorts.single
+            : null;
+    final field = descriptorFor(_fields(), fieldId);
+    final label = field?.label ?? fieldId;
+    if (current == null) {
+      ref.read(taskViewConfigProvider.notifier).state =
+          config.copyWith(sorts: [SortKey(field: fieldId)]);
+      _announce('Sorted by $label, ascending.');
+    } else if (!current.desc) {
+      ref.read(taskViewConfigProvider.notifier).state =
+          config.copyWith(sorts: [SortKey(field: fieldId, desc: true)]);
+      _announce('Sorted by $label, descending.');
+    } else {
+      ref.read(taskViewConfigProvider.notifier).state =
+          config.copyWith(sorts: const []);
+      _announce('Sorting cleared.');
+    }
+  }
+
   // --- Saved views (fl-8-saved-views) ---
 
   static _TasksView _surfaceFor(String viewType) => switch (viewType) {
@@ -191,6 +281,8 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
     ref.read(activeSavedViewProvider.notifier).state = v;
     ref.read(taskColumnPrefsProvider.notifier).state =
         v == null ? const [] : List.of(v.columns);
+    ref.read(taskViewConfigProvider.notifier).state =
+        v?.config ?? ViewConfig.empty;
     setState(() => _view =
         v == null ? _TasksView.mainTable : _surfaceFor(v.viewType));
     _announce(v == null ? 'Main table view.' : 'View ${v.name}.');
@@ -198,19 +290,21 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
 
   void _selectBuiltin(_TasksView v) {
     if (ref.read(activeSavedViewProvider) != null) {
-      // Leaving a saved view: drop its local column overrides too.
+      // Leaving a saved view: drop its local column + config overrides too.
       ref.read(activeSavedViewProvider.notifier).state = null;
       ref.read(taskColumnPrefsProvider.notifier).state = const [];
+      ref.read(taskViewConfigProvider.notifier).state = ViewConfig.empty;
     }
     setState(() => _view = v);
   }
 
-  /// Current layout != the active view's saved layout (the dirty state).
+  /// Current layout or filter/sort/group != the active view's saved state.
   bool get _viewDirty {
     final v = ref.watch(activeSavedViewProvider);
     if (v == null) return false;
     final current = effectiveTaskColumns(ref);
-    return ColumnPref.encodeList(current) != ColumnPref.encodeList(v.columns);
+    return ColumnPref.encodeList(current) != ColumnPref.encodeList(v.columns) ||
+        ref.watch(taskViewConfigProvider).encode() != v.config.encode();
   }
 
   /// Create a view from the CURRENT layout + surface ("+" and "Save as new").
@@ -253,6 +347,7 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
                             name: name,
                             viewType: _viewTypeOf(_view),
                             columns: effectiveTaskColumns(ref, listen: false),
+                            config: ref.read(taskViewConfigProvider),
                             isShared: share,
                           );
                   if (ctx2.mounted) Navigator.pop(ctx2, saved);
@@ -283,6 +378,7 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
             name: v.name,
             viewType: v.viewType,
             columns: effectiveTaskColumns(ref, listen: false),
+            config: ref.read(taskViewConfigProvider),
             isShared: v.isShared,
             version: v.version,
           );
@@ -298,6 +394,7 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
     final v = ref.read(activeSavedViewProvider);
     if (v == null) return;
     ref.read(taskColumnPrefsProvider.notifier).state = List.of(v.columns);
+    ref.read(taskViewConfigProvider.notifier).state = v.config;
     _announce('Reset to the saved layout of ${v.name}.');
   }
 
@@ -332,6 +429,7 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
               name: name,
               viewType: v.viewType,
               columns: v.columns,
+              config: v.config,
               isShared: v.isShared,
               version: v.version);
           ref.read(activeSavedViewProvider.notifier).state = saved;
@@ -345,6 +443,7 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
               name: v.name,
               viewType: v.viewType,
               columns: v.columns,
+              config: v.config,
               isShared: !v.isShared,
               version: v.version);
           ref.read(activeSavedViewProvider.notifier).state = saved;
@@ -410,26 +509,45 @@ class _KanbanScreenState extends ConsumerState<KanbanScreen> {
           _BoardToolbar(
             onNewItem: _openNewTask,
             onQuery: (q) => setState(() => _query = q),
+            onOpenFilter: () =>
+                showFilterBuilder(context, ref, _fields(), _announceViewChange),
+            onOpenSort: () =>
+                showSortEditor(context, ref, _fields(), _announceViewChange),
+            onOpenGroupBy: () =>
+                showGroupByPicker(context, ref, _fields(), _announceViewChange),
           ),
           Expanded(
             child: tasksAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text('Failed to load: $e')),
               data: (tasks) {
-                final visible = _query.isEmpty
-                    ? tasks
-                    : tasks
-                        .where((t) =>
-                            t.title.toLowerCase().contains(_query.toLowerCase()))
-                        .toList();
+                // fl-8-filter-sort-group pipeline: filter → search → sort.
+                final config = ref.watch(taskViewConfigProvider);
+                final fields = buildFieldDescriptors(
+                  fieldConfigs:
+                      ref.watch(taskFieldConfigsProvider).valueOrNull ?? const [],
+                  projects:
+                      ref.watch(projectsProvider).valueOrNull ?? const [],
+                  tasks: tasks,
+                );
+                var visible = applyFilter(tasks, config, fields);
+                if (_query.isNotEmpty) {
+                  visible = visible
+                      .where((t) =>
+                          t.title.toLowerCase().contains(_query.toLowerCase()))
+                      .toList();
+                }
+                visible = applySort(visible, config, fields);
                 return switch (_view) {
                   _TasksView.mainTable => MainTableView(
                       tasks: visible,
+                      groups: computeGroups(visible, config, fields),
                       onOpen: _openEditTask,
                       onSetStatus: (t, status) => _commitMove(t, status),
                       onSetDue: _setDue,
                       onAddItem: _addItem,
                       onSetCustomField: _setCustomField,
+                      onSortColumn: _toggleHeaderSort,
                     ),
                   _TasksView.list =>
                     _TaskListView(tasks: visible, colors: c, onEdit: _openEditTask),
@@ -860,9 +978,18 @@ class _ViewTabs extends StatelessWidget {
 /// UI-2 toolbar row: New item (primary), board search, project filter, and
 /// announced coming-soon stubs for Person / Sort / Group by.
 class _BoardToolbar extends ConsumerWidget {
-  const _BoardToolbar({required this.onNewItem, required this.onQuery});
+  const _BoardToolbar({
+    required this.onNewItem,
+    required this.onQuery,
+    required this.onOpenFilter,
+    required this.onOpenSort,
+    required this.onOpenGroupBy,
+  });
   final VoidCallback onNewItem;
   final ValueChanged<String> onQuery;
+  final VoidCallback onOpenFilter;
+  final VoidCallback onOpenSort;
+  final VoidCallback onOpenGroupBy;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -928,8 +1055,60 @@ class _BoardToolbar extends ConsumerWidget {
               ),
           const SizedBox(width: MndSpace.s8),
           stub(Icons.person_outline, 'Person'),
-          stub(Icons.swap_vert, 'Sort'),
-          stub(Icons.layers_outlined, 'Group by'),
+          // fl-8-filter-sort-group: live Filter / Sort / Group-by controls;
+          // buttons announce their active state in the label.
+          Builder(builder: (context) {
+            final config = ref.watch(taskViewConfigProvider);
+            final filterCount = config.conditionCount;
+            final sortCount = config.sorts.length;
+            final grouped = config.groupBy != 'status';
+            Widget control({
+              required Key key,
+              required IconData icon,
+              required String label,
+              required VoidCallback onPressed,
+              required String semantics,
+            }) =>
+                Semantics(
+                  label: semantics,
+                  excludeSemantics: true,
+                  child: TextButton.icon(
+                    key: key,
+                    onPressed: onPressed,
+                    icon: Icon(icon, size: 16),
+                    label: Text(label),
+                  ),
+                );
+            return Row(mainAxisSize: MainAxisSize.min, children: [
+              control(
+                key: const ValueKey('board-filter'),
+                icon: Icons.filter_list,
+                label: filterCount > 0 ? 'Filter ($filterCount)' : 'Filter',
+                onPressed: onOpenFilter,
+                semantics: filterCount > 0
+                    ? 'Filter, $filterCount active conditions. Edit filters'
+                    : 'Filter. Build filter conditions',
+              ),
+              control(
+                key: const ValueKey('board-sort'),
+                icon: Icons.swap_vert,
+                label: sortCount > 0 ? 'Sort ($sortCount)' : 'Sort',
+                onPressed: onOpenSort,
+                semantics: sortCount > 0
+                    ? 'Sort, $sortCount active levels. Edit sorting'
+                    : 'Sort. Add sorting',
+              ),
+              control(
+                key: const ValueKey('board-group'),
+                icon: Icons.layers_outlined,
+                label: grouped ? 'Grouped' : 'Group by',
+                onPressed: onOpenGroupBy,
+                semantics: grouped
+                    ? 'Grouped by a custom field. Change grouping'
+                    : 'Group by. Choose a grouping field',
+              ),
+            ]);
+          }),
           // fl-8-column-registry: show/hide + keyboard reorder for Main-Table
           // columns. The popover is the non-pointer path (headers are
           // drag-only), so it lives on the always-visible toolbar.

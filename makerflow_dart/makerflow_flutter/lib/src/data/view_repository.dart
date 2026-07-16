@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:makerflow_client/makerflow_client.dart' as api;
 
+import 'view_config.dart';
+
 /// Column-layout persistence for the Main Table (fl-8-column-registry).
 /// One entry per visible-or-hidden column, in display order.
 class ColumnPref {
@@ -44,6 +46,7 @@ class SavedViewVm {
     required this.name,
     required this.viewType, // table | kanban | list | calendar
     required this.columns,
+    this.config = ViewConfig.empty, // filter/sort/group-by (filtersJson)
     this.isShared = false,
     this.ownerUserInfoId = 0,
     this.version = 1,
@@ -53,6 +56,7 @@ class SavedViewVm {
   final String name;
   final String viewType;
   final List<ColumnPref> columns;
+  final ViewConfig config;
   final bool isShared;
   final int ownerUserInfoId;
   final int version;
@@ -76,6 +80,7 @@ abstract class ViewRepository {
     required String name,
     required String viewType,
     required List<ColumnPref> columns,
+    ViewConfig config = ViewConfig.empty,
     bool isShared = false,
     int version = 1,
   });
@@ -104,6 +109,7 @@ class InMemoryViewRepository implements ViewRepository {
     required String name,
     required String viewType,
     required List<ColumnPref> columns,
+    ViewConfig config = ViewConfig.empty,
     bool isShared = false,
     int version = 1,
   }) async {
@@ -112,6 +118,7 @@ class InMemoryViewRepository implements ViewRepository {
       name: name,
       viewType: viewType,
       columns: List.of(columns),
+      config: config,
       isShared: isShared,
       version: version + (id == null ? 0 : 1),
     );
@@ -176,6 +183,7 @@ class ServerpodViewRepository implements ViewRepository {
         name: v.name,
         viewType: v.viewType,
         columns: ColumnPref.decodeList(v.columnsJson),
+        config: ViewConfig.decode(v.filtersJson),
         isShared: v.isShared,
         ownerUserInfoId: v.ownerUserInfoId,
         version: v.version,
@@ -197,6 +205,7 @@ class ServerpodViewRepository implements ViewRepository {
     required String name,
     required String viewType,
     required List<ColumnPref> columns,
+    ViewConfig config = ViewConfig.empty,
     bool isShared = false,
     int version = 1,
   }) async {
@@ -208,7 +217,7 @@ class ServerpodViewRepository implements ViewRepository {
       name: name,
       entityType: 'task',
       viewType: viewType,
-      filtersJson: '{}',
+      filtersJson: config.encode(),
       columnsJson: ColumnPref.encodeList(columns),
       isShared: isShared,
       version: version,

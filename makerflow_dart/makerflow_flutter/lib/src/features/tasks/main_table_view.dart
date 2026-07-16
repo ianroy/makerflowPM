@@ -4,6 +4,7 @@ import 'package:makerflow_design/makerflow_design.dart';
 
 import '../../data/field_models.dart';
 import '../../data/models.dart';
+import '../../data/view_config.dart';
 import '../../data/view_repository.dart';
 import '../../state/providers.dart';
 import 'custom_field_cells.dart';
@@ -24,23 +25,39 @@ class MainTableView extends ConsumerStatefulWidget {
   const MainTableView({
     super.key,
     required this.tasks,
+    required this.groups,
     required this.onOpen,
     required this.onSetStatus,
     required this.onSetDue,
     required this.onAddItem,
     required this.onSetCustomField,
+    required this.onSortColumn,
   });
 
+  /// All visible (filtered + sorted) tasks — drives the battery + autofit.
   final List<TaskVm> tasks;
+
+  /// The rendered groups (fl-8-filter-sort-group: group-by-any-field). The
+  /// default is the six status groups; keys stay stable for collapse state
+  /// and the per-group ghost add-item rows.
+  final List<TaskGroup> groups;
+
   final ValueChanged<TaskVm> onOpen;
   final void Function(TaskVm task, String status) onSetStatus;
   final void Function(TaskVm task, DateTime due) onSetDue;
-  final void Function(String status, String title) onAddItem;
+
+  /// Add an item into a group; the owner derives the field value the group
+  /// implies (status group → that status, label group → that label, ...).
+  final void Function(String groupKey, String title) onAddItem;
 
   /// Write one custom-field value (null clears). The owner merges into the
   /// task's bag and persists (D6 whole-bag replace).
   final void Function(TaskVm task, FieldConfigVm field, Object? value)
       onSetCustomField;
+
+  /// A column header was clicked: toggle sorting on that field
+  /// (asc → desc → off). Field ids match column keys.
+  final ValueChanged<String> onSortColumn;
 
   @override
   ConsumerState<MainTableView> createState() => _MainTableViewState();
@@ -311,15 +328,13 @@ class _MainTableViewState extends ConsumerState<MainTableView> {
       children: [
         _StatusBattery(tasks: widget.tasks),
         const SizedBox(height: MndSpace.s12),
-        for (final status in kanbanColumns) ..._group(context, c, status),
+        for (final g in widget.groups) ..._group(context, c, g),
       ],
     );
   }
 
-  List<Widget> _group(BuildContext context, MakerflowColors c, String status) {
-    final groupColor = MndLabelColors.status[status] ?? MndLabelColors.blank;
-    final rows = widget.tasks.where((t) => t.status == status).toList();
-    final collapsed = _collapsed.contains(status);
+  List<Widget> _group(BuildContext context, MakerflowColors c, TaskGroup g) {
+    final collapsed = _collapsed.contains(g.key);
     final registry = _registry;
     final visibleCols = _prefs.where((p) => !p.hidden).toList();
 
@@ -328,38 +343,48 @@ class _MainTableViewState extends ConsumerState<MainTableView> {
         padding: const EdgeInsets.only(top: MndSpace.s12, bottom: MndSpace.s4),
         child: Row(children: [
           IconButton(
-            tooltip: collapsed ? 'Expand ${_label(status)}' : 'Collapse ${_label(status)}',
+            tooltip: collapsed ? 'Expand ${g.label}' : 'Collapse ${g.label}',
             visualDensity: VisualDensity.compact,
             iconSize: 18,
-            icon: Icon(collapsed ? Icons.chevron_right : Icons.expand_more, color: groupColor),
+            icon: Icon(collapsed ? Icons.chevron_right : Icons.expand_more, color: g.color),
             onPressed: () => setState(() {
-              collapsed ? _collapsed.remove(status) : _collapsed.add(status);
+              collapsed ? _collapsed.remove(g.key) : _collapsed.add(g.key);
             }),
           ),
           Semantics(
             header: true,
-            child: Text(_label(status),
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: groupColor)),
+            child: Text(g.label,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: g.color)),
           ),
           const SizedBox(width: MndSpace.s8),
-          Text('${rows.length} ${rows.length == 1 ? 'item' : 'items'}',
+          Text('${g.tasks.length} ${g.tasks.length == 1 ? 'item' : 'items'}',
               style: TextStyle(fontSize: 12, color: c.muted)),
         ]),
       ),
       if (!collapsed) ...[
         _headerRow(context, c, registry, visibleCols),
-        for (final t in rows) _row(context, c, groupColor, t, registry, visibleCols),
+        for (final t in g.tasks) _row(context, c, g.color, t, registry, visibleCols),
         _AddItemRow(
-          status: status,
-          groupColor: groupColor,
-          onSubmit: (title) => widget.onAddItem(status, title),
+          groupKey: g.key,
+          groupColor: g.color,
+          onSubmit: (title) => widget.onAddItem(g.key, title),
         ),
       ],
     ];
   }
 
-  /// Column headers: draggable (reorder), with a resize handle on each right
-  /// boundary (drag = resize, double-tap = autofit).
+  /// The sort marker for a column header (fl-8-filter-sort-group): ▲/▼ when
+  /// the field participates in the sort, with its level when multi-sorted.
+  String _sortMarker(String fieldId) {
+    final sorts = ref.watch(taskViewConfigProvider).sorts;
+    final i = sorts.indexWhere((s) => s.field == fieldId);
+    if (i < 0) return '';
+    final arrow = sorts[i].desc ? ' ▼' : ' ▲';
+    return sorts.length > 1 ? '$arrow${i + 1}' : arrow;
+  }
+
+  /// Column headers: draggable (reorder), clickable (toggle sort), with a
+  /// resize handle on each right boundary (drag = resize, double-tap = autofit).
   Widget _headerRow(BuildContext context, MakerflowColors c,
       List<_TaskColumnSpec> registry, List<ColumnPref> cols) {
     return Container(
@@ -367,7 +392,21 @@ class _MainTableViewState extends ConsumerState<MainTableView> {
       decoration: BoxDecoration(border: Border(bottom: BorderSide(color: c.line))),
       child: Row(children: [
         const SizedBox(width: MndSpace.s8),
-        Expanded(child: Text('Item', style: TextStyle(fontSize: 12, color: c.muted))),
+        Expanded(
+          child: Semantics(
+            button: true,
+            label: 'Item — sort by item name',
+            excludeSemantics: true,
+            child: InkWell(
+              onTap: () => widget.onSortColumn('title'),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Item${_sortMarker('title')}',
+                    style: TextStyle(fontSize: 12, color: c.muted)),
+              ),
+            ),
+          ),
+        ),
         for (final p in cols) ...[
           _headerCell(context, c, registry, p),
           _resizeHandle(context, c, p),
@@ -381,11 +420,19 @@ class _MainTableViewState extends ConsumerState<MainTableView> {
     final spec = specIn(registry, p.key)!;
     final header = SizedBox(
       width: p.width - 6, // the resize handle owns the last 6px
-      child: Center(
-        child: Text(spec.label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 12, color: c.muted)),
+      child: Semantics(
+        button: true,
+        label: '${spec.label} — sort by ${spec.label}',
+        excludeSemantics: true,
+        child: InkWell(
+          onTap: () => widget.onSortColumn(p.key),
+          child: Center(
+            child: Text('${spec.label}${_sortMarker(p.key)}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 12, color: c.muted)),
+          ),
+        ),
       ),
     );
     // Drag a header onto another to reorder (drop inserts BEFORE the target).
@@ -623,8 +670,8 @@ Widget _columnRow(
 /// The ghost "+ Add item" row: type + Enter creates in this group and keeps
 /// focus for rapid entry (monday's add-item chaining).
 class _AddItemRow extends StatefulWidget {
-  const _AddItemRow({required this.status, required this.groupColor, required this.onSubmit});
-  final String status;
+  const _AddItemRow({required this.groupKey, required this.groupColor, required this.onSubmit});
+  final String groupKey;
   final Color groupColor;
   final ValueChanged<String> onSubmit;
 
@@ -668,7 +715,7 @@ class _AddItemRowState extends State<_AddItemRow> {
         const SizedBox(width: MndSpace.s4),
         Expanded(
           child: TextField(
-            key: ValueKey('add-item:${widget.status}'),
+            key: ValueKey('add-item:${widget.groupKey}'),
             controller: _controller,
             focusNode: _focus,
             onSubmitted: _submit,
