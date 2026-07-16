@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:makerflow_design/makerflow_design.dart';
 
-import 'package:makerflow_flutter/src/data/view_repository.dart';
 import 'package:makerflow_flutter/src/features/tasks/kanban_screen.dart';
 import 'package:makerflow_flutter/src/state/providers.dart';
 
